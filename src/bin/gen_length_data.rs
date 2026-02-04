@@ -22,17 +22,11 @@ struct StatVal {
 
 const MAX_COUNT:usize= 5;
 
+
 fn main() {
 
     let mut rng = rand::rng();
     let mut rnd_vec = Vec::with_capacity(MAX_COUNT);
-
-    //乱数生成の確認用
-    // for _ in 1..=MAX_COUNT {
-    //     // 長さ測定値を生成
-    //     let val: f64 = rng.random_range(0.02..=100.0);
-    //     rnd_vec.push(val);    
-    // }
 
     // senderに毎秒一つのデータを送る
     // 最終的に送ったデータの統計を表示
@@ -86,7 +80,6 @@ fn cal_stats ( rvec: &[f64]) -> StatVal {
     s
 
 } 
-
 
 ///
 ///  結果表示
