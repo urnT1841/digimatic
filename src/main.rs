@@ -10,7 +10,6 @@ use digimatic::port_prepare::port_prepare;
 use digimatic::generator::generator;
 use digimatic::sender::send_data;
 use digimatic::receiver::receiver;
-//use serialport::SerialPort;
 
 fn main() {
     // ポート準備
@@ -26,28 +25,31 @@ fn main() {
     };
 
     loop {
-        // testのためループでじゃんじゃん出す
         let val = generator();
 
         // sender には tx port を貸し出してデータ送出  (返値なし)
         send_data(val, &mut *ports.tx);
 
         // reveiver には rx portを貸し出してデータ受信
-        let r_data = match receiver(&mut *ports.rx) {
+        let r_data =receiver(&mut *ports.rx);
+        match r_data {
             Ok(data) => {
-                println!("受信データ： {}", data.trim()); 
-                data
-            }
+                print_mes_result(val,&data)
+            },
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
-                continue; // タイムアウトならここでループの先頭に戻る（match外の println は実行しない）
-            }
+                ()
+            },
             Err(e) => {
-                eprintln!("受信エラー {}", e);
-                continue; // エラー時も同様
-            }
+                eprintln!("受信エラー {}", e)
+            },
         };
-        // r_data は String 型になっているので、{} で表示可能
-        println!("Excel/IgorProに送るデータ: {} ", r_data.trim());
         thread::sleep(Duration::from_secs(1));
     }
+}
+
+// 生成データと受信データ出力
+fn print_mes_result(tx_data: f64, rx_data: &str) {
+
+    println!("[Tx] {:>6.2} mm  => [Rx] {:>6} mm", tx_data, rx_data.trim());
+
 }
