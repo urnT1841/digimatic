@@ -6,7 +6,6 @@
 //
 
 use serialport::SerialPort;
-use std::io::Write;
 
 pub fn send_data(data: f64, tx_p: &mut dyn SerialPort) {
     // 送信用にデータ変換
