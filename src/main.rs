@@ -6,9 +6,10 @@
 
 use std::{thread, time::Duration};
 
+use digimatic::frame_array_builder::build_frame_array;
 use digimatic::port_prepare::port_prepare;
 use digimatic::generator::generator;
-use digimatic::sender::send_data;
+use digimatic::sender::{send,SendMode};
 use digimatic::receiver::receiver;
 
 fn main() {
@@ -26,9 +27,14 @@ fn main() {
 
     loop {
         let val = generator();
+        let digi_frame =  build_frame_array(val);
 
         // sender には tx port を貸し出してデータ送出  (返値なし)
-        send_data(val, &mut *ports.tx);
+        // 本番：フレームを送る
+        digimatic::sender::send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
+
+        // デバッグ：生データを送って確認する
+        // digimatic::sender::send(SendMode::SimpleText(val), &mut *tx_p);
 
         // reveiver には rx portを貸し出してデータ受信
         let r_data =receiver(&mut *ports.rx);

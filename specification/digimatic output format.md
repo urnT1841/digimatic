@@ -54,13 +54,15 @@
            5 -> 0.00000
 
 ### timing chart
-    | symbol | min. | Max. | Description |
-    | ------ | ---- | ---- |
-    | t1     | 0    | 2    | request -> data output star|
-    | t2  
-    | t3
-    | t4
-    | t5
+
+    | symbol | min. | Max. | Description                    |
+    | ------ | ---- | ---- | ------------------------------ |
+    | t1     | 0    | 2    | request -> data output star    |
+    | t2     | 15u  | -    | ck [L] level pulse width       |
+    | t3     | 100u | -    | ck [H] level pulse width       |
+    | t4     | 100u | -    | ck down to est.data pulse width|
+    | t5     | 0    | -    | reqest [L] min hold time       | 
+    
     | t6
     | t8
     | t8
