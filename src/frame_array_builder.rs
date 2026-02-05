@@ -4,43 +4,20 @@
 //! 
 //! 
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-enum Sign {
-    Plus = 0x00,
-    Minus  = 0x08,
-}
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-enum Unit {
-    Mm = 0x00,
-    _Inch = 0x01,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PointPosition {
-    Zero = 0x00,    // 000000.
-    One = 0x01,     // 00000.0
-    Two = 0x02,     // 0000.00
-    Three = 0x03,   // 000.000
-    Four = 0x04,    // 00.0000
-    Five = 0x05,    // 0.00000
-}
-
+use crate::frame::*;
 
 const EPSILON:f64 = 1E-5;  // 浮動小数点の揺らぎ対策
 
 
-pub fn build_frame_array( val   :f64 ) -> [u8; 13] {
+pub fn build_frame_array( val   :f64 ) -> [u8; FRAME_LENGTH] {
 
-    let mut digi_frame = [0x0Fu8; 13];  //  (0~12の13個 d1->0, d13->12)
+    let mut digi_frame = [0x0Fu8; FRAME_LENGTH];  //  (0~12の13個 d1->0, d13->12)
 
     // 下記は固定なので書き換える
-    digi_frame[4] = if val >= 0.0 {Sign::Plus as u8} else { Sign::Minus as u8};     // d5 sign: +:0(0000), -:8(1000) マイナスは来ないけど
-    digi_frame[11] = PointPosition::Two as u8;  // d12 小数点位置は2桁固定
-    digi_frame[12] = Unit::Mm as u8;      // d13 unit 0:mm, 1:inch  mm固定（ミツトヨ純正品の日本品はmmしか返さない(法律上))
+    digi_frame[D4] = if val >= 0.0 {Sign::Plus as u8} else { Sign::Minus as u8};     // d5 sign: +:0(0000), -:8(1000) マイナスは来ないけど
+    digi_frame[D11] = PointPosition::Two as u8;  // d12 小数点位置は2桁固定
+    digi_frame[D12] = Unit::Mm as u8;      // d13 unit 0:mm, 1:inch  mm固定（ミツトヨ純正品の日本品はmmしか返さない(法律上))
 
     // ここからf64で受け取った測定値を BDCに変換する
     // 小数点以下2桁のxxxx.xx が変換対象

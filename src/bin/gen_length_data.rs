@@ -3,8 +3,9 @@ use std::thread;
 use std::time::Duration;
 
 // ライブラリ(digimatic)から必要な機能を呼び出す
-use digimatic::sender::send_data;
+use digimatic::sender::send;
 use digimatic::port_prepare::port_prepare;
+use digimatic::sender::SendMode;
 
 #[derive(Debug, Default)]
 struct StatVal {
@@ -38,7 +39,7 @@ fn main() {
         rnd_vec.push(val);
 
         // 準備した ports の tx を使って送信
-        send_data(val, &mut *ports.tx);
+        send(SendMode::SimpleText(val), &mut *ports.tx);
         println!("[{}/{}] 送信中: {:.2}", i, MAX_COUNT, val);
 
         // 少し待機（シリアル通信の安定のため）

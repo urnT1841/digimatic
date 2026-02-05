@@ -30,11 +30,11 @@ fn main() {
         let digi_frame =  build_frame_array(val);
 
         // sender には tx port を貸し出してデータ送出  (返値なし)
-        // 本番：フレームを送る
-        digimatic::sender::send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
+        // 本番：digimaticフレームを送る
+        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
 
         // デバッグ：生データを送って確認する
-        // digimatic::sender::send(SendMode::SimpleText(val), &mut *tx_p);
+        // send(SendMode::SimpleText(val), &mut *tx_p);
 
         // reveiver には rx portを貸し出してデータ受信
         let r_data =receiver(&mut *ports.rx);
