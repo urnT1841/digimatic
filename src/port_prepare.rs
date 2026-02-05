@@ -22,8 +22,9 @@ pub struct PortPair {
 }
 
 pub fn port_prepare() -> Result<PortPair, Error> {
-    let tx_path = "/tmp/ptty_s";
-    let rx_path = "/tmp/ptty_d";
+    let pid = std::process::id();
+    let tx_path = format!("/tmp/ptty_s_{}", pid);
+    let rx_path = format!("/tmp/ptty_d_{}", pid);
     let tx_arg = format!("pty,raw,echo=0,link={}", tx_path);
     let rx_arg = format!("pty,raw,echo=0,link={}", rx_path);
 
@@ -36,21 +37,19 @@ pub fn port_prepare() -> Result<PortPair, Error> {
     thread::sleep(Duration::from_millis(200));
 
     // tx,rx のそれぞれのポートを開く
-    let tx = serialport::new(tx_path, 9600)
+    let tx = serialport::new(&tx_path, 9600)
         .timeout(Duration::from_millis(100))
         .open()
         .map_err(|e| Error::new(std::io::ErrorKind::Other, e))?;
 
-    let rx = serialport::new(rx_path, 9600)
+    let rx = serialport::new(&rx_path, 9600)
         .timeout(Duration::from_millis(100))
         .open()
         .map_err(|e| Error::new(std::io::ErrorKind::Other, e))?;
 
     Ok(PortPair {
-        tx_path: tx_path.to_string(),
-        rx_path: rx_path.to_string(),
-        tx,
-        rx,
+        tx_path, rx_path,
+        tx, rx,
         _socat: child,
     })
 }
