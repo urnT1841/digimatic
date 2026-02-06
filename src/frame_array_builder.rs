@@ -15,9 +15,9 @@ pub fn build_frame_array( val   :f64 ) -> [u8; FRAME_LENGTH] {
     let mut digi_frame = [0x0Fu8; FRAME_LENGTH];  //  (0~12の13個 d1->0, d13->12)
 
     // 下記は固定なので書き換える
-    digi_frame[D4] = if val >= 0.0 {Sign::Plus as u8} else { Sign::Minus as u8};     // d5 sign: +:0(0000), -:8(1000) マイナスは来ないけど
-    digi_frame[D11] = PointPosition::Two as u8;  // d12 小数点位置は2桁固定
-    digi_frame[D12] = Unit::Mm as u8;      // d13 unit 0:mm, 1:inch  mm固定（ミツトヨ純正品の日本品はmmしか返さない(法律上))
+    digi_frame[D5] = if val >= 0.0 {Sign::Plus as u8} else { Sign::Minus as u8};     // d5 sign: +:0(0000), -:8(1000) マイナスは来ないけど
+    digi_frame[D12] = PointPosition::Two as u8;  // d12 小数点位置は2桁固定
+    digi_frame[D13] = Unit::Mm as u8;      // d13 unit 0:mm, 1:inch  mm固定（ミツトヨ純正品の日本品はmmしか返さない(法律上))
 
     // ここからf64で受け取った測定値を BDCに変換する
     // 小数点以下2桁のxxxx.xx が変換対象
@@ -47,11 +47,11 @@ mod tests {
         let frame = build_frame_array(val);
         
         // 期待される値をチェック
-        assert_eq!(frame[11], PointPosition::Two as u8); // 小数点位置 
-        assert_eq!(frame[12], Unit::Mm as u8);           // 単位 
+        assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置 
+        assert_eq!(frame[D13], Unit::Mm as u8);           // 単位 
         
         // 123.456 -> 123.46 (四捨五入) -> [0, 1, 2, 3, 4, 6]
-        assert_eq!(frame[10], 6); // d11 (1の位) [cite: 59-61]
+        assert_eq!(frame[D11], 6); // d11 (1の位) [cite: 59-61]
         
         println!("Test Frame: {:?}", frame);
     }
