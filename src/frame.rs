@@ -7,19 +7,19 @@
 
 // デジマッチック データフレームの位置
 // インデックスだとずれるので
-pub const D1: usize  = 0;
-pub const D2: usize  = 1;
-pub const D3: usize  = 2;
-pub const D4: usize  = 3;
-pub const D5: usize  = 4;
-pub const D6: usize  = 5;
-pub const D7: usize  = 6;
-pub const D8: usize  = 7;
-pub const D9: usize  = 8;
-pub const D10: usize = 9;
-pub const D11: usize = 10;
-pub const D12: usize = 11;
-pub const D13: usize = 12;
+pub const D1: usize  = 0;   // header
+pub const D2: usize  = 1;   // header
+pub const D3: usize  = 2;   // header
+pub const D4: usize  = 3;   // header
+pub const D5: usize  = 4;   // sign ( + or - )
+pub const D6: usize  = 5;   // data
+pub const D7: usize  = 6;   // data
+pub const D8: usize  = 7;   // data
+pub const D9: usize  = 8;   // data
+pub const D10: usize = 9;   // data
+pub const D11: usize = 10;  // data
+pub const D12: usize = 11;  // point position
+pub const D13: usize = 12;  // unit  ( mm or inch )
 
 pub const FRAME_LENGTH:usize = 13;  // デジマチックフレームの長さは13固定
 
