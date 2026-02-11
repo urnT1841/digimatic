@@ -5,6 +5,7 @@
 
 
 use std::io;
+use crate::frame::*;
 
 /// 文字列として送られてきたdigimatic frameをデコードする
 pub fn decode_digi_frame_string( rx_frame: &str ) -> Result< f64, io::Error >{
@@ -22,7 +23,7 @@ pub fn decode_digi_frame_string( rx_frame: &str ) -> Result< f64, io::Error >{
         &frame[12..13], // 単位   unit
     ) {
         // 全ての条件が揃った「正解の形」
-        (13, "FFFF", s, val_str, p, u) => {            
+        (FRAME_LENGTH, "FFFF", s, val_str, p, u) => {            
             let sign = if s == "0" { 1.0 } else { -1.0 };
             let raw_val = val_str.parse::<f64>()
                 .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid digits"))?;
