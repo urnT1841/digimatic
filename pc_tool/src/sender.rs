@@ -34,7 +34,8 @@ pub fn send(mode: SendMode, tx_p: &mut dyn SerialPort) {
 
         // デジマチック形式の構築 (13デジットをHex文字列へ)
         SendMode::DigimaticFrame(frame) => {
-            let hex: String = frame.iter()
+            let hex: String = frame
+                .iter()
                 .map(|b| format!("{:X}", b)) // 各要素を16進数文字へ
                 .collect();
             format!("{}\n", hex)

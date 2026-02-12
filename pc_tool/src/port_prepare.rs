@@ -48,8 +48,10 @@ pub fn port_prepare() -> Result<PortPair, Error> {
         .map_err(|e| Error::new(std::io::ErrorKind::Other, e))?;
 
     Ok(PortPair {
-        tx_path, rx_path,
-        tx, rx,
+        tx_path,
+        rx_path,
+        tx,
+        rx,
         _socat: child,
     })
 }
