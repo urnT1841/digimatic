@@ -40,3 +40,26 @@ pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
     }
    Err("Pico port not found".into())
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_actual_pico_connection() {
+        let result = find_pico_port();
+
+        match result {
+            Ok(port) => {
+                println!("\n✅ Pico detected at : {}", port);
+                assert!(!port.is_empty());
+            }
+            Err(e) => {
+                panic!("\n✖ Pico not found! Check connectino or VDI/PID. Error {} ", e);
+            }
+        }
+    }
+
+}
