@@ -16,10 +16,10 @@ pub fn decode_digi_frame_string( rx_frame: &str ) -> Result< f64, io::Error >{
     // 構造をタプルに分解してマッチング
     match (
         frame.len(),
-        &frame[D1..D5],       // ヘッダ (D1-D4)
-        &frame[D5..D6],       // 符号  sign  D5
+        &frame[D1..D5],         // ヘッダ (D1-D4)
+        &frame[D5..D6],         // 符号  sign  D5
         &frame[D6..D12],        // 数値 (D6-D11)
-        &frame[D12..D13],     // 小数点 point pos (D12)
+        &frame[D12..D13],       // 小数点 point pos (D12)
         &frame[D13..D13+1],     // 単位   unit (D13)
     ) {
         // 全ての条件が揃った「正解の形」
