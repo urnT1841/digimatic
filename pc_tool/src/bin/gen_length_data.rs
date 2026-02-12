@@ -3,9 +3,9 @@ use std::thread;
 use std::time::Duration;
 
 // ライブラリ(digimatic)から必要な機能を呼び出す
-use digimatic::sender::send;
 use digimatic::port_prepare::port_prepare;
 use digimatic::sender::SendMode;
+use digimatic::sender::send;
 
 #[derive(Debug, Default)]
 struct StatVal {
@@ -19,7 +19,6 @@ struct StatVal {
 const MAX_COUNT: usize = 10; // 10個溜まったら終了
 
 fn main() {
-
     let mut ports = match port_prepare() {
         Ok(p) => p,
         Err(e) => {
@@ -57,7 +56,9 @@ fn cal_stats(rvec: &[f64]) -> StatVal {
     let mut s = StatVal::default();
     s.min = f64::MAX;
 
-    if rvec.is_empty() { return s; }
+    if rvec.is_empty() {
+        return s;
+    }
 
     let mut sum: f64 = 0.0;
     for &val in rvec {
@@ -68,10 +69,7 @@ fn cal_stats(rvec: &[f64]) -> StatVal {
     s.count = rvec.len();
     s.mean = sum / s.count as f64;
 
-    let variance: f64 = rvec
-        .iter()
-        .map(|&x| (x - s.mean).powi(2))
-        .sum::<f64>() / rvec.len() as f64;
+    let variance: f64 = rvec.iter().map(|&x| (x - s.mean).powi(2)).sum::<f64>() / rvec.len() as f64;
 
     s.std_sigma = variance.sqrt();
     s
