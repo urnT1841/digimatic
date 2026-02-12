@@ -38,7 +38,7 @@ pub fn decode_digi_frame_string( rx_frame: &str ) -> Result< f64, io::Error >{
         }
         
         // 文字数が違う場合
-        (len, _, _, _, _, _) if len != 13 => {
+        (len, _, _, _, _, _) if len != FRAME_LENGTH => {
             Err(io::Error::new(io::ErrorKind::InvalidData, format!("Invalid length: {}", len)))
         }
 
