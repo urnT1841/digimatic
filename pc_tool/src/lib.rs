@@ -10,3 +10,4 @@ pub mod generator;
 pub mod frame_array_builder;
 pub mod decoder_digi_frame;
 pub mod frame;
+pub mod scanner_of_pico_connection;
