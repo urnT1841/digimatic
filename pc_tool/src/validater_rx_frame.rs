@@ -11,6 +11,14 @@ use std::io::{Error, ErrorKind};
 pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     // 受信文字列は /n がついているので除去
     let frame = rx_frame.trim();
+    
+    // ASCII文字以外は来ないが念のためチェックしておく
+    if !frame.is_ascii() {
+        return Err(std::io::Error::new(
+            ErrorKind::InvalidData,
+            "Frame contains non-ASCII characters",
+        ));
+    }
 
     // 構造をタプルに分解してチェック
     // byteに変換してからスライスしたほうが良いとのこと UTF8で2,3バイトがくるとPanicになる
