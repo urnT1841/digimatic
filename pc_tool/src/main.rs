@@ -6,14 +6,22 @@
 
 use std::{thread, time::Duration};
 
-use digimatic::decoder_digi_frame::decode_digi_frame_string;
 use digimatic::frame_array_builder::build_frame_array;
 use digimatic::generator::generator;
 use digimatic::port_prepare::port_prepare;
 use digimatic::receiver::receiver;
 use digimatic::sender::{SendMode, send};
+use digimatic::validater_rx_frame::parse_rx_frame;
 
 fn main() {
+    // PC内で完結して動作確認できる
+    run_simmulation_loop();
+
+    //実機とつないであれこれ
+    // run_actual_loop();
+}
+
+fn run_simmulation_loop() {
     // ポート準備
     let mut ports = match port_prepare() {
         Ok(port) => {
@@ -30,28 +38,33 @@ fn main() {
         let val = generator();
         let digi_frame = build_frame_array(val);
 
-        // sender には tx port を貸し出してデータ送出  (返値なし)
-        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx); // 本番：digimaticフレームを送る
-        // send(SendMode::SimpleText(val), &mut *tx_p);                            // デバッグ：生データを送る
+        // 送信
+        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
 
-        // reveiver には rx portを貸し出してデータ受信
+        // 受信
         let r_data = receiver(&mut *ports.rx);
+
         match r_data {
             Ok(data) => {
-                let decoded_result = decode_digi_frame_string(&data);
-
-                if let Ok(mes_val) = decoded_result {
-                    print_tx_rx_decodo_result(val, &data, mes_val)
-                } else {
-                    // エラー処理
-                    eprintln!("データ異常 {}", data);
+                // rx文字列(フレーム)のバリデーション
+                match parse_rx_frame(&data) {
+                    Ok(measurement) => {
+                        let val_f64 = measurement.to_f64();
+                        println!("{} {:?} : ", measurement.raw_val, measurement.unit);
+                        print_tx_rx_decodo_result(val, &data, val_f64);
+                    }
+                    Err(e) => {
+                        eprintln!("データ異常（パース失敗）: {} | 原因: {}", data, e);
+                    }
                 }
             }
+            // タイムアウト時は何もしない
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            // それ以外のエラー
             Err(e) => {
-                eprintln!("受信エラー {}", e)
+                eprintln!("受信エラー {}", e);
             }
-        };
+        } // match r_data の閉じ
         thread::sleep(Duration::from_secs(1));
     }
 }
