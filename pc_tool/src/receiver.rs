@@ -1,24 +1,26 @@
-//!
 //! データレシーバ
-//!
-//! 渡されたポートに入ってくるデータを受けり文字列に戻して返す
-//!
-//!
 //!
 
 use serialport::SerialPort;
+use std::io::{BufRead, BufReader};
 
-pub fn receiver(rx_p: &mut dyn SerialPort) -> Result<String, std::io::Error> {
-    const BUFFER_SIZE: usize = 64;
-    let mut read_buf = [0u8; BUFFER_SIZE];
+///
+/// USB CDC からのデータを読み取る
+/// 
+/// args:   rx_p :受信ポート
+/// return: Result<String,Err>
+/// 概要: BufRead,BufReaderを使って \n が来るまで読みこむ
+///       読み込んだストリームはResult<String,Err>で返す
+/// 
+pub fn receiver(rx_p: &mut Box<dyn SerialPort>) -> Result<String, std::io::Error> {
+    let mut rx_reader = BufReader::new(rx_p);
+    let mut rx_line = String::new();
 
-    match rx_p.read(&mut read_buf) {
-        // 128bytesまではバッファーにため込む
-        Ok(n) => {
-            // nは \n を含んだ戻り値なのでこれを使ってスライスする
-            let read_byte_line = &read_buf[..n];
-            let byte_string = String::from_utf8_lossy(read_byte_line).to_string();
-            Ok(byte_string)
+    match rx_reader.read_line(&mut rx_line) {
+        Ok(0) => Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "port cloesd")),
+        Ok(_) => {
+            // \n を取り除いてStringにする
+            Ok(rx_line.trim_end().to_string())
         }
         Err(e) => Err(e),
     }

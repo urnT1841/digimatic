@@ -12,6 +12,7 @@ use digimatic::port_prepare::port_prepare;
 use digimatic::receiver::receiver;
 use digimatic::sender::{SendMode, send};
 use digimatic::validater_rx_frame::parse_rx_frame;
+use digimatic::frame::*;
 
 fn main() {
     // PC内で完結して動作確認できる
@@ -23,16 +24,11 @@ fn main() {
 
 fn run_simmulation_loop() {
     // ポート準備
-    let mut ports = match port_prepare() {
-        Ok(port) => {
-            println!("tx : {}, rx : {}", port.tx_path, port.rx_path);
-            port
-        }
-        Err(e) => {
-            eprintln!("ポートを開くのを失敗 {}", e);
-            std::process::exit(1);
-        }
-    };
+    let mut ports = port_prepare().expect("Faild to open ports");
+    
+    // 受信用構造耐性姓
+    // port所有権が rx_receiverへ
+    let mut rx_receiver = CdcReceiver::new(ports.rx);
 
     loop {
         let val = generator();
@@ -42,10 +38,12 @@ fn run_simmulation_loop() {
         send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
 
         // 受信
-        let r_data = receiver(&mut *ports.rx);
-
-        match r_data {
+        match rx_receiver.read_measurement() {
             Ok(data) => {
+                if data.is_empty() {
+                    continue;
+                }
+
                 // rx文字列(フレーム)のバリデーション
                 match parse_rx_frame(&data) {
                     Ok(measurement) => {
