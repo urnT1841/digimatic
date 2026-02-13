@@ -30,35 +30,35 @@ fn main() {
         let val = generator();
         let digi_frame = build_frame_array(val);
 
-        // sender には tx port を貸し出してデータ送出  (返値なし)
-        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx); // 本番：digimaticフレームを送る
-        // send(SendMode::SimpleText(val), &mut *tx_p);                            // デバッグ：生データを送る
+        // 送信
+        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
 
-        // reveiver には rx portを貸し出してデータ受信
+        // 受信
         let r_data = receiver(&mut *ports.rx);
-        match rx_data {
-            Ok(data) => {
-                let decoded_result = mes_val(&data); //  ここは修正すること もともとは decorde-~だった
 
-                if let Ok(mes_val) = decoded_result {
-                    print_tx_rx_decodo_result(val, &data, mes_val)
-                } else {
-                    // エラー処理
-                    eprintln!("データ異常 {}", data);
+        match r_data {
+            Ok(data) => {
+                // rx文字列(フレーム)のバリデーション
+                match parse_rx_frame(&data) {
+                    Ok(measurement) => {
+                        let val_f64 = measurement.to_f64();
+                        println!("{} {:?} : ", measurement.raw_val, measurement.unit);
+                        print_tx_rx_decodo_result(val, &data, val_f64);
+                    }
+                    Err(e) => {
+                        eprintln!("データ異常（パース失敗）: {} | 原因: {}", data, e);
+                    }
                 }
             }
+            // タイムアウト時は何もしない
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            // それ以外のエラー
             Err(e) => {
-                eprintln!("受信エラー {}", e)
+                eprintln!("受信エラー {}", e);
             }
-        };
+        } // match r_data の閉じ
         thread::sleep(Duration::from_secs(1));
     }
-}
-
-fn mes_val(s: &str) -> Result<f64, std::io::Error> {
-
-    Ok(123.45)
 }
 
 // 生成データ,受信文字列,復号データを出力
