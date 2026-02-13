@@ -6,12 +6,12 @@
 
 use std::{thread, time::Duration};
 
-use digimatic::decoder_digi_frame::decode_digi_frame_string;
 use digimatic::frame_array_builder::build_frame_array;
 use digimatic::generator::generator;
 use digimatic::port_prepare::port_prepare;
 use digimatic::receiver::receiver;
 use digimatic::sender::{SendMode, send};
+use digimatic::validater_rx_frame::parse_rx_frame;
 
 fn main() {
     // ポート準備
@@ -36,9 +36,9 @@ fn main() {
 
         // reveiver には rx portを貸し出してデータ受信
         let r_data = receiver(&mut *ports.rx);
-        match r_data {
+        match rx_data {
             Ok(data) => {
-                let decoded_result = decode_digi_frame_string(&data);
+                let decoded_result = mes_val(&data); //  ここは修正すること もともとは decorde-~だった
 
                 if let Ok(mes_val) = decoded_result {
                     print_tx_rx_decodo_result(val, &data, mes_val)
@@ -54,6 +54,11 @@ fn main() {
         };
         thread::sleep(Duration::from_secs(1));
     }
+}
+
+fn mes_val(s: &str) -> Result<f64, std::io::Error> {
+
+    Ok(123.45)
 }
 
 // 生成データ,受信文字列,復号データを出力
