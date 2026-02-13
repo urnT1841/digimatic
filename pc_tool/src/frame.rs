@@ -65,3 +65,21 @@ pub struct Measurement {
     pub point: PointPosition, // 小数点位置
     pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
 }
+
+impl Measurement {
+    pub fn to_f64(&self) -> f64 {
+        // 整数として保存している部分を数値に変換
+        let val = self.raw_val.parse::<f64>().unwrap_or(0.0);
+
+        //小数点の桁数分で割って測定値に変換。そのあと符号適用
+        let divisor = 10f64.powi(self.point as i32);
+        let sign_dir = match self.sign {
+            Sign::Plus => 1.0,
+            Sign::Minus => -1.0,
+        };
+
+        // 最終的な f64 の測定値
+        ( val / divisor) * sign_dir
+    
+    }
+}
