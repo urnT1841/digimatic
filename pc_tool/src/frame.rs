@@ -82,3 +82,31 @@ impl Measurement {
         (val / divisor) * sign_dir
     }
 }
+
+
+use serialport::SerialPort;
+use std::io::{BufRead, BufReader, Error, ErrorKind};
+
+#[derive(Debug)]
+pub struct CdcReceiver {
+    rx_reader: BufReader<Box<dyn SerialPort>>,
+}
+
+impl CdcReceiver {
+    pub fn new(port: Box<dyn SerialPort>) -> Self {
+        Self {
+            rx_reader: BufReader::new(port),
+        }
+    }
+
+    /// 次の一行（測定データ）を読み込む
+    pub fn read_measurement(&mut self) -> Result<String, Error> {
+        let mut line = String::new();
+        // read_lineは改行が来るまで待機（ブロック）します
+        match self.rx_reader.read_line(&mut line) {
+            Ok(0) => Err(Error::new(ErrorKind::ConnectionAborted, "Pico disconnected")),
+            Ok(_) => Ok(line.trim().to_string()),
+            Err(e) => Err(e),
+        }
+    }
+}
