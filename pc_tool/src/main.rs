@@ -14,6 +14,14 @@ use digimatic::sender::{SendMode, send};
 use digimatic::validater_rx_frame::parse_rx_frame;
 
 fn main() {
+    // PC内で完結して動作確認できる
+    run_simmulation_loop();
+
+    //実機とつないであれこれ
+    // run_actual_loop();
+}
+
+fn run_simmulation_loop() {
     // ポート準備
     let mut ports = match port_prepare() {
         Ok(port) => {

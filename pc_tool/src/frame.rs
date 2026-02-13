@@ -79,7 +79,6 @@ impl Measurement {
         };
 
         // 最終的な f64 の測定値
-        ( val / divisor) * sign_dir
-    
+        (val / divisor) * sign_dir
     }
 }
