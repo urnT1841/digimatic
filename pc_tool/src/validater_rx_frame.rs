@@ -13,6 +13,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     let frame = rx_frame.trim();
 
     // 構造をタプルに分解してチェック
+    // byteに変換してからスライスしたほうが良いとのこと UTF8で2,3バイトがくるとPanicになる
     match (
         frame.len(),
         &frame[D1..D5],       // ヘッダ (D1-D4)
