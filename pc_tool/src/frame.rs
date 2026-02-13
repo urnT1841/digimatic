@@ -24,14 +24,14 @@ pub const D13: usize = 12; // unit  ( mm or inch )
 pub const FRAME_LENGTH: usize = 13; // デジマチックフレームの長さは13固定
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Sign {
     Plus = 0x00,
     Minus = 0x08,
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Unit {
     Mm = 0x00,
     _Inch = 0x01,
@@ -46,4 +46,39 @@ pub enum PointPosition {
     Three = 0x03, // 000.000
     Four = 0x04,  // 00.0000
     Five = 0x05,  // 0.00000
+}
+
+// 作ったけど使ってない
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DigimaticFrame {
+    pub header: [u8; 4],
+    pub sign: Sign,
+    pub data: [u8; 6],
+    pub point_pos: PointPosition,
+    pub unit: Unit,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Measurement {
+    pub raw_val: String,      // デジマチックフレームの D4-D11
+    pub sign: Sign,           // 符号
+    pub point: PointPosition, // 小数点位置
+    pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
+}
+
+impl Measurement {
+    pub fn to_f64(&self) -> f64 {
+        // 整数として保存している部分を数値に変換
+        let val = self.raw_val.parse::<f64>().unwrap_or(0.0);
+
+        //小数点の桁数分で割って測定値に変換。そのあと符号適用
+        let divisor = 10f64.powi(self.point as i32);
+        let sign_dir = match self.sign {
+            Sign::Plus => 1.0,
+            Sign::Minus => -1.0,
+        };
+
+        // 最終的な f64 の測定値
+        (val / divisor) * sign_dir
+    }
 }
