@@ -20,6 +20,19 @@
 | 10     | GND(F.G) | - | Flame GND   |
 
 (*1)  
+
+```mermaid
+flowchart LR
+    VCC[VCC] --> R[Pull-up Resistor<br/>100kΩ typ<br/>(70k–140kΩ)]
+    R --> N((●))
+    IN[Input Pin] --> N
+    N --> BUF[Input Buffer]
+
+    BUF --- TH[Threshold<br/>1.55V typ<br/>(1.25–1.7V)]
+```
+
+
+---
                  VCC
                   │
                   │
@@ -32,10 +45,22 @@ IN ───────────────●────────▷�
 Input threshold:
     Typ. 1.55 V
     (1.25 V ～ 1.7 V)
-
+---
 
 
 (*2)
+
+```mermaid
+flowchart TB
+    OUT[Output Pin] --> N((●))
+    N --> NMOS[NMOS (Low-side switch)]
+    NMOS --> GND[GND]
+
+    OUT --- SPEC[5.5V typ<br/>-0.3–7.0V]
+    NMOS --- IO[IOL = 1.0mA<br/>VOL = 0.2V max]
+```
+
+---
 
 OUT ───────────────●─────────────  (External pin)
                    │
@@ -51,13 +76,14 @@ OUT ───────────────●─────────�
                         |/
                          │
                         GND
+
 Output characteristics:
     Typ. 5.5 V
     (-0.3 V ～ +7.0 V)
 
     IOL = 1.0 mA
     VOL = 0.2 V (MAX)
-
+---
 
 
 
