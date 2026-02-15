@@ -9,7 +9,7 @@ use std::{thread, time::Duration};
 use digimatic::frame_array_builder::build_frame_array;
 use digimatic::generator::generator;
 use digimatic::port_prepare::port_prepare;
-use digimatic::receiver::receiver;
+//use digimatic::receiver::receiver;
 use digimatic::sender::{SendMode, send};
 use digimatic::validater_rx_frame::parse_rx_frame;
 use digimatic::frame::*;
@@ -30,6 +30,7 @@ fn run_simmulation_loop() {
     // port所有権が rx_receiverへ
     let mut rx_receiver = CdcReceiver::new(ports.rx);
 
+    const WATI_TIME:u64 = 10;
     loop {
         let val = generator();
         let digi_frame = build_frame_array(val);
@@ -63,7 +64,7 @@ fn run_simmulation_loop() {
                 eprintln!("受信エラー {}", e);
             }
         } // match r_data の閉じ
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(WATI_TIME));
     }
 }
 

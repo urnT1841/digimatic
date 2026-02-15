@@ -9,10 +9,9 @@ use std::io::{Error, ErrorKind};
 
 /// 文字列として送られてきたdigimatic frameをパースしてMeasurement構造体に詰め込む
 pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
-    // 受信文字列は /n がついているので除去
+    // 受信文字列の整形 (Receiverで取り除いているけど念のため) とASCII文字チェック
     let frame = rx_frame.trim();
     
-    // ASCII文字以外は来ないが念のためチェックしておく
     if !frame.is_ascii() {
         return Err(std::io::Error::new(
             ErrorKind::InvalidData,
@@ -21,7 +20,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     }
 
     // 構造をタプルに分解してチェック
-    // byteに変換してからスライスしたほうが良いとのこと UTF8で2,3バイトがくるとPanicになる
+    // byteに変換してからスライスしたほうが良い。 UTF8で2,3バイト文字がくるとPanicになる(未対応)
     match (
         frame.len(),
         &frame[D1..D5],       // ヘッダ (D1-D4)
@@ -31,7 +30,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
         &frame[D13..D13 + 1], // 単位   unit (D13)
     ) {
         // 全ての条件が揃った「正解の形」を Measurement構造体に詰める
-        // くどいけれども シリアル経由の値が相手なので用心側に。とはいえ，自分でもやりすぎ感はあるが。
+        // くどい処理だがシリアル経由の値が相手なので用心側に。とはいえ，自分でもやりすぎ感はあるが。
         (FRAME_LENGTH, "FFFF", s, val_str, p, u) => Ok(Measurement {
             raw_val: convert_val(val_str)?,
             sign: convert_sign(s)?,

@@ -3,18 +3,62 @@
 
 ## Pins
 
+端子はノギスに正体して(ジョウが左側)みたときのアサイン
+5 4 3 2 1
+
 | PinNo. | Signal | I/O | description |
 |--------| ------ | --- | ----------- |
 | 1      | GND    |  -  | Signal GND  |
-| 2      | DATA   |  O  | mes data    |
-| 3      | CK     |  O  | Clock out   |
+| 2 (*2) | DATA   |  O  | mes data    |
+| 3 (*2) | CK     |  O  | Clock out   |
 | 4      | N.C.   |  -  | Non connect |
-| 5      | REQ    |  I  | deta Request|
+| 5 (*1) | REQ    |  I  | deta Request|
 | 6      | ORIG   |  I  | origin sig. |
 | 7      | N.C    |  -  | Non connect |
 | 8      | N.C    |  -  | Non Connect |
 | 9      | +5V    |  -  | power sup.  |
 | 10     | GND(F.G) | - | Flame GND   |
+
+(*1)  
+                 VCC
+                  │
+                  │
+                  R        Typ. 100kΩ
+                  │        (70kΩ ～ 140kΩ)
+                  │
+IN ───────────────●────────▷│>o
+                                  Input Buffer
+
+Input threshold:
+    Typ. 1.55 V
+    (1.25 V ～ 1.7 V)
+
+
+
+(*2)
+
+OUT ───────────────●─────────────  (External pin)
+                   │
+                   │
+                   │
+                   └─────┐
+                         │
+                        |\
+                        | \
+                        |  \   NMOS
+                        |  /
+                        | /
+                        |/
+                         │
+                        GND
+Output characteristics:
+    Typ. 5.5 V
+    (-0.3 V ～ +7.0 V)
+
+    IOL = 1.0 mA
+    VOL = 0.2 V (MAX)
+
+
 
 
 ## electrical spec
@@ -62,8 +106,7 @@
     | t3     | 100u | -    | ck [H] level pulse width       |
     | t4     | 100u | -    | ck down to est.data pulse width|
     | t5     | 0    | -    | reqest [L] min hold time       | 
-    
-    | t6
-    | t8
-    | t8
-    | t9
+    | t6     | -    | -    |                                |
+    | t8     | -    | -    |                                |
+    | t8     | -    | -    |                                |
+    | t9     | -    | -    |                                |
