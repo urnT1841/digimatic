@@ -1,8 +1,7 @@
-//------------------  ここからSender
 
 //
 // 仮想ポートにデータを流しこむ
-//
+//  Simの時使用
 //
 
 use serialport::SerialPort;
