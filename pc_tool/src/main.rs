@@ -26,8 +26,8 @@ fn run_simmulation_loop() {
     // ポート準備
     let mut ports = port_prepare().expect("Faild to open ports");
     
-    // 受信用構造耐性姓
-    // port所有権が rx_receiverへ
+    // 受信用構造体
+    // port所有権が rx_receiverへ移る
     let mut rx_receiver = CdcReceiver::new(ports.rx);
 
     const WATI_TIME:u64 = 10;
@@ -39,7 +39,7 @@ fn run_simmulation_loop() {
         send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
 
         // 受信
-        match rx_receiver.read_measurement() {
+        match rx_receiver.read_str_measurement() {
             Ok(data) => {
                 if data.is_empty() {
                     continue;
@@ -63,7 +63,7 @@ fn run_simmulation_loop() {
             Err(e) => {
                 eprintln!("受信エラー {}", e);
             }
-        } // match r_data の閉じ
+        } 
         thread::sleep(Duration::from_secs(WATI_TIME));
     }
 }
