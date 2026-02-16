@@ -20,7 +20,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     }
 
     // 構造をタプルに分解してチェック
-    // byteに変換してからスライスしたほうが良い。 UTF8で2,3バイト文字がくるとPanicになる(未対応)
+    // byteに変換するほうが安全だが，バイト列で受ける関数の実装で対応
     match (
         frame.len(),
         &frame[D1..D5],       // ヘッダ (D1-D4)
@@ -30,7 +30,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
         &frame[D13..D13 + 1], // 単位   unit (D13)
     ) {
         // 全ての条件が揃った「正解の形」を Measurement構造体に詰める
-        // くどい処理だがシリアル経由の値が相手なので用心側に。とはいえ，自分でもやりすぎ感はあるが。
+        // くどい処理だがシリアル経由の値が相手なので用心側に。とはいえやりすぎ感はある。
         (FRAME_LENGTH, "FFFF", s, val_str, p, u) => Ok(Measurement {
             raw_val: convert_val(val_str)?,
             sign: convert_sign(s)?,
@@ -49,15 +49,6 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     }
 }
 
-// sign parse
-fn convert_sign(s: &str) -> Result<Sign, Error> {
-    match s {
-        "0" => Ok(Sign::Plus),
-        "8" => Ok(Sign::Minus),
-        _ => Err(std::io::Error::new(ErrorKind::InvalidData, "Unknown sign")),
-    }
-}
-
 // 以下は本体側を見やすくするためのヘルパー関数群
 // val parse
 fn convert_val(val_str: &str) -> Result<String, Error> {
@@ -66,6 +57,15 @@ fn convert_val(val_str: &str) -> Result<String, Error> {
         Ok(val_str.to_string()) // 実体を作って返す
     } else {
         Err(Error::new(ErrorKind::InvalidData, "Invalid numeric data"))
+    }
+}
+
+// sign parse
+fn convert_sign(s: &str) -> Result<Sign, Error> {
+    match s {
+        "0" => Ok(Sign::Plus),
+        "8" => Ok(Sign::Minus),
+        _ => Err(std::io::Error::new(ErrorKind::InvalidData, "Unknown sign")),
     }
 }
 
