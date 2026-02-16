@@ -20,7 +20,7 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     }
 
     // 構造をタプルに分解してチェック
-    // byteに変換するほうが安全だが，バイト列で受ける関数の実装で対応
+    // byteに変換するほうが安全
     match (
         frame.len(),
         &frame[D1..D5],       // ヘッダ (D1-D4)
