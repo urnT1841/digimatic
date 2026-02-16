@@ -24,7 +24,7 @@
 ```mermaid
 flowchart LR
     VCC[VCC] --> R[Pull-up Resistor<br/>100kΩ typ<br/>(70k–140kΩ)]
-    R --> N((●))
+    R --> N((+))
     IN[Input Pin] --> N
     N --> BUF[Input Buffer]
 
@@ -52,7 +52,7 @@ Input threshold:
 
 ```mermaid
 flowchart TB
-    OUT[Output Pin] --> N((●))
+    OUT[Output Pin] --> N((+))
     N --> NMOS[NMOS (Low-side switch)]
     NMOS --> GND[GND]
 
