@@ -1,7 +1,7 @@
 
 
 import random
-
+import time
 
 def gen_cd_measurment():
     val = random.randint(1, 15000)
@@ -13,7 +13,6 @@ def to_str_for_frame(val):
 
 
 def build_digi_frame(val_str):
-
     digi_frame = ["0"] * 13
 
     # fixed values
@@ -30,23 +29,31 @@ def build_digi_frame(val_str):
 
 
 def sender(frame):
-    #文字列送出なのでJoinでくっつける
+    print(frame)
+
+
+def sim_from_caliper():
+    val = gen_cd_measurment() / 100
+    val_str = to_str_for_frame(val)
+    frame = build_digi_frame(val_str)
+    #list -> 文字列
     frame_string = "".join(frame)
-    print(frame_string)
+
+    # バイナリ ただし文字列からのバイナリなので，ノギス実機からの
+    # 出力とは異なるので使うときは注意
+    # frame_string_bin = frame_string.encode()
+
+    return frame_string
 
 
 def main():
     for i in range(1, 100):
-        val = gen_cd_measurment() / 100
-        val_str = to_str_for_frame(val)
-        digimatic_frame = build_digi_frame(val_str)
-        sender( digimatic_frame)
-        
-        # 生成文字列とフレームに詰めたものの確認
-        # frame_string = "".join(digimatic_frame)
-        # print(val_str)
-        # print(frame_string)
-        
+        digimatic_frame = sim_from_caliper()
+        sender(digimatic_frame)
+
+        # 時間調整  .sleep_ms は ミリ秒での指定
+        time.sleep_ms(1500)
+                
 
 if __name__ == '__main__':
     main()
