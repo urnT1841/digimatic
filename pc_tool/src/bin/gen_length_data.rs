@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 
 // ライブラリ(digimatic)から必要な機能を呼び出す
-use digimatic::sim::port_prepare::port_prepare;
+use digimatic::port_prepare::port_prepare;
 use digimatic::sim::sender::SendMode;
 use digimatic::sim::sender::send;
 
