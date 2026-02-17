@@ -11,7 +11,7 @@ use std::io::{Error, ErrorKind};
 pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
     // 受信文字列の整形 (Receiverで取り除いているけど念のため) とASCII文字チェック
     let frame = rx_frame.trim();
-    
+
     if !frame.is_ascii() {
         return Err(std::io::Error::new(
             ErrorKind::InvalidData,
