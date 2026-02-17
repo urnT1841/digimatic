@@ -13,21 +13,22 @@ use digimatic::sim::frame_array_builder::build_frame_array;
 use digimatic::sim::generator::generator;
 use digimatic::sim::sender::{SendMode, send};
 use digimatic::validater_rx_frame::parse_rx_frame;
-use digimatic::{frame::*, scanner_of_pico_connection};
+use digimatic::frame::*;
 
 fn main() {
     // PC内で完結して動作確認できる
     //run_simmulation_loop();
 
     //実機とつないであれこれ
-    run_actual_loop();
+    // TODO: コンパイラがうるさいので返値は捨てる。一通り動くようになったらちゃんと処理する。
+    _ = run_actual_loop();
 }
 
 fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
     // picoが接続されているポートを走査
     // 見つからなかったらpanicで終わる。 // TODO: 後でエラーハンドリング実装すること
     let pico_port_path = find_pico_port()?;
-    let mut rx_port = open_pico_port(&pico_port_path)?;
+    let rx_port = open_pico_port(&pico_port_path)?;
     let mut rx_receiver = CdcReceiver::new(rx_port);
 
     loop {
@@ -57,8 +58,6 @@ fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-
-    Ok(())
 }
 
 ///
