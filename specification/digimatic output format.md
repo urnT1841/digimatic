@@ -23,12 +23,15 @@
 
 ```mermaid
 flowchart LR
-    VCC[VCC] --> R[Pull-up Resistor<br/>100kΩ typ<br/>(70k–140kΩ)]
-    R --> N((+))
+    VCC[VCC] --> R["Pull-up Resistor (100kΩ)"]
+    R --> N(( ))
     IN[Input Pin] --> N
     N --> BUF[Input Buffer]
 
-    BUF --- TH[Threshold<br/>1.55V typ<br/>(1.25–1.7V)]
+    subgraph Spec ["Electrical Specs"]
+        BUF --- TH["Threshold: 1.55V (1.25V-1.7V)"]
+        R --- RK["Range: 70k-140kΩ"]
+    end
 ```
 
 
