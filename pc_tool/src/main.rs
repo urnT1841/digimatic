@@ -6,11 +6,11 @@
 
 use std::{thread, time::Duration};
 
-use digimatic::frame_array_builder::build_frame_array;
-use digimatic::generator::generator;
+use digimatic::sim::frame_array_builder::build_frame_array;
+use digimatic::sim::generator::generator;
 use digimatic::port_prepare::port_prepare;
 //use digimatic::receiver::receiver;
-use digimatic::sender::{SendMode, send};
+use digimatic::sim::sender::{SendMode, send};
 use digimatic::validater_rx_frame::parse_rx_frame;
 use digimatic::frame::*;
 

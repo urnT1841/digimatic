@@ -4,8 +4,8 @@ use std::time::Duration;
 
 // ライブラリ(digimatic)から必要な機能を呼び出す
 use digimatic::port_prepare::port_prepare;
-use digimatic::sender::SendMode;
-use digimatic::sender::send;
+use digimatic::sim::sender::SendMode;
+use digimatic::sim::sender::send;
 
 #[derive(Debug, Default)]
 struct StatVal {
