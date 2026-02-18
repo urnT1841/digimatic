@@ -5,6 +5,9 @@
 //! 
 
 use std::{thread, time::Duration};
+use std::fs::{File,OpenOptions};
+use csv::{Writer, WriterBuilder};
+use chrono::Local;
 
 use crate::sim::frame_array_builder::build_frame_array;
 use crate::sim::generator::generator;
@@ -21,6 +24,11 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
     // 受信用構造体
     // port所有権が rx_receiverへ移る
     let mut rx_receiver = CdcReceiver::new(ports.rx);
+
+    // 保存用にライター準備
+    let mut rx_wtr = create_log_writer("rx_log.csv")?;
+    let mut m_wtr = create_log_writer("measurement.csv")?;
+
 
     const WATI_TIME: u64 = 1;  // 秒で指定
     loop {
@@ -41,6 +49,13 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
                 match parse_rx_frame(&data) {
                     Ok(measurement) => {
                         let val_f64 = measurement.to_f64();
+                        // データ保存用構造体準備
+                        let m_log = MeasurementLog {
+                            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
+                            val: val_f64,
+                        };
+                        m_wtr.serialize(m_log)?;  // 測定データ記録
+                        m_wtr.flush()?;
                         println!("{} {:?} : ", measurement.raw_val, measurement.unit);
                         print_tx_rx_decode_result(val, &data, val_f64);
                     }
@@ -69,4 +84,16 @@ fn print_tx_rx_decode_result(tx_data: f64, rx_data: &str, deco_data: f64) {
         rx_data.trim(),
         deco_data
     );
+}
+
+///
+/// ライター生成
+/// 
+fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Error>> {
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+
+    Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }

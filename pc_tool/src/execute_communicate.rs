@@ -51,6 +51,7 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
                             val: val_f64,
                         };
                         m_wtr.serialize(m_log)?;  // 測定データ記録
+                        m_wtr.flush()?;
                         println!("{} {:?} : ", measurement.raw_val, measurement.unit);
                         print_rx_decode_result(&data, val_f64);
                     }
