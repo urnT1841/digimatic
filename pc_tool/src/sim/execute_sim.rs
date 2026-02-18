@@ -30,7 +30,7 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
     let mut m_wtr = create_log_writer("measurement.csv")?;
 
 
-    const WATI_TIME: u64 = 1;  // 秒で指定
+    const WATI_TIME_MS: u64 = 700;  // ミリ秒で指定 700msに意味はないよ
     loop {
         let val = generator();
         let digi_frame = build_frame_array(val);
@@ -44,6 +44,15 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
                 if data.is_empty() {
                     continue;
                 }
+                // 受信記録記録用準備
+                let rx_log = RxDataLog {
+                    timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
+                    raw_len: data.len(),
+                    raw_data: format!("{:?}",data),
+                    error_log: None,
+                };
+                rx_wtr.serialize(rx_log)?;
+                rx_wtr.flush()?;
 
                 // rx文字列(フレーム)のバリデーション
                 match parse_rx_frame(&data) {
@@ -71,7 +80,7 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
                 eprintln!("受信エラー {}", e);
             }
         }
-        thread::sleep(Duration::from_secs(WATI_TIME));
+        thread::sleep(Duration::from_millis(WATI_TIME_MS));
     }
 }
 
