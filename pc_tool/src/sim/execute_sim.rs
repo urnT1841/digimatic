@@ -14,7 +14,7 @@ use crate::validater_rx_frame::parse_rx_frame;
 use crate::frame::*;
 
 
-pub fn run_simmulation_loop() {
+pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
     // ポート準備
     let mut ports = port_prepare().expect("Faild to open ports");
 
@@ -58,6 +58,7 @@ pub fn run_simmulation_loop() {
         }
         thread::sleep(Duration::from_secs(WATI_TIME));
     }
+    Ok(())
 }
 
 
