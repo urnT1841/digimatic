@@ -1,5 +1,7 @@
 /tmp
 /specification/*.pdf
+*.csv
+*.log
 
 # --- Rust ---
 /pc_tool/target/
