@@ -4,15 +4,18 @@ import random
 import time
 
 def gen_cd_measurment():
+    """ CDデータ生成 100で割って 整数部 ３桁，小数点以下２桁となる値 """
     val = random.randint(1, 15000)
     return val
 
 
-def to_str_for_frame(val):
+def to_str_form_frame(val):
+    """頭の不足桁は0で埋めて返す """
     return f"{val:07.2f}"
 
 
 def build_digi_frame(val_str):
+    """ デジマチックのフレームっぽいリストを返す  """
     digi_frame = ["0"] * 13
 
     # fixed values
@@ -21,7 +24,7 @@ def build_digi_frame(val_str):
     digi_frame[11] = "2"    # point posision 2 fix
     digi_frame[12] = "0"    # unit 0:mm fix
 
-    # 小数点消してlstで流し込む
+    # 測定値相当は小数点消してlstで流し込む
     digits_only = val_str.replace(".","")
     digi_frame[5:11] = list(digits_only)
 
@@ -34,20 +37,20 @@ def sender(frame):
 
 def sim_from_caliper():
     val = gen_cd_measurment() / 100
-    val_str = to_str_for_frame(val)
+    val_str = to_str_form_frame(val)
     frame = build_digi_frame(val_str)
     #list -> 文字列
     frame_string = "".join(frame)
 
     # バイナリ ただし文字列からのバイナリなので，ノギス実機からの
-    # 出力とは異なるので使うときは注意
+    # 出力とは異なる。使うときは注意
     # frame_string_bin = frame_string.encode()
 
     return frame_string
 
 
 def main():
-    for i in range(1, 100):
+    while True:
         digimatic_frame = sim_from_caliper()
         sender(digimatic_frame)
 

@@ -58,7 +58,6 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
         }
         thread::sleep(Duration::from_secs(WATI_TIME));
     }
-    Ok(())
 }
 
 
