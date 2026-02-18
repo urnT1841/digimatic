@@ -91,7 +91,7 @@ fn convert_unit(u: &str) -> Result<Unit, Error> {
     }
 }
 
-// 未実装
+// TODO: 未実装
 // 文字列に変換したものではなく 生のバイナリデータで送られてきたものの復号
 // pub fn parse_rx_frame_bin(rx_stream: &Vec<u8>) {
 
