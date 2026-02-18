@@ -9,7 +9,7 @@ use digimatic::sim::execute_sim;
 
 fn main() {
 
-    const MODE: &str = "actual";
+    const MODE: &str = "sim";
 
     let result = match MODE {
         "sim" => execute_sim::run_simmulation_loop(),
