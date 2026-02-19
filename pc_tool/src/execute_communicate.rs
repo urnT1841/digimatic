@@ -54,13 +54,10 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
         loop {
             match rx_receiver.read_str_measurement() {
                 Ok(data) => {
-                    if data.is_empty() {
-                        continue;
-                    }
-
                     // 受信記録記録を生成して記録
-                    //  コンストラクタと .save_flash() メソッド を impl
-                    RxDataLog::new(&data).save_flush(&mut rx_wtr)?; // エラーの扱い注意
+                    if let Err(e) = RxDataLog::new(&data).save_flush(&mut rx_wtr) {
+                        eprintln!("Failed to save data: {}", e)
+                    }
 
                     // rx文字列(フレーム)のバリデーション
                     match parse_rx_frame(&data) {
@@ -78,9 +75,9 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
                 // タイムアウト時は何もしない
                 Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
                 // それ以外のエラー
-                Err(e) => {
-                    eprintln!("受信エラー {}", e);
-                }
+                //切断などの致命的な場合，このループを脱げて外側に出る
+                Err(e) if CdcReceiver::is_fatal_error(&e) => break,
+                _ => continue,
             }
         }
     }
