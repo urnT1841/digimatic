@@ -10,8 +10,8 @@ use chrono::Local;
 
 use crate::scanner_of_pico_connection::find_pico_port;
 use crate::validater_rx_frame::parse_rx_frame;
-use crate::frame::*;
-
+use crate::communicator::CdcReceiver;
+use crate::logger::*;
 
 pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
     // picoが接続されているポートを走査
