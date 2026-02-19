@@ -18,8 +18,6 @@ pub struct RxDataLog {
 
 impl RxDataLog {
     // コンストラクタ
-    // ループ内で使用するので raw は所有権もらう move
-    // 将来使いまわすとき(stdoutやGUI実装など)借用にして拡張
     pub fn new(raw: &str) -> Self {
         Self {
             timestamp: Local::now().format("%H:%M:%S.3f").to_string(),
