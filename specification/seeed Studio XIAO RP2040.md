@@ -56,9 +56,9 @@ Seeed Studio XIAO RP2040 Pre-Soldered | Plug-and-Play mini ... |
 |Boot | RP2040_BOOT|| ブートモード開始|
 |CHARGE_LED| VCC_3V3|| CHG-LED_Red|
 |RGB LED| NEOPIX ||	RGB LED|
-|USER_LED_R|| IO17_RGB-R	ユーザー制御赤色RGB LEDピン|
-|USER_LED_B|| IO25_RGB-B	ユーザー制御青色RGB LEDピン|
-|USER_LED_G|| IO16_RGB-G	ユーザー制御緑色RGB LEDピン|
+|USER_LED_R|| IO17_RGB-R | ユーザー制御赤色RGB LEDピン|
+|USER_LED_B|| IO25_RGB-B | ユーザー制御青色RGB LEDピン|
+|USER_LED_G|| IO16_RGB-G | ユーザー制御緑色RGB LEDピン|
 ||||
 
 <pre>
