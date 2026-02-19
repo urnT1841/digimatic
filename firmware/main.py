@@ -6,9 +6,9 @@ from machine import Pin
 
 # 17: Red, 16: Green, 25: Blue (XIAO RP2040の場合)
 # 緑以外のLEDは消しておく
-led_green = Pin(16, Pin.OUT).value(1)  # XIAO-RP2040 の内蔵LED
-Pin(17, Pin.OUT).value(1)
-Pin(25, Pin.OUT).value(1)
+#led_green = Pin(16, Pin.OUT).value(1)  # XIAO-RP2040 の内蔵LED
+#Pin(17, Pin.OUT).value(1)
+#Pin(25, Pin.OUT).value(1)
 
 def gen_cd_measurment():
     """ CDデータ生成 100で割って 整数部 ３桁，小数点以下２桁となる値 """
