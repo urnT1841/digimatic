@@ -14,26 +14,39 @@ use digimatic::logger::RxDataLog;
 /// 
 ///
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let pico_port_path = digimatic::scanner_of_pico_connection::find_pico_port()?;
-    let rx_port = open_pico_port(&pico_port_path)?;
-    let mut rx_receiver = CdcReceiver::new(rx_port);
-
-    let mut rx_wtr = create_log_writer("rx_debug.csv")?;
- 
     loop {
-        // デコードせず、文字列として1行取る
-        match rx_receiver.read_str_measurement() {
-            Ok(raw) => {
-                if let Err(e) = RxDataLog::new(&raw).save_flush(&mut rx_wtr) {
-                    eprintln!("Failed to save data: {} ", e)
-                }
-                println!("Logged: {}", raw);
+        // picoを探す
+        let pico_port_path = match digimatic::scanner_of_pico_connection::find_pico_port() {
+            Ok(path) => path,
+            Err(_) => {
+                std::thread::sleep(Duration::from_secs(1));
+                continue;
             }
-            Err(e) if CdcReceiver::is_fatal_error(&e) => break, // 切断時のみ終了
-            _ => continue,
+        };
+
+        // port open
+        let rx_port = match open_pico_port(&pico_port_path) {
+            Ok(port) => port,
+            Err(_) => continue,
+        };
+
+        let mut rx_receiver = CdcReceiver::new(rx_port);
+        let mut rx_wtr = create_log_writer("rx_debug.csv")?;
+ 
+        loop {
+            match rx_receiver.read_str_measurement() {
+                Ok(raw) => {
+                    if let Err(e) = RxDataLog::new(&raw).save_flush(&mut rx_wtr) {
+                        eprintln!("Failed to save data: {} ", e)
+                    }
+                    println!("Logged: {}", raw);
+                }
+                //切断などの致命的な場合，子のループを脱げて外側に出る
+                Err(e) if CdcReceiver::is_fatal_error(&e) => break, 
+                _ => continue,
+            }
         }
     }
-    Ok(())
 }
 
 
