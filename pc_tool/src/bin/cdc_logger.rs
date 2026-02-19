@@ -1,13 +1,12 @@
 //!
 //!  usb-cdc で受信したデータをファイルに保存
-//! 
+//!
 
-use std::fs::{File, OpenOptions};
-use std::time::Duration;
-use std::io::{self, Write};
-use serialport::SerialPort;
 use csv::{Writer, WriterBuilder};
-
+use serialport::SerialPort;
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
+use std::time::Duration;
 
 use digimatic::communicator::CdcReceiver;
 use digimatic::logger::RxDataLog;
@@ -17,7 +16,6 @@ use digimatic::logger::RxDataLog;
 /// 見つかったらながれてきたぱけっとをろぎんぐする。
 ///
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut pico_waiting = 0;
     loop {
         // 待ち受け時間制限 10分 600s で設定
@@ -28,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         print!("\rpicoを探しています。{}秒 ", pico_waiting);
         io::stdout().flush().unwrap();
-    
+
         // picoを探す
         let pico_port_path = match digimatic::scanner_of_pico_connection::find_pico_port() {
             Ok(path) => path,
@@ -49,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut rx_receiver = CdcReceiver::new(rx_port);
         let mut rx_wtr = create_log_writer("rx_debug.csv")?;
- 
+
         loop {
             match rx_receiver.read_str_measurement() {
                 Ok(raw) => {
@@ -59,13 +57,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("Logged: {}", raw);
                 }
                 //切断などの致命的な場合，子のループを脱げて外側に出る
-                Err(e) if CdcReceiver::is_fatal_error(&e) => break, 
+                Err(e) if CdcReceiver::is_fatal_error(&e) => break,
                 _ => continue,
             }
         }
     }
 }
-
 
 ///
 /// portのpathを受け取って Open する
@@ -80,12 +77,9 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 
 ///
 /// ライター生成
-/// 
+///
 fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Error>> {
-    let file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+    let file = OpenOptions::new().create(true).append(true).open(path)?;
 
     Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }

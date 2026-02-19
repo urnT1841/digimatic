@@ -1,24 +1,23 @@
 //!
 //!  Sim実行
 //!  generatar -> frame Build -> send -> revice -> display を
-//! すべてRustで実装したもの 
-//! 
+//! すべてRustで実装したもの
+//!
 
-use std::{thread, time::Duration};
-use std::fs::{File,OpenOptions};
-use csv::{Writer, WriterBuilder};
 use chrono::Local;
+use csv::{Writer, WriterBuilder};
+use std::fs::{File, OpenOptions};
+use std::{thread, time::Duration};
 
+use crate::communicator::CdcReceiver;
+use crate::logger::*;
 use crate::sim::frame_array_builder::build_frame_array;
 use crate::sim::generator::generator;
 use crate::sim::port_prepare::port_prepare;
 use crate::sim::sender::{SendMode, send};
 use crate::validater_rx_frame::parse_rx_frame;
-use crate::communicator::CdcReceiver;
-use crate::logger::*;
 
-
-pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
+pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
     // ポート準備
     let mut ports = port_prepare().expect("Faild to open ports");
 
@@ -30,8 +29,7 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
     let mut rx_wtr = create_log_writer("rx_log.csv")?;
     let mut m_wtr = create_log_writer("measurement.csv")?;
 
-
-    const WATI_TIME_MS: u64 = 700;  // ミリ秒で指定 700msに意味はないよ
+    const WATI_TIME_MS: u64 = 700; // ミリ秒で指定 700msに意味はないよ
     loop {
         let val = generator();
         let digi_frame = build_frame_array(val);
@@ -49,7 +47,7 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
                 let rx_log = RxDataLog {
                     timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
                     raw_len: data.len(),
-                    raw_data: format!("{:?}",data),
+                    raw_data: format!("{:?}", data),
                     error_log: None,
                 };
                 rx_wtr.serialize(rx_log)?;
@@ -64,7 +62,7 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
                             timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
                             val: val_f64,
                         };
-                        m_wtr.serialize(m_log)?;  // 測定データ記録
+                        m_wtr.serialize(m_log)?; // 測定データ記録
                         m_wtr.flush()?;
                         println!("{} {:?} : ", measurement.raw_val, measurement.unit);
                         print_tx_rx_decode_result(val, &data, val_f64);
@@ -85,7 +83,6 @@ pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {
     }
 }
 
-
 // 生成データ,受信文字列,復号データを出力
 fn print_tx_rx_decode_result(tx_data: f64, rx_data: &str, deco_data: f64) {
     println!(
@@ -98,12 +95,9 @@ fn print_tx_rx_decode_result(tx_data: f64, rx_data: &str, deco_data: f64) {
 
 ///
 /// ライター生成
-/// 
+///
 fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Error>> {
-    let file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+    let file = OpenOptions::new().create(true).append(true).open(path)?;
 
     Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }
