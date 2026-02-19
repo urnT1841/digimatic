@@ -4,8 +4,10 @@
 
 use std::fs::{File, OpenOptions};
 use std::time::Duration;
+use std::io::{self, Write};
 use serialport::SerialPort;
 use csv::{Writer, WriterBuilder};
+
 
 use digimatic::communicator::CdcReceiver;
 use digimatic::logger::RxDataLog;
@@ -15,16 +17,29 @@ use digimatic::logger::RxDataLog;
 /// 見つかったらながれてきたぱけっとをろぎんぐする。
 ///
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let mut pico_waiting = 0;
     loop {
-        println!("picoを探しています。");
+        // 待ち受け時間制限 10分 600s で設定
+        if pico_waiting > 600 {
+            println!("タイムアウト： 待ち受けを終了します。");
+            break Ok(());
+        }
+
+        print!("\rpicoを探しています。{}秒 ", pico_waiting);
+        io::stdout().flush().unwrap();
+    
         // picoを探す
         let pico_port_path = match digimatic::scanner_of_pico_connection::find_pico_port() {
             Ok(path) => path,
             Err(_) => {
                 std::thread::sleep(Duration::from_secs(1));
+                pico_waiting += 1;
                 continue;
             }
         };
+        // 見つかったのでリセット
+        pico_waiting = 0;
 
         // port open
         let rx_port = match open_pico_port(&pico_port_path) {
