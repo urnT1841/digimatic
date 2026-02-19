@@ -19,7 +19,7 @@ impl RxDataLog {
     // コンストラクタ
     pub fn new(raw: &str) -> Self {
         Self {
-            timestamp: Local::now().format("%H:%M:%S.3f").to_string(),
+            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
             raw_len: raw.len(),
             raw_data: format!("{:?}", raw),
             error_log: None,
@@ -48,7 +48,7 @@ impl MeasurementLog {
     // コンストラクタ
     pub fn new(val: f64) -> Self {
         Self {
-            timestamp: Local::now().format("%H:%M:%S.3f").to_string(),
+            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
             val,
         }
     }
