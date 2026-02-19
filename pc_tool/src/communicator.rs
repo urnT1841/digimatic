@@ -37,7 +37,7 @@ impl CdcReceiver {
     }
 
     // バイナリで送信されたデータ受信 \n終端前提
-    pub fn read_bin_measurment(&mut self) -> Result<Vec<u8>, Error> {
+    pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, Error> {
         let mut rx_stream = Vec::new();
 
         match self.rx_reader.read_until(b'\n', &mut rx_stream) {
