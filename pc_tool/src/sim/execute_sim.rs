@@ -14,7 +14,8 @@ use crate::sim::generator::generator;
 use crate::sim::port_prepare::port_prepare;
 use crate::sim::sender::{SendMode, send};
 use crate::validater_rx_frame::parse_rx_frame;
-use crate::frame::*;
+use crate::communicator::CdcReceiver;
+use crate::logger::*;
 
 
 pub fn run_simmulation_loop() -> Result<(),Box<dyn std::error::Error>> {

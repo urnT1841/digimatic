@@ -55,4 +55,15 @@ impl CdcReceiver {
             Err(e) => Err(e),
         }
     }
+
+    pub fn is_fatal_error(err: &std::io::Error) -> bool {
+        use std::io::ErrorKind;
+        match err.kind() {
+            ErrorKind::ConnectionAborted |
+            ErrorKind::BrokenPipe |
+            ErrorKind::NotFound |
+            ErrorKind::PermissionDenied => true,
+            _ => false,
+        }
+    }
 }
