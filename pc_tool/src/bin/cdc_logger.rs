@@ -11,10 +11,12 @@ use digimatic::communicator::CdcReceiver;
 use digimatic::logger::RxDataLog;
 
 ///
-/// 
+/// usb-cdcにつながれたPicoを探す。ずーっと待ち続ける。
+/// 見つかったらながれてきたぱけっとをろぎんぐする。
 ///
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
+        println!("picoを探しています。");
         // picoを探す
         let pico_port_path = match digimatic::scanner_of_pico_connection::find_pico_port() {
             Ok(path) => path,
