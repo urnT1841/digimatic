@@ -6,7 +6,6 @@ use serialport::SerialPort;
 use std::time::Duration;
 use std::fs::{File,OpenOptions};
 use csv::{Writer, WriterBuilder};
-use chrono::Local;
 
 use crate::scanner_of_pico_connection::find_pico_port;
 use crate::validater_rx_frame::parse_rx_frame;
@@ -31,27 +30,15 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                // 受信記録記録用準備
-                let rx_log = RxDataLog {
-                    timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
-                    raw_len: data.len(),
-                    raw_data: format!("{:?}",data),
-                    error_log: None,
-                };
-                rx_wtr.serialize(rx_log)?;
-                rx_wtr.flush()?;
+                // 受信記録記録を生成して記録
+                //  コンストラクタと .save_flash() メソッド を impl
+                RxDataLog::new(&data).save_flush(&mut rx_wtr)?;  // エラーの扱い注意
 
                 // rx文字列(フレーム)のバリデーション
                 match parse_rx_frame(&data) {
                     Ok(measurement) => {
                         let val_f64 = measurement.to_f64();
-                        // データ保存用構造体準備
-                        let m_log = MeasurementLog {
-                            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
-                            val: val_f64,
-                        };
-                        m_wtr.serialize(m_log)?;  // 測定データ記録
-                        m_wtr.flush()?;
+                        MeasurementLog::new(val_f64).save_flush(&mut m_wtr)?;    // エラーの扱い注意
                         println!("{} {:?} : ", measurement.raw_val, measurement.unit);
                         print_rx_decode_result(&data, val_f64);
                     }

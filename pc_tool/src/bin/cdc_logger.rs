@@ -6,11 +6,9 @@ use std::fs::{File, OpenOptions};
 use std::time::Duration;
 use serialport::SerialPort;
 use csv::{Writer, WriterBuilder};
-use chrono::Local;
 
 use digimatic::communicator::CdcReceiver;
-use digimatic::logger::*;
-
+use digimatic::logger::RxDataLog;
 
 ///
 /// 
@@ -23,17 +21,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rx_wtr = create_log_writer("rx_debug.csv")?;
  
     loop {
-        // デコードせず、文字列（またはバイナリ）として1行取る
+        // デコードせず、文字列として1行取る
         match rx_receiver.read_str_measurement() {
             Ok(raw) => {
-                let log = RxDataLog {
-                    timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
-                    raw_len: raw.len(),
-                    raw_data: format!("{:?}",raw),
-                    error_log: None,
-                };
-                rx_wtr.serialize(log)?;        //
-                rx_wtr.flush()?;              //
+                if let Err(e) = RxDataLog::new(&raw).save_flush(&mut rx_wtr) {
+                    eprintln!("Failed to save data: {} ", e)
+                }
                 println!("Logged: {}", raw);
             }
             Err(e) if CdcReceiver::is_fatal_error(&e) => break, // 切断時のみ終了
