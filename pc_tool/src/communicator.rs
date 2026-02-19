@@ -1,7 +1,7 @@
 //!
 //! USB=CDC function
 //!   ( cdc:Communication Device Class)
-//! 
+//!
 
 //use serde::Serialize;
 use serialport::SerialPort;
@@ -59,10 +59,10 @@ impl CdcReceiver {
     pub fn is_fatal_error(err: &std::io::Error) -> bool {
         use std::io::ErrorKind;
         match err.kind() {
-            ErrorKind::ConnectionAborted |
-            ErrorKind::BrokenPipe |
-            ErrorKind::NotFound |
-            ErrorKind::PermissionDenied => true,
+            ErrorKind::ConnectionAborted
+            | ErrorKind::BrokenPipe
+            | ErrorKind::NotFound
+            | ErrorKind::PermissionDenied => true,
             _ => false,
         }
     }
