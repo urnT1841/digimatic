@@ -1,11 +1,10 @@
 //!
 //! Logやデータ保存などファイル書き込み系を扱う
-//! 
+//!
 
-use serde::Serialize;
 use chrono::Local;
+use serde::Serialize;
 //use std::io::{BufRead, BufReader, Error, ErrorKind};
-
 
 /// 通信データ保存用
 #[derive(Serialize, Debug)]
@@ -28,16 +27,15 @@ impl RxDataLog {
     }
 
     // ライターにデータ送ってFlush
-    pub fn save_flush (
+    pub fn save_flush(
         &self,
-        wtr: &mut csv::Writer<std::fs::File>
+        wtr: &mut csv::Writer<std::fs::File>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         wtr.serialize(self)?;
         wtr.flush()?;
         Ok(())
     }
 }
-
 
 /// 測定データ保存用
 #[derive(Serialize, Debug)]
@@ -56,9 +54,9 @@ impl MeasurementLog {
     }
 
     // ライターにデータ送ってFlush
-    pub fn save_flush (
+    pub fn save_flush(
         &self,
-        wtr: &mut csv::Writer<std::fs::File>
+        wtr: &mut csv::Writer<std::fs::File>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         wtr.serialize(self)?;
         wtr.flush()?;
