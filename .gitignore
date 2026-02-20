@@ -2,6 +2,7 @@
 /specification/*.pdf
 *.csv
 *.log
+*Zone.Identifier
 
 # --- Rust ---
 /pc_tool/target/
