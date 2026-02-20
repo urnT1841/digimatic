@@ -1,34 +1,33 @@
-# これは何?
-これはミツトヨのデジタルキャリパーからの出力をPCで受けられるようにするツール(になる予定のもの)です。
-ノギスからの信号は RaspberryPi Pico (実際は seeed RP2040) が受けて PCに送ります。
+# About This Project
+*[日本語はこちら](README.ja.md)*
 
-ノギス
-  →
-レベルシフタ(SN74LXC8T245PWR) をDip化
-  →
-RP Pico
-   → 
-PC (Linux / Windows)
+This is a tool (currently in development) designed to receive data output from a Mitutoyo digital caliper and send it to a PC.
+The signals from the caliper are intercepted by a Raspberry Pi Pico (specifically, a Seeed XIAO RP2040) and forwarded to the PC.
 
+**Signal Flow:**
+Caliper
+  → Level Shifter (SN74LXC8T245PWR on a DIP adapter)
+  → RP Pico (XIAO RP2040)
+  → PC (Linux / Windows)
 
-## 現状
-今の段階：
-  - Simとして動きます (socatを使うのでLinux用)
-      + ノギスの測定データ(ぽいものを生成)
-      + ミツトヨ仕様に準じたフレーム文字列を生成
-      + 送受信用にそれぞれ仮想ポートを生成
-      + ポートを介してデータを送受信
-      + フレームをデコードして測定値を得る
-  
-  - 実機との接続
-      + PR Picoから USB-CDCでのデータ受信までは確認
-      + ノギスとの接続は電子工作中(部品待ち@2026/02/19)
+## Current Status
+At the current stage:
+- **Runs as a Simulator** (Linux only, utilizing `socat`):
+    - Generates mock caliper measurement data.
+    - Generates frame strings compliant with Mitutoyo's data output specifications.
+    - Creates virtual serial ports for transmission and reception.
+    - Transmits and receives data through these virtual ports.
+    - Decodes the received frames to extract measurement values.
+
+- **Hardware Integration**:
+    - Successfully verified data reception from the Pico to the PC via USB-CDC.
+    - The electronic circuitry to connect the actual caliper is currently under construction (Waiting for parts as of Feb 19, 2026).
 
 ## ToDo
-実機(デジタルノギス)との接続環境構築(電子工作)
-  - ノギスとの接続ケーブル:ミツトヨ純正平形ストレート 905338
-  - ケーブルoutput受け:ボックスヘッダ 10P 基板取付け (マルツオンライン 217010SE)
-  - データ受けマイコン:seeed XIAO-RP2040
-  - キャリパーからの信号レベルシフタ(1.5V -> 3.3V):SN74LXC8T245PWR
-  - TSSOP24 → DIP変換基板:DA-TSSOP24-P65
-  - レベルシフタへの電源供給：LDO AP2112
+Build the hardware interface for the actual digital caliper (Electronics):
+- **Caliper connection cable:** Mitutoyo genuine flat straight cable (905338)
+- **Cable output receptacle:** 10-pin Box Header, PCB mount (Marutsu Online 217010SE)
+- **Data receiver MCU:** Seeed Studio XIAO RP2040
+- **Signal level shifter (1.5V to 3.3V):** SN74LXC8T245PWR
+- **TSSOP24 to DIP adapter board:** DA-TSSOP24-P65
+- **Power supply for level shifter:** LDO AP2112
