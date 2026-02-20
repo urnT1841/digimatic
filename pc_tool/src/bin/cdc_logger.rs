@@ -3,9 +3,7 @@
 //!
 
 use csv::{Writer, WriterBuilder};
-use serialport::SerialPort;
 use std::fs::{File, OpenOptions};
-use std::time::Duration;
 
 use digimatic::communicator::{
     BAUD_RATE, CdcReceiver, StopCode, open_cdc_port, wait_until_connection,
