@@ -8,6 +8,16 @@ use serialport::SerialPort;
 use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::time::Duration;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StopCode {
+    Normal,      // 正常
+    Stop,        //
+    TimeOut,     // 既定の時間Picoが見つからなかった
+    HWInterrupt, // 外部の停止ボタン
+    HWIssue,     // Picoがノギスを見失ったなど(ノギス取り外したとか)
+    UserForce,   // Ctrl-c  (これ捕まえられるの?)
+}
+
 #[derive(Debug)]
 pub struct CdcReceiver {
     rx_reader: BufReader<Box<dyn SerialPort>>,
@@ -66,4 +76,40 @@ impl CdcReceiver {
             _ => false,
         }
     }
+}
+
+///
+/// pico探す
+///
+pub const MAX_WAIT_DURATION: Duration = Duration::from_secs(600);
+
+pub fn wait_until_connection() -> Result<String, StopCode> {
+    let start_time = std::time::Instant::now();
+
+    loop {
+        if let Ok(path) = crate::scanner_of_pico_connection::find_pico_port() {
+            return Ok(path);
+        }
+        let elapsed = start_time.elapsed();
+
+        if elapsed > MAX_WAIT_DURATION {
+            return Err(StopCode::TimeOut);
+        }
+        print!("\rpicoを探しています。{}秒 ", elapsed.as_secs());
+        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+
+        std::thread::sleep(Duration::from_secs(1));
+    }
+}
+
+///
+/// portのpathを受け取って Open する
+///
+pub const BAUD_RATE: u32 = 115200;
+pub fn open_cdc_port(path: &str, baud_rate: u32) -> Result<Box<dyn SerialPort>, serialport::Error> {
+    let port = serialport::new(path, BAUD_RATE)
+        .timeout(Duration::from_millis(100))
+        .open()?;
+
+    Ok(port)
 }

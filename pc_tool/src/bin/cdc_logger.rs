@@ -5,74 +5,74 @@
 use csv::{Writer, WriterBuilder};
 use serialport::SerialPort;
 use std::fs::{File, OpenOptions};
-use std::io::{self, Write};
 use std::time::Duration;
 
-use digimatic::communicator::CdcReceiver;
+use digimatic::communicator::{
+    BAUD_RATE, CdcReceiver, StopCode, open_cdc_port, wait_until_connection,
+};
 use digimatic::logger::RxDataLog;
 
 ///
-/// usb-cdcにつながれたPicoを探す。ずーっと待ち続ける。
-/// 見つかったらながれてきたぱけっとをろぎんぐする。
+/// usb-cdcにつながれたPicoを探して，見つかったら接続, 流れてくるデータを記録
 ///
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut pico_waiting = 0;
-    loop {
-        // 待ち受け時間制限 10分 600s で設定
-        if pico_waiting > 600 {
-            println!("タイムアウト： 待ち受けを終了します。");
-            break Ok(());
-        }
-
-        print!("\rpicoを探しています。{}秒 ", pico_waiting);
-        io::stdout().flush().unwrap();
-
-        // picoを探す
-        let pico_port_path = match digimatic::scanner_of_pico_connection::find_pico_port() {
+    let reason = 'outer: loop {
+        // pico 接続待ち（関数内でループ見つかるかタイムアウトまで）
+        let pico_port_path = match wait_until_connection() {
             Ok(path) => path,
-            Err(_) => {
-                std::thread::sleep(Duration::from_secs(1));
-                pico_waiting += 1;
-                continue;
-            }
-        };
-        // 見つかったのでリセット
-        pico_waiting = 0;
-
-        // port open
-        let rx_port = match open_pico_port(&pico_port_path) {
-            Ok(port) => port,
-            Err(_) => continue,
+            Err(e) => break 'outer e, // タイムアウトなら 'outer を抜ける
         };
 
+        // open port & 書込準備
+        let rx_port = open_cdc_port(&pico_port_path, BAUD_RATE)?;
         let mut rx_receiver = CdcReceiver::new(rx_port);
         let mut rx_wtr = create_log_writer("rx_debug.csv")?;
 
-        loop {
-            match rx_receiver.read_str_measurement() {
-                Ok(raw) => {
-                    if let Err(e) = RxDataLog::new(&raw).save_flush(&mut rx_wtr) {
-                        eprintln!("Failed to save data: {} ", e)
-                    }
-                    println!("Logged: {}", raw);
-                }
-                //切断などの致命的な場合，子のループを脱げて外側に出る
-                Err(e) if CdcReceiver::is_fatal_error(&e) => break,
-                _ => continue,
-            }
+        // logging開始
+        // 戻り値が HWIssue (切断) なら、pico探しに戻る
+        let stop_reason = run_logging(&mut rx_receiver, &mut rx_wtr);
+
+        if stop_reason != StopCode::HWIssue {
+            break 'outer stop_reason;
         }
-    }
+
+        println!("\nPicoとの接続が切れました。再接続を試みます...");
+    };
+
+    // 最後にレポートを表示
+    println!("\n最終ステータス: {:?}", reason);
+    Ok(())
 }
 
 ///
-/// portのpathを受け取って Open する
+/// データ保存
 ///
-fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> {
-    let port = serialport::new(path, 115200)
-        .timeout(Duration::from_millis(100))
-        .open()?;
+fn run_logging(
+    rx_receiver: &mut CdcReceiver, // ポートを内包したレシーバーを渡す
+    rx_wtr: &mut csv::Writer<std::fs::File>,
+) -> StopCode {
+    // Result ではなく直接 StopCode を返すと main がスッキリします
+    loop {
+        match rx_receiver.read_str_measurement() {
+            Ok(raw) => {
+                // ここで Pico からの "STOP" 文字列をチェックする
+                if raw.trim() == "STOP" {
+                    return StopCode::Normal; // 物理ボタンによる停止
+                }
 
-    Ok(port)
+                if let Err(e) = RxDataLog::new(&raw).save_flush(rx_wtr) {
+                    eprintln!("Failed to save data: {} ", e);
+                }
+                println!("Logged: {}", raw);
+            }
+            // 切断などの致命的なエラー
+            Err(e) if CdcReceiver::is_fatal_error(&e) => {
+                return StopCode::HWIssue; // 再接続が必要なエラー
+            }
+            // タイムアウトなどの一時的なエラーは無視して継続
+            _ => continue,
+        }
+    }
 }
 
 ///
