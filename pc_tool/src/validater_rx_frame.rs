@@ -93,6 +93,8 @@ fn convert_unit(u: &str) -> Result<Unit, Error> {
 
 // TODO: 未実装
 // 文字列に変換したものではなく 生のバイナリデータで送られてきたものの復号
+// 送られてくるのは nibble x 13 の52bit 各nibbleはLSB → ひっくり返してデコード
 // pub fn parse_rx_frame_bin(rx_stream: &Vec<u8>) {
-
+//
 // }
+
