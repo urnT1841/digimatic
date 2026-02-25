@@ -5,6 +5,7 @@ import time
 import pin_difinitions
 import model_caliper
 from led_switch import led_switch
+import validation_ruse
 
 # led on/off value
 ON = 0
@@ -90,14 +91,8 @@ def main():
     data, clk, req, _, = pin_difinitions.init_hardware()
     led_switch(OFF, OFF, OFF)    # (r, g, b)
 
-    # 測定データSimデータ → バイナリフレーム(リスト)を生成 
-    # Nibbleはlsbで埋込み
-    digi_frame = model_caliper.make_nibble_list()
-
-    send_binary_bits(digi_frame)
-    
     led_switch(OFF, OFF, OFF)
- 
+
     
 def main_sim():
 
