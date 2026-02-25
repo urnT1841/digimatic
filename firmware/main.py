@@ -5,7 +5,7 @@ import time
 import pin_difinitions
 import model_caliper
 from led_switch import led_switch
-import validation_ruse
+import validation_rule
 
 # led on/off value
 ON = 0
@@ -13,8 +13,8 @@ OFF = 1
 
 
 def send_binary_bits(send_list):
-    tx_pin = machine.Pin(27, machine.Pin.OUT)
-    clk_pin = machine.Pin(19, machine.Pin.OUT, value=1)
+    tx_pin = machine.Pin(D1, machine.Pin.OUT)
+    clk_pin = machine.Pin(D6, machine.Pin.OUT, value=1)
 
     for c in send_list:
         tx_pin.value(c)
@@ -63,27 +63,7 @@ def receive_digimatic_frame(rx_Pin):
     return bits
 
 
-def test_send_and_receive(send_list):
-    rx_pin, *_, tx_pin = pin_difinitions.init_hardware()
-    captured_bits = []
-    
-    print("--- 送受信テスト開始 ---")
-    for i, bit in enumerate(send_list):
-        # 1. 送信
-        tx_pin.value(bit)
-        
-        # 2. 受信 (送信した直後のピンの状態を読み取る)
-        # 物理的に tx_pin と rx_pin がつながっていれば、bit と同じ値が読めるはず
-        read_val = rx_pin.value()
-        captured_bits.append(read_val)
-        
-        # デバッグ表示（4ビットごとに区切ると見やすい）
-        sep = " | " if (i + 1) % 4 == 0 else " "
-        print(f"{read_val}", end=sep)
-        if (i + 1) % 4 == 0 and (i + 1) % 16 == 0: print() # 16bitごとに改行
 
-    print("\n--- 受信完了 ---")
-    return captured_bits
 
 
 def main():
@@ -113,8 +93,31 @@ def main_sim():
      # result = decode_digimatic_frame(captured)
      # print(f"デコード結果: {result}")
 
-
      led_switch(OFF, OFF, OFF)    # (r, g, b)
+
+
+
+def test_send_and_receive(send_list):
+    rx_pin, *_, tx_pin = pin_difinitions.init_hardware()
+    captured_bits = []
+    
+    print("--- 送受信テスト開始 ---")
+    for i, bit in enumerate(send_list):
+        # 1. 送信
+        tx_pin.value(bit)
+        
+        # 2. 受信 (送信した直後のピンの状態を読み取る)
+        # 物理的に tx_pin と rx_pin がつながっていれば、bit と同じ値が読めるはず
+        read_val = rx_pin.value()
+        captured_bits.append(read_val)
+        
+        # デバッグ表示（4ビットごとに区切ると見やすい）
+        sep = " | " if (i + 1) % 4 == 0 else " "
+        print(f"{read_val}", end=sep)
+        if (i + 1) % 4 == 0 and (i + 1) % 16 == 0: print() # 16bitごとに改行
+
+    print("\n--- 受信完了 ---")
+    return captured_bits
 
 
 
