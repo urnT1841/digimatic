@@ -1,0 +1,16 @@
+# Mitutoyo Connecting Cable Electric Connection
+
+
+## Cable product
+
+[ProductPate] (https://www.mitutoyo.co.jp/products/data-management/i-o-devices/input/04azb512/) 
+Code No.: 959149
+Product name: 出力スイッチ付きストレート
+Price: \2930 -
+connect type: C 出力スイッチ付きストレート
+cabel length: 1m
+
+
+## Connection
+
+
