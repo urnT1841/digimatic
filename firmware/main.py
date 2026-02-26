@@ -7,6 +7,7 @@ from pin_difinitions import ON,OFF
 import pin_difinitions as pins
 import model_caliper
 import led_switch as led
+from led_switch import LED_ON, LED_OFF
 import validation_rule
 
 
@@ -27,7 +28,7 @@ def send_binary_bits(send_list):
         
         # Clock High
         clk_pin.value(1)
-        led(OFF,OFF,OFF)
+        led(LED_OFF,LED_OFF,LED_OFF)
         time.sleep_ms(300)
 
 
@@ -48,7 +49,7 @@ def receive_digimatic_frame(rx_Pin):
         
         # LEDをパルス伸長的に光らせる準備（最初のビットで点灯など）
         if len(bits) == 1:
-            led(ON, OFF, OFF)
+            led(LED_ON, LED_OFF, LED_OFF)
 
         # CLOCKがHighに戻るのを待つ（チャタリング・重複読み防止）
         while clk_pin.value() == 0:
@@ -56,7 +57,7 @@ def receive_digimatic_frame(rx_Pin):
             
     # 受信完了後に少し光らせてから消す
     time.sleep_ms(80)
-    led(OFF, OFF, OFF)
+    led(LED_OFF, LED_OFF, LED_OFF)
     
     return bits
 
@@ -66,16 +67,14 @@ def receive_digimatic_frame(rx_Pin):
 def main():
     
     data, clk, req, _, = pins.init_hardware()
-    led(OFF, OFF, OFF)    # (r, g, b)
+    led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
     gc.collect()
 
 
-    led(OFF, OFF, OFF)
+    led(LED_OFF, LED_OFF, LED_OFF)
 
     
-
-
 
 
 
