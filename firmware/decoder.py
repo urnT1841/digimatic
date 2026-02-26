@@ -54,7 +54,7 @@ def validator(bit_list):
 
 
 
-def main(rx_frame):
+def decode_bin_frame(rx_frame):
     try:
         # validator 内部で raise されるので、
         # 正常系(ハッピーパス)の処理に集中
@@ -85,10 +85,3 @@ def reverse_nibble(nib_list):
 
 
 
-
-
-
-
-
-if __name__ == '__main__':
-    main()
