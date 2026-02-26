@@ -1,4 +1,5 @@
 import machine
+from micropython import const
 
 # seeed studio xiao rp2040 pin difinition
 
@@ -33,8 +34,8 @@ TX_DATA_PIN = D0
 REQ_OUT_PIN = D7
 
 # 論理定数
-ON = 0
-OFF = 1
+ON = const(0)
+OFF = const(1)
 
 # ピンオブジェクトの初期化関数
 def init_hardware():
