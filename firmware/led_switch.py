@@ -2,9 +2,10 @@
 
 import machine
 
+from pin_difinitions import ON,OFF
+
+
 # LED設定
-ON = 0
-OFF = 1
 green_led = machine.Pin(16, machine.Pin.OUT)
 red_led = machine.Pin(17, machine.Pin.OUT)
 blue_led = machine.Pin(25, machine.Pin.OUT)
