@@ -1,9 +1,5 @@
 
 import random
-import time
-
-import led_switch as led
-from led_switch import LED_ON, LED_OFF
 
 
 def sim_measure():
@@ -87,25 +83,6 @@ def make_nibble_bits(digit, order="lsb"):
 
     return nibble_bits
 
-
-def send_binary_bits(send_list):
-    """ for sim  """
-
-    for c in send_list:
-        tx_data.value(c)
-        time.sleep_us(10) # 安定を待つ
-        
-        # Clock Low (start)
-        clk.value(OFF)
-        
-        # LED制御やウェイト
-        led(g=LED_ON)
-        time.sleep_ms(300)
-        
-        # Clock High
-        clk.value(ON)
-        led(LED_OFF,LED_OFF,LED_OFF)
-        time.sleep_ms(300)
 
 
 def caliper_sim():

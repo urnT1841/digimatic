@@ -18,17 +18,18 @@ def main():
     caliper sim model
     """
 
-    data, clk, req, _, = pins.init_hardware()
     led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
-    cd = model_caliper.sim_measure()
-    frame_str = model_caliper.build_frame(cd)
-    send_list = model_caliper.make_nibble_list(frame_str)
-     
+    # 各桁をlsbにした52bitのframe
+    digi_frame = model_caliper.caliper_sim()
+
     # 送受信シミュレーション
-    captured = test_send_and_receive(send_list,data)
+    led(g=LED_ON)
+    captured = test_send_and_receive(digi_frame)
+    time.sleep_ms(40)
+    led(g=LED_OFF)  # 送受信の前後でLEDを光らせておく
      
-    print(f"send   : {send_list}")
+    print(f"send   : {digi_frame}")
     print(f"receive: {captured}")
      
     # デコード関数を呼び出す not yet
@@ -38,38 +39,19 @@ def main():
     led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
 
-def send_binary_bits(send_list):
-
-    for c in send_list:
-        tx_data.value(c)
-        time.sleep_us(10) # 安定を待つ
-        
-        # Clock Low (start)
-        clk.value(OFF)
-        
-        # LED制御やウェイト
-        led(g=LED_ON)
-        time.sleep_ms(300)
-        
-        # Clock High
-        clk.value(ON)
-        led(LED_OFF,LED_OFF,LED_OFF)
-        time.sleep_ms(300)
-
 
 def test_send_and_receive(send_list):
-    rx_pin, *_, tx_pin = pins.init_hardware()
     captured_bits = []
     
     print("--- 送受信テスト開始 ---")
     for i, bit in enumerate(send_list):
-        # 1. 送信
-        tx_pin.value(bit)
-        time.sleep_us(10)  # 安定化
+        # 送信
+        tx_data.value(bit)
+        time.sleep_us(20)
         
-        # 2. 受信 (送信した直後のピンの状態を読み取る)
+        # 受信 (送信した直後のピンの状態を読み取る)
         # 物理的に tx_pin と rx_pin がつながっていれば、bit と同じ値が読めるはず
-        read_val = rx_pin.value()
+        read_val = rx_data.value()
         captured_bits.append(read_val)
         
         # デバッグ表示（4ビットごとに区切ると見やすい）

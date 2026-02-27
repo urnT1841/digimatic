@@ -69,16 +69,19 @@ def main():
             match current_state:
                 case STATE_IDLE:
                     # 待機処理
+                    # TODO:
                     if trigger:
                         current_state = STATE_REQUEST
         
                 case STATE_REQUEST:
                     # 要求処理
+                    # TODO:
                     current_state = STATE_RECEIVE
         
                 case STATE_RECEIVE:
                     # 受信処理
                     # タイムアウト処理を忘れずに
+                    # TODO:
                     current_state = STATE_VALIDATE
         
                 case _:
@@ -87,7 +90,6 @@ def main():
 
             if check_stop_command_from_pc():
                 break
-
 
 
     
@@ -127,6 +129,25 @@ def check_stop_command_from_pc():
         if line == "STOP":
             return True
     return False
+
+
+def send_binary_bits(send_list):
+
+    for c in send_list:
+        tx_data.value(c)
+        time.sleep_us(10) # 安定を待つ
+        
+        # Clock Low (start)
+        clk.value(OFF)
+        
+        # LED制御やウェイト
+        led(g=LED_ON)
+        time.sleep_ms(300)
+        
+        # Clock High
+        clk.value(ON)
+        led(LED_OFF,LED_OFF,LED_OFF)
+        time.sleep_ms(300)
 
 
 if __name__ == '__main__':
