@@ -1,10 +1,16 @@
 
+import time
+
 import pin_difinitions as pins
 import model_caliper
 import led_switch as led
+from led_switch import LED_ON, LED_OFF
 
-ON = pins.ON
-OFF = pins.OFF
+
+# pin設定
+rx_data, clk, req, tx_data = pins.init_hardware()
+led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
+
 
 
 def main():
@@ -13,7 +19,7 @@ def main():
     """
 
     data, clk, req, _, = pins.init_hardware()
-    led(OFF, OFF, OFF)    # (r, g, b)
+    led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
     cd = model_caliper.sim_measure()
     frame_str = model_caliper.build_frame(cd)
@@ -29,9 +35,26 @@ def main():
     # result = decode_digimatic_frame(captured)
     # print(f"デコード結果: {result}")
 
-    led(OFF, OFF, OFF)    # (r, g, b)
+    led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
 
+def send_binary_bits(send_list):
+
+    for c in send_list:
+        tx_data.value(c)
+        time.sleep_us(10) # 安定を待つ
+        
+        # Clock Low (start)
+        clk.value(OFF)
+        
+        # LED制御やウェイト
+        led(g=LED_ON)
+        time.sleep_ms(300)
+        
+        # Clock High
+        clk.value(ON)
+        led(LED_OFF,LED_OFF,LED_OFF)
+        time.sleep_ms(300)
 
 
 def test_send_and_receive(send_list):
@@ -42,6 +65,7 @@ def test_send_and_receive(send_list):
     for i, bit in enumerate(send_list):
         # 1. 送信
         tx_pin.value(bit)
+        time.sleep_us(10)  # 安定化
         
         # 2. 受信 (送信した直後のピンの状態を読み取る)
         # 物理的に tx_pin と rx_pin がつながっていれば、bit と同じ値が読めるはず
