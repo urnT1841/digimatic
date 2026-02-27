@@ -134,7 +134,7 @@ Output characteristics:
     | t2     | 15u  | -    | ck [L] level pulse width       |
     | t3     | 100u | -    | ck [H] level pulse width       |
     | t4     | 100u | -    | ck down to est.data pulse width|
-    | t5     | 0    | -    | reqest [L] min hold time       | 
+    | t5     | 0    | -    | request [L] min hold time      | 
     | t6     | -    | -    |                                |
     | t8     | -    | -    |                                |
     | t8     | -    | -    |                                |

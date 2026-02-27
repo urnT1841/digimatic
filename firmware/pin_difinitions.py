@@ -33,19 +33,20 @@ TX_DATA_PIN = D0
 # 要求信号出力 (10kΩ抵抗越し)
 REQ_OUT_PIN = D7
 
-# 論理定数
-ON = const(0)
-OFF = const(1)
+# 論理定数 正論理 DataPinはこれで制御
+# LED Pinに関してはLDEの中で定義。なおLEDは負論理 high = off
+ON = const(1)
+OFF = const(0)
 
 # ピンオブジェクトの初期化関数
 def init_hardware():
-    # 電源有効化
+    # LDO電源有効化
     en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT)
-    en.value(1) 
+    en.value(ON) 
     
     # 方向制御をA->Bに固定
     dir_p = machine.Pin(DIR_CONTROL_PIN, machine.Pin.OUT)
-    dir_p.value(0) 
+    dir_p.value(OFF) 
     
     # INのPinが不安定なら pullup 設定(value = 1)を入れてみる
     return (
@@ -54,3 +55,17 @@ def init_hardware():
         machine.Pin(REQ_OUT_PIN, machine.Pin.OUT, value=1),  # req
         machine.Pin(TX_DATA_PIN, machine.Pin.OUT, value=1) # tx
     )
+
+# ピンオブジェクトの解法
+def cleanup_hardware():
+    # LDOへの電源落とす
+    # これは先にやっておく
+    en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT)
+    en.value(OFF)
+    
+    # picoのPinをOFFに。レジスタ書き込みで一気に
+    GPIO_OUT_CLR = 0xd0000018
+    machine.mem32[GPIO_OUT_CLR] = 0x3FFFFFFF
+    
+    
+
