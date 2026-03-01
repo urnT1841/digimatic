@@ -76,6 +76,7 @@ def main():
                 case STATE_REQUEST:
                     # 要求処理
                     # TODO:
+                    requestor(True)
                     current_state = STATE_RECEIVE
         
                 case STATE_RECEIVE:
@@ -101,7 +102,25 @@ def main():
         pins.cleanup_hardware()
         print("pico stoped")
 
-    
+
+def requestor(signal):
+    """
+      データリクエスト送信
+      Hi-Z → LowでRequstになる
+    """
+
+    if signal:
+        # 0Vに落としてReqest送出
+        req =  machine.Pin(REQ_OUT_PIN, machine.Pin.OUT)
+        req.value(0)
+        # マニュアルから Req -> DATA送出まで 0ms ~ 12ms
+    else:
+        # Hi-Zに戻す
+        req =  machine.Pin(REQ_OUT_PIN, machine.Pin.IN)
+
+
+
+
 
 def process_idel():
     """  待ち受け    """
