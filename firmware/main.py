@@ -74,7 +74,7 @@ def main():
                 case STATE_REQUEST:
                     # 要求処理
                     # TODO:
-                    send_request()
+                    process_request()
                     current_state = STATE_RECEIVE
         
                 case STATE_RECEIVE:
@@ -119,8 +119,7 @@ def process_idel():
 def process_request():
     """ スイッチ，PCからのトリガを受け caliperにRequestを送る  """
 
-    # image  まだ実装してない
-    # send_signal(request)
+    send_request()
 
     return STATE_RECEIVE
 
