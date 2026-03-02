@@ -1,11 +1,10 @@
 
 import time
-import machine
 import sys
 import select
 import gc
 
-from pin_difinitions import ON,OFF
+from pin_difinitions import ON, OFF, send_request
 import pin_difinitions as pins
 import led_switch as led
 from led_switch import LED_ON, LED_OFF
@@ -75,7 +74,7 @@ def main():
                 case STATE_REQUEST:
                     # 要求処理
                     # TODO:
-                    requestor(True)
+                    send_request()
                     current_state = STATE_RECEIVE
         
                 case STATE_RECEIVE:
@@ -83,6 +82,10 @@ def main():
                     # タイムアウト処理を忘れずに
                     # TODO:
                     current_state = STATE_VALIDATE
+        
+                case STATE_VALIDATE:
+                    validate()
+                    current_state = STATE_IDLE
         
                 case _:
                     # とりあえず上記以外は待ち
@@ -100,24 +103,6 @@ def main():
         # 後始末
         pins.cleanup_hardware()
         print("pico stoped")
-
-
-def requestor(signal):
-    """
-      データリクエスト送信
-      Hi-Z → LowでRequstになる
-      args:  True    send request (et to 0V (active low))
-             False   waitting  (set Hi-z mode)
-    """
-
-    if signal:
-        # 0Vに落としてReqest送出
-        req =  machine.Pin(pins.REQ_OUT_PIN, machine.Pin.OUT)
-        req.value(0)
-        # マニュアルから Req -> DATA送出まで 0ms ~ 12ms
-    else:
-        # Hi-Zに戻す
-        req =  machine.Pin(pins.REQ_OUT_PIN, machine.Pin.IN)
 
 
 
