@@ -1,15 +1,14 @@
 
 import time
+import machine
 import sys
 import select
 import gc
 
 from pin_difinitions import ON,OFF
 import pin_difinitions as pins
-import model_caliper
 import led_switch as led
 from led_switch import LED_ON, LED_OFF
-import validation_rule
 
 
 # pin設定
@@ -107,16 +106,18 @@ def requestor(signal):
     """
       データリクエスト送信
       Hi-Z → LowでRequstになる
+      args:  True    send request (et to 0V (active low))
+             False   waitting  (set Hi-z mode)
     """
 
     if signal:
         # 0Vに落としてReqest送出
-        req =  machine.Pin(REQ_OUT_PIN, machine.Pin.OUT)
+        req =  machine.Pin(pins.REQ_OUT_PIN, machine.Pin.OUT)
         req.value(0)
         # マニュアルから Req -> DATA送出まで 0ms ~ 12ms
     else:
         # Hi-Zに戻す
-        req =  machine.Pin(REQ_OUT_PIN, machine.Pin.IN)
+        req =  machine.Pin(pins.REQ_OUT_PIN, machine.Pin.IN)
 
 
 
