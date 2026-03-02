@@ -76,4 +76,18 @@ def cleanup_hardware():
     machine.mem32[GPIO_OUT_CLR] = 0x3FFFFFFF
     
     
+def requestor(signal):
+    """
+      データリクエスト送信
+      Hi-Z → LowでRequstになる
+      args:  True    send request (set to 0V (active low))
+             False   waitting  (set Hi-z mode)
+    """
 
+    if signal:
+        # 0Vに落としてReqest送出
+        req.init(mode=machine.Pin.OUT)
+        req.value(0)
+    else:
+        # Hi-Zに戻す
+        req.init(mode=machine.Pin.IN)
