@@ -93,6 +93,6 @@ def stop_request():
       set to Hi-Z
     """
     req.init(mode=machine.Pin.IN)
-    
+
     
     
