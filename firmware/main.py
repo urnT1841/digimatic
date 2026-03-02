@@ -4,7 +4,7 @@ import sys
 import select
 import gc
 
-from pin_difinitions import ON, OFF, send_request
+from pin_difinitions import ON, OFF, send_request, stop_request
 import pin_difinitions as pins
 import led_switch as led
 from led_switch import LED_ON, LED_OFF
@@ -13,7 +13,6 @@ from led_switch import LED_ON, LED_OFF
 # pin設定
 rx_data, clk, req, tx_data = pins.init_hardware()
 led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
-
 
 BIN_FRAME_LENGTH = 52   # デジマチックのフレームは 52bit
 
@@ -28,23 +27,28 @@ STATE_VALIDATE = 3
 gc.collect()
 
 
-def receive_digimatic_frame(rx_Pin):
-    bits = []
-    
+def receive_digimatic_frame(bits_buffer):
+    _clk = clk
+    _data = rx_data
+
     # 通信開始まで待機（アイドル状態の後の最初の変化を待つ）
     # busy wait なのでよくない。 state machineを導入することを検討
     # ※タイムアウト処理を入れるのが理想的
     
-    while len(bits) < BIN_FRAME_LENGTH:
+    while bit_count in  range(BIN_FRAME_LENGTH):
         # CLOCKがLowになる（立ち下がり）のを待つ
         while clk.value() == 1:
             pass
         
         # Lowになった瞬間にDATAを読み取る
-        bits.append(rx_data.value())
+        bits_buffer[bit_count] = _data.value()  # データ受信
         
+        if bit_count == 0:
+        # request を hi-zに戻す
+            stop_request() 
+
         # LEDをパルス伸長的に光らせる準備（最初のビットで点灯など）
-        if len(bits) == 1:
+        if len(bit_count) == 1:
             led(LED_ON, LED_OFF, LED_OFF)
 
         # CLOCKがHighに戻るのを待つ（チャタリング・重複読み防止）
@@ -55,11 +59,13 @@ def receive_digimatic_frame(rx_Pin):
     time.sleep_ms(80)
     led(LED_OFF, LED_OFF, LED_OFF)
     
-    return bits
+    return True
 
 
 
 def main():
+    #受信用バッファ
+    rx_buffer = [0] * BIN_FRAME_LENGTH
 
     try:
         current_state = STATE_IDLE
@@ -72,19 +78,18 @@ def main():
                         current_state = STATE_REQUEST
         
                 case STATE_REQUEST:
-                    # 要求処理
-                    # TODO:
                     process_request()
                     current_state = STATE_RECEIVE
         
                 case STATE_RECEIVE:
-                    # 受信処理
-                    # タイムアウト処理を忘れずに
-                    # TODO:
-                    current_state = STATE_VALIDATE
-        
+                    if receive_caliper_data(rx_buffer):
+                        current_state = STATE_VALIDATE
+                    else:
+                        print("timeout")
+                        current_state = STATE_IDLE
+
                 case STATE_VALIDATE:
-                    validate()
+                    validate(rx_buffer)
                     current_state = STATE_IDLE
         
                 case _:
@@ -118,10 +123,8 @@ def process_idel():
         
 def process_request():
     """ スイッチ，PCからのトリガを受け caliperにRequestを送る  """
-
     send_request()
 
-    return STATE_RECEIVE
 
 
 def check_stop_command_from_pc():
