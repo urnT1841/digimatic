@@ -1,10 +1,7 @@
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
-                
-def to_int(nib):
-    #msb想定
-    return (nib[0] << 3) | (nib[1] << 2) | (nib[2] << 1) | nib[3]
+from validation_rune import CHECK_RULES
 
 
 def validate(nib13_frame):
@@ -14,13 +11,13 @@ def validate(nib13_frame):
         # 個別ルール
         if i in CHECK_RULES:
             if not CHECK_RULES[i](val):
-                raise ValueError(f"Position d{i+1} rule failed: expected {CHECK_RULES[i]}, got {val}")
-        
+                return None
+
         # BCD領域(d6~d11)の共通チェック
         elif 5 <= i <= 10:
             if not (0 <= val <= 9):
-                raise ValueError(f"BCD out of range at d{i+1}: {val}")
-    
+                returun None
+
     return True
 
 
@@ -47,32 +44,26 @@ def validator(bit_list):
     # ここでlsb -> msb に直しておく。詰めるのはタプル(中身をいじらないという意思)
     nib13_frame = [tuple(bit_list[i*4 : i*4+4][::-1]) for i in range(13)]
 
-    # ここから本番バリデーションして，パスすればそのlistをBCD変換
+    # ここから本番バリデーションして，BCD変換
+    # 実際のチェックは validate で実施
     if validate(nib13_frame):
-        # 通ったのでnibble -> bcd
-        return validated_frame        
+        # 通ったのでnibble -> bcd, かつ13Byteの連続した文字列
+        validated = to_bcd_output(nib13_frame)
+        return validated
+    else:
+        # バリテーション失敗
+        return None
 
 
+def to_bcd_output(nib13_list):
+    # all 1(15)はF, 他は intへの変換でOK
+    digi_frame_str = ["F" if to_int(nib) == 15 else str(to_int(nib)) for nib in nib13_frame]
 
-def decode_bin_frame(rx_frame):
-    try:
-        # validator 内部で raise されるので、
-        # 正常系(ハッピーパス)の処理に集中
-        decoded_values = validator(rx_frame)
-        
-        return decoded_values
-        
-    except ValueError as e:
-        # どのバリデーションに引っかかったか、e にメッセージが入っている
-        print(f"Validation Error: {e}")
-    except Exception as e:
-        # 予期せぬエラー（インデックスエラー等）
-        print(f"Unexpected Error: {e}")    
+    return "".join( digi_frame_str)
 
 
-    
-    
-
+# 以下の関数はリスト内法表記にしたので使わなくなった
+# が，まだデバッグで使うかもなので残しておく
 def reverse_nibble(nib_list):
     """ lsb -> msb, 或いは msb -> lsb への並び替え
         arg:    list ["0","1","0","1"]
@@ -83,5 +74,9 @@ def reverse_nibble(nib_list):
     # 受け取るのは正しい(問題のない) nibble前提
     return nib_list[::-1]
 
+
+def to_int(nib):
+    #msb想定
+    return (nib[0] << 3) | (nib[1] << 2) | (nib[2] << 1) | nib[3]
 
 
