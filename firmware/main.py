@@ -41,16 +41,20 @@ def main():
                 current_state = process_request()
         
             elif current_state == STATE_RECEIVE:
-                current_state = receive_caliper_data(rx_buffer):
+                current_state = receive_caliper_data(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
-                if validate(rx_buffer):
-                    print("Data is right. send to Host PC")
-                    send_date_()
+                # 正規のデコードされた文字列か失敗のNone
+                validated = validator(rx_buffer)
+
+                if validated:
+                    send_to_host(validated)
                 else:
-                    print("bad data. Wait for next data")
-                    current_state = STATE_IDLE
-        
+                    # none (バリデーション失敗)の時 何もしないで状態遷移
+                    pass
+
+                current_state = STATE_IDLE
+
             else:
                 # とりあえず上記以外は待ち
                 current_state = STATE_IDLE
@@ -59,15 +63,13 @@ def main():
                 break
 
     except KeyboardInterrupt:
-        print("Interrrupt by user (ctlr-c etc)")
+        pass
+        # print("Interrrupt by user (ctlr-c etc)")
     
     finally:
         # 後始末
         pins.cleanup_hardware()
-        print("pico stoped")
-
-
-
+        # print("pico stoped")
 
 
 def process_idle():
@@ -162,6 +164,10 @@ def check_stop_command_from_pc():
             return True
     return False
 
+
+def send_to_host(digi_frame):
+    # USB-CDC (print) で Host PC へ
+    print(digi_frame)
 
 def send_binary_bits(send_list):
 
