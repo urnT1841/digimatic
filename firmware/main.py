@@ -89,7 +89,7 @@ def process_idle():
     while time.ticks_diff(time.ticks_ms(), start_tick) < STATE_CHECK_TIME:
         # クロックが 100us(CLOCK_CHECK_TIME) の間Lowが継続していたか確認
         if clk.value() == 0:
-            time.sleep_um(CLOCK_CHECK_TIME)
+            time.sleep_us(CLOCK_CHECK_TIME)
             if clk.value() == 0:
                 return STATE_RECEIVE 
             
