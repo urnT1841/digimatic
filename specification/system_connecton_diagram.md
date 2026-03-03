@@ -1,3 +1,6 @@
+
+```mermaid
+
 graph LR
     %% ノギス
     subgraph "ノギス CD-15AXW"
@@ -55,3 +58,4 @@ graph LR
     class GPIO_REQ low
     class DATA_OUT hiz
     class CLOCK_OUT hiz
+```
