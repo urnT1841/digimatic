@@ -1,8 +1,10 @@
 from machine import Pin
 import time
+import pin_difinitions
 
 # Pin 0 を入力(Hi-Z)として初期化
-req_pin = Pin(0, Pin.IN)
+req_pin = Pin(D7, Pin.IN)
+
 
 print("--- 検証開始: Hi-Z 状態 ---")
 print("ノギスのプルアップで 1 (High) になるはずです。")
