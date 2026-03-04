@@ -6,7 +6,7 @@ import gc
 
 from pin_difinitions import ON, OFF, send_request, stop_request
 import pin_difinitions as pins
-import led_switch as led
+from led_switch import led_switch as led
 from led_switch import LED_ON, LED_OFF
 from decoder import validator
 
@@ -21,7 +21,13 @@ STATE_IDLE = 0
 STATE_REQUEST = 1
 STATE_RECEIVE = 2
 STATE_VALIDATE = 3
+STATE_ERROR = 4
 
+#エラー定義
+ERR__NONE = 0
+ERR_TIMEOUT = 1  # 信号が来ない
+ERR_READ    = 2  # クロックが途中で途切れた、物理的ノイズ  # TODO: 返す部分は未実装
+ERR_DECODE  = 3  # バリデーション（FFFFヘッダ等）失敗
 
 # 初期化とか定数確保が終わったらいったんGCを走らせる
 gc.collect()
@@ -33,27 +39,32 @@ def main():
 
     try:
         current_state = STATE_IDLE
+        err_state = ERR__NONE
         while True:
             if current_state == STATE_IDLE:
-                current_state = process_idle()
+                current_state , err_state = process_idle()
 
             elif current_state == STATE_REQUEST:
-                current_state = process_request()
+                current_state , err_state = process_request()
         
             elif current_state == STATE_RECEIVE:
-                current_state = receive_caliper_data(rx_buffer)
+                current_state , err_state = process_receive(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
                 # 正規のデコードされた文字列か失敗のNone
                 validated = validator(rx_buffer)
-
                 if validated:
                     send_to_host(validated)
                 else:
-                    # none (バリデーション失敗)の時 何もしないで状態遷移
-                    pass
+                    # none (バリデーション失敗)の時
+                    current_state = STATE_ERROR
 
                 current_state = STATE_IDLE
+
+            elif current_state == STATE_ERROR:
+                # error messageを送出 err_stateによって分岐
+                # TODO: rust側が対応できていないので 現状はpass(何もしない)
+                pass
 
             else:
                 # とりあえず上記以外は待ち
@@ -91,20 +102,21 @@ def process_idle():
         if clk.value() == 0:
             time.sleep_us(CLOCK_CHECK_TIME)
             if clk.value() == 0:
-                return STATE_RECEIVE 
+                return STATE_RECEIVE , ERR__NONE
             
         # PCからのリクエストボタン押しなどのチェック
-        if check_trigger():
-            return STATE_REQUEST
+        # 未実装
+        #if check_trigger():
+        #    return STATE_REQUEST
             
-    return STATE_IDLE
+    return STATE_IDLE , ERR__NONE
 
 
 def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
     send_request()
 
-    return STATE_RECEIVE
+    return STATE_RECEIVE , ERR__NONE
 
 
 def process_receive(bits_buffer):
@@ -112,6 +124,7 @@ def process_receive(bits_buffer):
     _clk = clk
     _data = rx_data
     TIMEOUT_US = 500000   # 長すぎかな？  タイムアウト用
+    start_tick = time.ticks_us()
 
     # 呼び出されたとき1ビット目の受信中なので
     # ここに移ってきたときの1ビット目は無条件で受け入れる
@@ -122,13 +135,13 @@ def process_receive(bits_buffer):
     for bit_count in  range(1, BIN_FRAME_LENGTH):
         # CLOCKがHighに戻るのを待つ（チャタリング・重複読み防止）
         while _clk.value() == 0:
-            if time.ticks_diff(time.ticks_us(), start_t) > TIMEOUT_US:
-                return STATE_IDLE  # タイムアウト失敗 Idle へ
+            if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
+                return STATE_ERROR , ERR_TIMEOUT  # タイムアウト失敗 エラー返して呼び出し元で Idle へ
 
         # 次のCLOCKがLowになるのを待つ
         while _clk.value() == 1:
-            if time.ticks_diff(time.ticks_us(), start_t) > TIMEOUT_US:
-                return STATE_IDLE  # タイムアウト失敗 Idle へ
+            if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
+                return STATE_ERROR , ERR_TIMEOUT  # タイムアウト失敗 エラー返して呼び出し元で Idle へ
         
         # Low → DATAを読み取る
         bits_buffer[bit_count] = _data.value()  # データ受信        
@@ -139,19 +152,18 @@ def process_receive(bits_buffer):
     time.sleep_ms(80)
     led(LED_OFF, LED_OFF, LED_OFF)
     
-    return STATE_VALIDATE
+    return STATE_VALIDATE , ERR__NONE
 
 
 def process_validate(rx_buffer):
     """ バリデーション → デジマチックフレーム埋め """
-    # 中身はこれから実装
-    validator(rx_buffer)
+    digi_frame = validator(rx_buffer)
+    if digi_frame:
+        return digi_frame
+    else:
+        return STATE_ERROR , ERR_DECODE
 
-
-    # PCへ送る
-    print(digi_frame)
-
-    return STATE_IDLE
+    return STATE_IDLE , ERR__NONE
 
 
 def check_stop_command_from_pc():
@@ -168,6 +180,7 @@ def check_stop_command_from_pc():
 def send_to_host(digi_frame):
     # USB-CDC (print) で Host PC へ
     print(digi_frame)
+
 
 def send_binary_bits(send_list):
 
