@@ -24,7 +24,7 @@ STATE_VALIDATE = 3
 STATE_ERROR = 4
 
 #エラー定義
-ERR__NONE = 0
+ERR_NONE = 0
 ERR_TIMEOUT = 1  # 信号が来ない
 ERR_READ    = 2  # クロックが途中で途切れた、物理的ノイズ  # TODO: 返す部分は未実装
 ERR_DECODE  = 3  # バリデーション（FFFFヘッダ等）失敗
@@ -39,7 +39,7 @@ def main():
 
     try:
         current_state = STATE_IDLE
-        err_state = ERR__NONE
+        err_state = ERR_NONE
         while True:
             if current_state == STATE_IDLE:
                 current_state , err_state = process_idle()
@@ -55,11 +55,10 @@ def main():
                 validated = validator(rx_buffer)
                 if validated:
                     send_to_host(validated)
+                    current_state = STATE_IDLE
                 else:
                     # none (バリデーション失敗)の時
                     current_state = STATE_ERROR
-
-                current_state = STATE_IDLE
 
             elif current_state == STATE_ERROR:
                 # error messageを送出 err_stateによって分岐
@@ -70,8 +69,12 @@ def main():
                 # とりあえず上記以外は待ち
                 current_state = STATE_IDLE
 
-            if check_stop_command_from_pc():
+            cmd = get_command_from_pc()
+            if cmd == "STOP":
                 break
+
+            elif cmd == "REQ":
+                current_state = STATE_RECEIVE
 
     except KeyboardInterrupt:
         pass
@@ -102,21 +105,16 @@ def process_idle():
         if clk.value() == 0:
             time.sleep_us(CLOCK_CHECK_TIME)
             if clk.value() == 0:
-                return STATE_RECEIVE , ERR__NONE
-            
-        # PCからのリクエストボタン押しなどのチェック
-        # 未実装
-        #if check_trigger():
-        #    return STATE_REQUEST
-            
-    return STATE_IDLE , ERR__NONE
+                return STATE_RECEIVE , ERR_NONE
+
+    return STATE_IDLE , ERR_NONE
 
 
 def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
     send_request()
 
-    return STATE_RECEIVE , ERR__NONE
+    return STATE_RECEIVE , ERR_NONE
 
 
 def process_receive(bits_buffer):
@@ -152,29 +150,16 @@ def process_receive(bits_buffer):
     time.sleep_ms(80)
     led(LED_OFF, LED_OFF, LED_OFF)
     
-    return STATE_VALIDATE , ERR__NONE
+    return STATE_VALIDATE , ERR_NONE
 
 
-def process_validate(rx_buffer):
-    """ バリデーション → デジマチックフレーム埋め """
-    digi_frame = validator(rx_buffer)
-    if digi_frame:
-        return digi_frame
-    else:
-        return STATE_ERROR , ERR_DECODE
-
-    return STATE_IDLE , ERR__NONE
-
-
-def check_stop_command_from_pc():
+def get_command_from_pc():
     """ serialを監視  """
 
-    # PCから STOP 文字列が送られてくることを期待
+    # PCから REQ, STOP などの 文字列が送られてくることを期待
     if select.select([sys.stdin], [], [], 0)[0]:
-        line = sys.stdin.readline().strip()
-        if line == "STOP":
-            return True
-    return False
+        return sys.stdin.readline().strip()
+    return None
 
 
 def send_to_host(digi_frame):
