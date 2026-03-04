@@ -48,7 +48,7 @@ tx_data = machine.Pin(TX_DATA_PIN, machine.Pin.OUT)     # tx
 clk = machine.Pin(RX_CLK_PIN, machine.Pin.IN)           # clk
 # req は input (Hi-Z) なのでvalue=0はここでの実質的な意味を持たない
 # ただしsignalを送るとき Outputモードに遷移するのであらかじめ 0(Low,OFF) を指定しておく
-# このPinに対しては Pull_UPしたり Hi にしたりはNG
+# このPinに対しては Pull_UPしたり Hi にしたりはNG -> 3.3Vが出力されて最悪ノギスが壊れる
 req = machine.Pin(REQ_OUT_PIN, machine.Pin.IN)  # req Hi-Z 設定
 req.value(OFF)
 

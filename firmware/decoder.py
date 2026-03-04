@@ -1,7 +1,7 @@
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
-from validation_rune import CHECK_RULES
+from validation_rule import CHECK_RULES
 
 
 def validate(nib13_frame):
@@ -16,7 +16,7 @@ def validate(nib13_frame):
         # BCD領域(d6~d11)の共通チェック
         elif 5 <= i <= 10:
             if not (0 <= val <= 9):
-                returun None
+                return None
 
     return True
 
@@ -57,7 +57,7 @@ def validator(bit_list):
 
 def to_bcd_output(nib13_list):
     # all 1(15)はF, 他は intへの変換でOK
-    digi_frame_str = ["F" if to_int(nib) == 15 else str(to_int(nib)) for nib in nib13_frame]
+    digi_frame_str = ["F" if to_int(nib) == 15 else str(to_int(nib)) for nib in nib13_list]
 
     return "".join( digi_frame_str)
 
