@@ -24,7 +24,7 @@ STATE_VALIDATE = 3
 STATE_ERROR = 4
 
 #エラー定義
-ERR__NONE = 0
+ERR_NONE = 0
 ERR_TIMEOUT = 1  # 信号が来ない
 ERR_READ    = 2  # クロックが途中で途切れた、物理的ノイズ  # TODO: 返す部分は未実装
 ERR_DECODE  = 3  # バリデーション（FFFFヘッダ等）失敗
@@ -39,29 +39,34 @@ def main():
 
     try:
         current_state = STATE_IDLE
-        err_state = ERR__NONE
+        err_state = ERR_NONE
         while True:
             if current_state == STATE_IDLE:
+                print("#DEBUG: start waiting")
                 current_state , err_state = process_idle()
 
             elif current_state == STATE_REQUEST:
+                print("#DEBUG: start request")
                 current_state , err_state = process_request()
         
             elif current_state == STATE_RECEIVE:
+                print("#DEBUG: start receive")
                 current_state , err_state = process_receive(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
+                print("#DEBUG: start validation")
                 # 正規のデコードされた文字列か失敗のNone
                 validated = validator(rx_buffer)
                 if validated:
+                    print("#DEBUG: sucsess validate")
                     send_to_host(validated)
+                    current_state = STATE_IDLE
                 else:
                     # none (バリデーション失敗)の時
                     current_state = STATE_ERROR
 
-                current_state = STATE_IDLE
-
             elif current_state == STATE_ERROR:
+                print("#DEBUG: something error")                
                 # error messageを送出 err_stateによって分岐
                 # TODO: rust側が対応できていないので 現状はpass(何もしない)
                 pass
@@ -72,6 +77,8 @@ def main():
 
             if check_stop_command_from_pc():
                 break
+        
+        # ここにPCからのキー入力受付を入れる
 
     except KeyboardInterrupt:
         pass
@@ -100,26 +107,25 @@ def process_idle():
     while time.ticks_diff(time.ticks_ms(), start_tick) < STATE_CHECK_TIME:
         # クロックが 100us(CLOCK_CHECK_TIME) の間Lowが継続していたか確認
         if clk.value() == 0:
+            print("#DEBUG: clock_low (ideling)")
             time.sleep_us(CLOCK_CHECK_TIME)
             if clk.value() == 0:
-                return STATE_RECEIVE , ERR__NONE
-            
-        # PCからのリクエストボタン押しなどのチェック
-        # 未実装
-        #if check_trigger():
-        #    return STATE_REQUEST
-            
-    return STATE_IDLE , ERR__NONE
+                print("#DEBUG: move to receive (clock still low)")
+                return STATE_RECEIVE , ERR_NONE
+
+    return STATE_IDLE , ERR_NONE
 
 
 def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
+    print("#DEBUG: send request")
     send_request()
 
-    return STATE_RECEIVE , ERR__NONE
+    return STATE_RECEIVE , ERR_NONE
 
 
 def process_receive(bits_buffer):
+    print("#DEBUG: start receive")
     # Clock に同期しつつdataを52bit読み込む
     _clk = clk
     _data = rx_data
@@ -136,14 +142,17 @@ def process_receive(bits_buffer):
         # CLOCKがHighに戻るのを待つ（チャタリング・重複読み防止）
         while _clk.value() == 0:
             if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
+                print("#DEBUG: time out -> Low fix")
                 return STATE_ERROR , ERR_TIMEOUT  # タイムアウト失敗 エラー返して呼び出し元で Idle へ
 
         # 次のCLOCKがLowになるのを待つ
         while _clk.value() == 1:
             if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
+                print("#DEBUG: time out -> High fix")
                 return STATE_ERROR , ERR_TIMEOUT  # タイムアウト失敗 エラー返して呼び出し元で Idle へ
         
         # Low → DATAを読み取る
+        print("#DEBUG: add data")
         bits_buffer[bit_count] = _data.value()  # データ受信        
 
             
@@ -152,18 +161,7 @@ def process_receive(bits_buffer):
     time.sleep_ms(80)
     led(LED_OFF, LED_OFF, LED_OFF)
     
-    return STATE_VALIDATE , ERR__NONE
-
-
-def process_validate(rx_buffer):
-    """ バリデーション → デジマチックフレーム埋め """
-    digi_frame = validator(rx_buffer)
-    if digi_frame:
-        return digi_frame
-    else:
-        return STATE_ERROR , ERR_DECODE
-
-    return STATE_IDLE , ERR__NONE
+    return STATE_VALIDATE , ERR_NONE
 
 
 def check_stop_command_from_pc():

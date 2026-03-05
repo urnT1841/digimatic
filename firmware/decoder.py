@@ -5,6 +5,7 @@ from validation_rule import CHECK_RULES
 
 
 def validate(nib13_frame):
+    print("DEBUG: start validate")
     for i, nib in enumerate(nib13_frame):
         val = to_int(nib)
         
@@ -34,7 +35,6 @@ def validator(bit_list):
     """
 
     REQUIRED_BIT_LENGTH = 52
-    validated_frame = []
 
     #長さチェック    
     if len(bit_list) != REQUIRED_BIT_LENGTH:
@@ -48,10 +48,12 @@ def validator(bit_list):
     # 実際のチェックは validate で実施
     if validate(nib13_frame):
         # 通ったのでnibble -> bcd, かつ13Byteの連続した文字列
+        print("DEBUG: complete validate. make digi-strings")
         validated = to_bcd_output(nib13_frame)
         return validated
     else:
         # バリテーション失敗
+        print("DEBUG: false validae")
         return None
 
 
