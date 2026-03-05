@@ -1,3 +1,20 @@
+
+import time
+
+from pin_difinitions import ON, OFF, send_request, stop_request
+import pin_difinitions as pins
+from led_switch import led_switch as led
+from led_switch import LED_ON, LED_OFF
+
+
+# pin設定
+rx_data, clk, req, tx_data , req_sw = pins.init_hardware()
+led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
+
+
+BIN_FRAME_LENGTH = 52   # デジマチックのフレームは 52bit
+
+
 def receive_busy(bits_buffer):
     """
     Busy-loop でクロック同期受信するシンプル版
@@ -12,16 +29,16 @@ def receive_busy(bits_buffer):
     send_request()
 
     # 最初のClock立下り待ち
-    while _clk.value() == 1:
+    while _clk.value() == ON:
         pass
 
     # ビット受信ループ
     for i in range(BIN_FRAME_LENGTH):
         # CLOCK High 待ち
-        while _clk.value() == 0:
+        while _clk.value() == OFF:
             pass
         # CLOCK Low 待ち
-        while _clk.value() == 1:
+        while _clk.value() == OFF:
             pass
         # データ読み取り
         bits_buffer[i] = _data.value()
@@ -30,3 +47,6 @@ def receive_busy(bits_buffer):
     led(LED_ON, LED_OFF, LED_OFF)
     time.sleep_ms(50)
     led(LED_OFF, LED_OFF, LED_OFF)
+
+    # 一応リクエストを止める
+    stop_request()
