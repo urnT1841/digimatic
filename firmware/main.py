@@ -54,7 +54,7 @@ def main():
         
             elif current_state == STATE_RECEIVE:
                 print("#DEBUG: start receive")
-                current_state , err_state = process_receive(rx_buffer)
+                current_state , err_state = process_receive_t(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
                 print("#DEBUG: start validation")
@@ -237,6 +237,62 @@ def send_binary_bits(send_list):
         clk.value(ON)
         led(LED_OFF,LED_OFF,LED_OFF)
         time.sleep_ms(300)
+
+
+def process_receive_t(bits_buffer):
+    print("#DEBUG: start receive logic with timing")
+    _clk = clk
+    _data = rx_data
+    TIMEOUT_US = 800  # 安全マージン大きめ
+
+    # Request 出力タイムスタンプ
+    t_req = time.ticks_us()
+    send_request()  # 受信直前に再確認用
+    print(f"#DEBUG: request sent at {t_req} us")
+
+    # 最初の Clock 立下りを待つ
+    while _clk.value() == 1:
+        if time.ticks_diff(time.ticks_us(), t_req) > TIMEOUT_US * 100:
+            print("#DEBUG: timeout waiting first falling edge")
+            return STATE_ERROR, ERR_TIMEOUT
+
+    t_first_falling = time.ticks_us()
+    print(f"#DEBUG: first falling edge detected at {t_first_falling} us, T1={time.ticks_diff(t_first_falling, t_req)} us")
+
+    # 最初のビット読み取り
+    bits_buffer[0] = _data.value()
+    led(LED_ON, LED_OFF, LED_OFF)
+
+    for bit_count in range(1, BIN_FRAME_LENGTH):
+        t_bit_start = time.ticks_us()
+
+        # CLOCK High 待ち
+        while _clk.value() == 0:
+            if time.ticks_diff(time.ticks_us(), t_bit_start) > TIMEOUT_US:
+                print(f"#DEBUG: bit {bit_count} timeout waiting High")
+                return STATE_ERROR, ERR_TIMEOUT
+
+        t_high = time.ticks_us()
+
+        # CLOCK Low 待ち
+        while _clk.value() == 1:
+            if time.ticks_diff(time.ticks_us(), t_bit_start) > TIMEOUT_US:
+                print(f"#DEBUG: bit {bit_count} timeout waiting Low")
+                return STATE_ERROR, ERR_TIMEOUT
+
+        t_falling = time.ticks_us()
+        bits_buffer[bit_count] = _data.value()
+
+        print(f"#DEBUG: bit {bit_count} read={bits_buffer[bit_count]}, High->Low={time.ticks_diff(t_falling, t_high)} us")
+
+    stop_request()
+    time.sleep_ms(50)
+    led(LED_OFF, LED_OFF, LED_OFF)
+    
+    return STATE_VALIDATE, ERR_NONE
+
+
+
 
 
 if __name__ == '__main__':
