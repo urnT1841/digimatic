@@ -37,6 +37,9 @@ def main():
     #受信用バッファ
     rx_buffer = [0] * BIN_FRAME_LENGTH
 
+    time.sleep(3)
+    print("DEBUG: wait 3s")
+
     try:
         current_state = STATE_IDLE
         err_state = ERR_NONE
@@ -69,6 +72,8 @@ def main():
                 print("#DEBUG: something error")                
                 # error messageを送出 err_stateによって分岐
                 # TODO: rust側が対応できていないので 現状はpass(何もしない)
+                time.sleep(3)
+                current_state = STATE_IDLE
                 pass
 
             else:
@@ -107,17 +112,22 @@ def process_idle():
     # Lowのままだったらreceive stateに移行
 
     STATE_CHECK_TIME = 100  # ms, 1回あたりのIdel時間
-    CLOCK_CHECK_TIME = 100  # us, ノイズ影響を避けるためのclock確認時間
-
     start_tick = time.ticks_ms()
+    prev_clk = clk.value()
+
+    # Req生成
+    #debug
+    send_request()
+
     while time.ticks_diff(time.ticks_ms(), start_tick) < STATE_CHECK_TIME:
-        # クロックが 100us(CLOCK_CHECK_TIME) の間Lowが継続していたか確認
-        if clk.value() == 0:
-            print("#DEBUG: clock_low (ideling)")
-            time.sleep_us(CLOCK_CHECK_TIME)
-            if clk.value() == 0:
-                print("#DEBUG: move to receive (clock still low)")
-                return STATE_RECEIVE , ERR_NONE
+        now_clk = clk.value()
+        
+        # 立ち下がりエッジ検出
+        if prev_clk == 1 and now_clk == 0:
+            print("DEBUG: falling edge detected")
+            return STATE_RECEIVE , ERR_NONE
+
+        prev_clk = now_clk
 
     return STATE_IDLE , ERR_NONE
 
@@ -131,20 +141,20 @@ def process_request():
 
 
 def process_receive(bits_buffer):
-    print("#DEBUG: start receive")
+    print("#DEBUG: start receive logic")
     # Clock に同期しつつdataを52bit読み込む
     _clk = clk
     _data = rx_data
-    TIMEOUT_US = 500000   # 長すぎかな？  タイムアウト用
-    start_tick = time.ticks_us()
+    TIMEOUT_US = 1000   # 長すぎかな？  タイムアウト用
 
-    # 呼び出されたとき1ビット目の受信中なので
+    # Clockのエッジを検出してから飛んでくるのので
     # ここに移ってきたときの1ビット目は無条件で受け入れる
     bits_buffer[0] = _data.value()
-    stop_request() 
     led(LED_ON, LED_OFF, LED_OFF)
     
     for bit_count in  range(1, BIN_FRAME_LENGTH):
+        start_tick = time.ticks_us()
+
         # CLOCKがHighに戻るのを待つ（チャタリング・重複読み防止）
         while _clk.value() == 0:
             if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
@@ -156,11 +166,14 @@ def process_receive(bits_buffer):
             if time.ticks_diff(time.ticks_us(), start_tick) > TIMEOUT_US:
                 print("#DEBUG: time out -> High fix")
                 return STATE_ERROR , ERR_TIMEOUT  # タイムアウト失敗 エラー返して呼び出し元で Idle へ
-        
-        # Low → DATAを読み取る
-        print("#DEBUG: add data")
-        bits_buffer[bit_count] = _data.value()  # データ受信        
 
+
+        # 最後のBitを受信し終わってからReqを止める (安定する?)
+        stop_request() 
+
+        # Low → DATAを読み取る
+        print("#DEBUG: add data : { bit_count} , {_data.value()}")
+        bits_buffer[bit_count] = _data.value()  # データ受信        
             
     # 受信完了後に少し光らせてから消す
     # この間にデータ来るかも？  clock 監視ループの中に入れるか
