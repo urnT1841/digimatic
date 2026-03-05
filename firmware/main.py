@@ -75,9 +75,13 @@ def main():
                 current_state = STATE_IDLE
             
             # ここにPCからのキー入力受付を入れる
-            if check_stop_command_from_pc():
+            cmd = get_command_from_pc()
+            if cmd == "STOP":
                 break
-        
+
+            elif cmd == "REQ":
+                current_state = STATE_RECEIVE
+
             # 外部スイッチからのReq信号生成受付
             if phi_sw_request():
                 current_state = STATE_REQUEST
@@ -166,15 +170,14 @@ def process_receive(bits_buffer):
     return STATE_VALIDATE , ERR_NONE
 
 
-def check_stop_command_from_pc():
+def get_command_from_pc():
     """ serialを監視  """
 
-    # PCから STOP 文字列が送られてくることを期待
+    # PCから REQ, STOP などの 文字列が送られてくることを期待
     if select.select([sys.stdin], [], [], 0)[0]:
-        line = sys.stdin.readline().strip()
-        if line == "STOP":
-            return True
-    return False
+        return sys.stdin.readline().strip()
+    return None
+
 
 
 last_sw_state = 1  # 1:押されていない , 0: 押下
