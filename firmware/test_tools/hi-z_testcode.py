@@ -3,7 +3,7 @@ import time
 import pin_difinitions
 
 # Pin 0 を入力(Hi-Z)として初期化
-req_pin = Pin(D7, Pin.IN)
+req_pin = Pin(pin_difinitions.D7, Pin.IN)
 
 
 print("--- 検証開始: Hi-Z 状態 ---")
