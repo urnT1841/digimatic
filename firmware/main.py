@@ -11,7 +11,7 @@ from led_switch import LED_ON, LED_OFF
 from decoder import validator
 
 # pin設定
-rx_data, clk, req, tx_data = pins.init_hardware()
+rx_data, clk, req, tx_data , req_sw = pins.init_hardware()
 led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
 BIN_FRAME_LENGTH = 52   # デジマチックのフレームは 52bit
@@ -72,13 +72,15 @@ def main():
                 pass
 
             else:
-                # とりあえず上記以外は待ち
                 current_state = STATE_IDLE
-
+            
+            # ここにPCからのキー入力受付を入れる
             if check_stop_command_from_pc():
                 break
         
-        # ここにPCからのキー入力受付を入れる
+            # 外部スイッチからのReq信号生成受付
+            if phi_sw_request():
+                current_state = STATE_REQUEST
 
     except KeyboardInterrupt:
         pass
@@ -173,6 +175,28 @@ def check_stop_command_from_pc():
         if line == "STOP":
             return True
     return False
+
+
+last_sw_state = 1  # 1:押されていない , 0: 押下
+def phi_sw_request():
+    global last_sw_state
+    """
+      タクトスイッチなど外部からReqを出せるように
+    """
+    # pull-upているPinに対してスイッチが押されることでGNDへ落ちる
+    # → send_request を送る (mainで State_request になってprocess_requestへ入る)
+
+    current_sw_state = req_sw.value()
+
+    # 離れていて押した最初だけ反応
+    sw_pressed = last_sw_state == 1 and current_sw_state == 0
+    last_sw_state = current_sw_state
+
+    # チャタリング対策は不要
+    #  Trueの場合(押下検知) は Stateが変更されるのでちゃたってもここのロジックを通らない
+    #  Falseの場合 Idle に入って100ms戻ってこないのでとうにチャタリングは収まっている
+    return sw_pressed
+
 
 
 def send_to_host(digi_frame):

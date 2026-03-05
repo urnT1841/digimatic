@@ -34,6 +34,7 @@ RX_CLK_PIN = D2
 
 # 自己テスト用
 TX_DATA_PIN = D0
+REQ_SW_PIN = D8
 
 # 要求信号出力 (10kΩ抵抗越し)
 REQ_OUT_PIN = D7
@@ -51,6 +52,7 @@ clk = machine.Pin(RX_CLK_PIN, machine.Pin.IN)           # clk
 # このPinに対しては Pull_UPしたり Hi にしたりはNG -> 3.3Vが出力されて最悪ノギスが壊れる
 req = machine.Pin(REQ_OUT_PIN, machine.Pin.IN)  # req Hi-Z 設定
 req.value(OFF)
+req_sw = machine.Pin(REQ_SW_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 
 # pinオブジェクトの初期化関数
 def init_hardware():
@@ -62,7 +64,7 @@ def init_hardware():
     
     # ピンをタプルで返す
     return (
-        rx_data, clk, req, tx_data
+        rx_data, clk, req, tx_data, req_sw
     )
 
 # Pinオブジェクトの解放
@@ -94,5 +96,3 @@ def stop_request():
     """
     req.init(mode=machine.Pin.IN)
 
-    
-    
