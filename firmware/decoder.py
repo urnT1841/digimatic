@@ -2,6 +2,10 @@
 # nibble は lsbで受け取っているので反転したうえで処理
 
 from validation_rule import CHECK_RULES
+from validation_rule import STATE_IDLE, STATE_ERROR, STATE_RECEIVE, STATE_REQUEST, STATE_VALIDATE
+from validation_rule import ERR_DECODE, ERR_NONE, ERR_READ, ERR_TIMEOUT
+
+BIN_FRAME_LENGTH = 52   # デジマチックのフレームは 52bit
 
 
 def validate(nib13_frame):
@@ -21,8 +25,10 @@ def validate(nib13_frame):
 
     return True
 
-
-def validator(bit_list):
+#
+# pico では使わない。もっと強力なマイコンならいけるか？
+# いやNGって決まったわけじゃないけど
+def validator_list_Comprehension(bit_list):
     """
     受信した52ビットの検証
     digimaticの意味付けに戻す
@@ -38,10 +44,11 @@ def validator(bit_list):
 
     #長さチェック    
     if len(bit_list) != REQUIRED_BIT_LENGTH:
-        raise ValueError(f"abnormal frame length {len(bit_list)}")
+        return STATE_ERROR, ERR_DECODE
     
     # 妥当な長さであったので 13個のnibble にスライス
     # ここでlsb -> msb に直しておく。詰めるのはタプル(中身をいじらないという意思)
+    # リスト内包記法を使っているのでもしかしたら重いかもということでこれはやめる
     nib13_frame = [tuple(bit_list[i*4 : i*4+4][::-1]) for i in range(13)]
 
     # ここから本番バリデーションして，BCD変換
@@ -55,6 +62,43 @@ def validator(bit_list):
         # バリテーション失敗
         print("DEBUG: false validae")
         return None
+
+
+def validator(bit_list):
+    """
+    受信したbit列の検証とBCD変換
+    リスト内包記法による重い スライスやリスト作成などの処理を行わないようにした版   
+    """
+
+    REQUIRED_BIT_LENGTH = 52
+    
+    # 長さチェック（raiseを排除）
+    if len(bit_list) != REQUIRED_BIT_LENGTH:
+        return STATE_ERROR, ERR_DECODE
+    
+    results = []
+    
+    for i in range(13):
+        base = i * 4
+        # あの「一行」のビット演算
+        val = (bit_list[base + 3] << 3) | (bit_list[base + 2] << 2) | \
+              (bit_list[base + 1] << 1) | bit_list[base]
+        
+        # 個別ルールチェック
+        if i in CHECK_RULES:
+            if not CHECK_RULES[i](val):
+                return None
+
+        # BCDデータ領域チェック
+        elif 5 <= i <= 10:
+            if not (0 <= val <= 9):
+                return None
+        
+        results.append("F" if val == 15 else str(val))
+    
+    return "".join(results)
+
+
 
 
 def to_bcd_output(nib13_list):
