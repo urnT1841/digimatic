@@ -27,17 +27,17 @@ def process_idle():
     #debug
     send_request()
 
-    while time.ticks_diff(time.ticks_ms(), start_tick) < STATE_CHECK_TIME:
-        now_clk = clk.value()
-        
-        # 立ち下がりエッジ検出
-        if prev_clk == 1 and now_clk == 0:
-            print("DEBUG: falling edge detected")
-            return STATE_RECEIVE , ERR_NONE
+    #while time.ticks_diff(time.ticks_ms(), start_tick) < STATE_CHECK_TIME:
+    #    now_clk = clk.value()
+    #    
+    #    # 立ち下がりエッジ検出
+    #    if prev_clk == 1 and now_clk == 0:
+    #        #print("DEBUG: falling edge detected")
+    #        return STATE_RECEIVE , ERR_NONE
 
-        prev_clk = now_clk
+    #   prev_clk = now_clk
 
-    return STATE_IDLE , ERR_NONE
+    return STATE_RECEIVE , ERR_NONE
 
 
 def process_request():
@@ -91,47 +91,71 @@ def process_receive(bits_buffer):
     return STATE_VALIDATE , ERR_NONE
 
 
-def receive_busy(bits_buffer):
+def process_receive_busy2(bits_buffer):
     """
-    Busy-loop でクロック同期受信するシンプル版
-    process_receive()と入れ替えて使う
-    - Requestは事前に送信済み、または最初に送る
-    - Pythonの処理遅延を極力排除
-    - bits_buffer: 長さ BIN_FRAME_LENGTH のリスト
+    ミツトヨ・デジマチック 52ビット受信関数 (同期統合版)
+    関数遷移のラグを無視するため、1ビット目の立ち下がりからサンプリングを開始します。
     """
-    _clk = clk
-    _data = rx_data
-
-    # Requestを出しておく
-    send_request()
-
-    # 最初のClock立下り待ち
-    while _clk.value() == ON:
+    _clk = clk        # ローカル変数にコピーしてアクセスを高速化
+    _rx_data = rx_data
+    
+    # 最初のエッジ同期 (Sync with 1st bit) ---
+    # まずCLKがHighであることを確認（すでにLowに落ちていた場合の誤読防止）
+    # ※ もしREQからCLKまでが極端に速い場合はここを調整
+    while _clk.value() == 0:
+        pass
+        
+    # クロックの「立ち下がり（Falling Edge）」を待機
+    while _clk.value() == 1:
         pass
     
-    #ここで1Bit目読んだほうが良いか？
-    #まずは下記を試して2重に持って行ったりするようならここで読む。
-    # bits_buffer[0] = _data.value()
+    # 立ち下がった瞬間に1ビット目をサンプリング（D1の1ビット目）
+    bits_buffer[0] = _rx_data.value()
 
-    # ビット受信ループ
-    # 1bit目を上で読む場合 ranage(1,BIN~)とすること
-    for i in range(BIN_FRAME_LENGTH):
-        # CLOCK High 待ち
-        while _clk.value() == OFF:
+    # 残り51ビットを回収 (51 bits loop) ---
+    for i in range(1, 52):
+        # クロックがHighに戻るのを待つ (Wait for High)
+        while _clk.value() == 0:
             pass
-        # CLOCK Low 待ち
-        while _clk.value() == ON:
+        # クロックがLowに落ちるのを待つ (Wait for Falling Edge)
+        while _clk.value() == 1:
             pass
-        # データ読み取り
-        bits_buffer[i] = _data.value()
+        # 落ちた瞬間にサンプリング
+        bits_buffer[i] = _rx_data.value()
 
-    # 受信完了後にLEDやデバッグ出力
-    led(LED_ON, LED_OFF, LED_OFF)
-    time.sleep_ms(50)
-    led(LED_OFF, LED_OFF, LED_OFF)
+    # 後処理 ---
+    # 通信が終わってからREQ信号を解除（LowからHighへ）
+    stop_request() 
+    
+    # ホスト（Rust側）へデータを送信
+    send_to_host(bits_buffer)
+    
+    # 正常終了としてバリデート状態へ遷移
+    return STATE_VALIDATE, ERR_NONE
 
-    # 一応リクエストを止める
+
+@micropython.native
+def process_receive_busy(bits_buffer):
+    # メソッドをローカル変数に格納（これで辞書検索をスキップし、C言語並みに速くなる）
+    _get_clk = clk.value
+    _get_dat = rx_data.value
+    
+    # --- 同期開始 ---
+    while _get_clk() == 0: continue
+    while _get_clk() == 1: continue
+    
+    # 1ビット目
+    bits_buffer[0] = _get_dat()
+
+    # --- 残り51ビット ---
+    for i in range(1, 52):
+        while _get_clk() == 0: continue # High待ち
+        while _get_clk() == 1: continue # Low待ち（エッジ検知）
+        bits_buffer[i] = _get_dat()      # 【最速サンプリング】
+    
     stop_request()
+    send_to_host(bits_buffer)
+    return STATE_VALIDATE, ERR_NONE
 
 
 def process_validate(rx_buffer):
