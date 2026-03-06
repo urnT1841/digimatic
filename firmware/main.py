@@ -50,7 +50,6 @@ def main():
                 # TODO: rust側が対応できていないので 現状はpass(何もしない)
                 time.sleep(3)
                 current_state = STATE_IDLE
-                pass
 
             else:
                 current_state = STATE_IDLE
