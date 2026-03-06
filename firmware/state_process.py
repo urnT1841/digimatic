@@ -6,6 +6,7 @@ from pin_definitions import rx_data, clk, req, req_sw, send_request, stop_reques
 from led_switch import led_switch as led
 from led_switch import LED_ON, LED_OFF
 from decoder import BIN_FRAME_LENGTH, validator
+from communicator import send_to_host,send_request, stop_request
 
 
 def process_idle():
