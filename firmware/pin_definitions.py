@@ -40,12 +40,10 @@ REQ_SW_PIN = D8
 REQ_OUT_PIN = D7
 
 #pinオブジェクト生成
-en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT,value=1)
-# AP2112Kからの出力とパスコン充電待ちを入れる
-time.sleep_ms(1)
-dir_p = machine.Pin(DIR_CONTROL_PIN, machine.Pin.OUT, value=1)
+en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT,value=0)          # 生成時は出力なし
+dir_p = machine.Pin(DIR_CONTROL_PIN, machine.Pin.OUT, value=0)  # 生成時は出力なし (レベルシフタも動かない
 rx_data = machine.Pin(RX_DATA_PIN, machine.Pin.IN)      # data (rx)
-tx_data = machine.Pin(TX_DATA_PIN, machine.Pin.OUT)     # tx
+tx_data = machine.Pin(TX_DATA_PIN, machine.Pin.OUT, value=0)     # tx 
 clk = machine.Pin(RX_CLK_PIN, machine.Pin.IN)           # clk
 # req は input (Hi-Z) なのでvalue=0はここでの実質的な意味を持たない
 # ただしsignalを送るとき Outputモードに遷移するのであらかじめ 0(Low,OFF) を指定しておく
@@ -54,18 +52,15 @@ req = machine.Pin(REQ_OUT_PIN, machine.Pin.IN)  # req Hi-Z 設定
 req.value(OFF)
 req_sw = machine.Pin(REQ_SW_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 
-# pinオブジェクトの初期化関数
 def init_hardware():
-    en.value(ON)   # LDO電源有効化
+    """  pinオブジェクトの初期化関数 """
+    # LDO電源有効かとパスコンの準電待ち 時間は適当。当然計算もしてない
+    en.value(ON)
+    time.sleep_ms(2)
+
     dir_p.value(ON) # 方向制御をA->Bに固定 生成時の待ちで安定済み，すぐに設定
+    time.sleep_ms(1)  # 系全体の安定待ち （念のため過ぎるか?)
     
-    # 念のため安定待ちを入れる
-    time.sleep_ms(1)
-    
-    # ピンをタプルで返す
-    return (
-        rx_data, clk, req, tx_data, req_sw
-    )
 
 # Pinオブジェクトの解放
 def cleanup_hardware():
