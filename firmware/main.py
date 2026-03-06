@@ -38,7 +38,7 @@ def main():
         
             elif current_state == STATE_RECEIVE:
                 print("#DEBUG: start receive")
-                current_state , err_state = process_receive_t(rx_buffer)
+                current_state , err_state = process_receive_busy(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
                 print("#DEBUG: start validation")
