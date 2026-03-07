@@ -18,34 +18,29 @@ gc.collect()
 
 
 def main():
-    #受信用バッファ
-    rx_buffer = [0] * BIN_FRAME_LENGTH
+    # 受信用バッファ
+    # 当初は 普通のリストを使っていたが,bit受信なので bytearray に変更
+    rx_buffer = bytearray(BIN_FRAME_LENGTH)
 
     time.sleep(3)
-    print("DEBUG: wait 3s")
 
     try:
         current_state = STATE_IDLE
         err_state = ERR_NONE
         while True:
             if current_state == STATE_IDLE:
-                print("#DEBUG: start waiting")
                 current_state , err_state = process_idle()
 
             elif current_state == STATE_REQUEST:
-                print("#DEBUG: start request")
                 current_state , err_state = process_request()
         
             elif current_state == STATE_RECEIVE:
-                print("#DEBUG: start receive")
                 current_state , err_state = process_receive_busy(rx_buffer)
 
             elif current_state == STATE_VALIDATE:
-                print("#DEBUG: start validation")
                 current_state, err_state = process_validate(rx_buffer)
                 
             elif current_state == STATE_ERROR:
-                print("#DEBUG: something error")                
                 # error messageを送出 err_stateによって分岐
                 # TODO: rust側が対応できていないので 現状はpass(何もしない)
                 time.sleep(3)
