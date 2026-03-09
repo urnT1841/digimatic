@@ -15,29 +15,8 @@ use serialport::{SerialPortType, UsbPortInfo, available_ports};
 const PICO_VID: u16 = 0x2E8A; // Raspberry PI
 const PICO_PID: u16 = 0x0005; // MicroPython
 
-pub fn find_pico_port1() -> Result<String, Box<dyn std::error::Error>> {
-    let ports_list = available_ports()?;
-
-    for p in ports_list {
-        match &p.port_type {
-            SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. })
-                if *vid == PICO_VID && *pid == PICO_PID =>
-            {
-                return Ok(p.port_name.clone());
-            }
-            _ => continue,
-        }
-    }
-    Err("Pico port not found".into())
-}
-
 pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
     let ports_list = available_ports()?;
-
-    println!("--- port scan ---");
-    for p in &ports_list {
-        println!("  {:?}", p);
-    }
 
     for p in ports_list {
         match &p.port_type {
