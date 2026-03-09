@@ -15,23 +15,39 @@ use serialport::{SerialPortType, UsbPortInfo, available_ports};
 const PICO_VID: u16 = 0x2E8A; // Raspberry PI
 const PICO_PID: u16 = 0x0005; // MicroPython
 
-pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
-    // available_ports()で探す。返値は Vec. pico portはループで探す
+pub fn find_pico_port1() -> Result<String, Box<dyn std::error::Error>> {
     let ports_list = available_ports()?;
 
     for p in ports_list {
         match &p.port_type {
-            //USB接続で pico の vdi/pidを持つもの
-            SerialPortType::UsbPort(UsbPortInfo {
-                vid: PICO_VID,
-                pid: PICO_PID,
-                ..
-            }) => {
-                // 条件に合致 (USBでPICO)
+            SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. })
+                if *vid == PICO_VID && *pid == PICO_PID =>
+            {
+                println!("✅ Pico matched! port={}", p.port_name);
                 return Ok(p.port_name.clone());
             }
+            _ => continue,
+        }
+    }
+    Err("Pico port not found".into())
+}
 
-            // それ以外（Bluetoothだったり、USBでもVIDが違うやつ）は全部無視
+pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
+    let ports_list = available_ports()?;
+
+    println!("--- port scan ---");
+    for p in &ports_list {
+        println!("  {:?}", p);
+    }
+
+    for p in ports_list {
+        match &p.port_type {
+            SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. })
+                if *vid == PICO_VID && *pid == PICO_PID =>
+            {
+                println!("✅ Pico matched! port={}", p.port_name);
+                return Ok(p.port_name.clone());
+            }
             _ => continue,
         }
     }
