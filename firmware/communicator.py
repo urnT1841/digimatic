@@ -23,7 +23,7 @@ last_sw_state = 1  # 1:押されていない , 0: 押下
 def phy_sw_request():
     global last_sw_state
     """
-      タクトスイッチなど外部からReqを出せるように
+      Databボタンやタクトスイッチなど外部からReqを出せるように
     """
     # pull-upているPinに対してスイッチが押されることでGNDへ落ちる
     # → send_request を送る (mainで State_request になってprocess_requestへ入る)
