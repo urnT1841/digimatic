@@ -65,11 +65,18 @@ def process_receive_busy(bits_buffer=rx_buffer):
     # メソッドをローカル変数に格納（これで辞書検索をスキップ。速くなる）
     _get_clk = clk.value
     _get_dat = rx_data.value
+    _ticks_us = time.ticks_us
+    _ticks_diff = time.ticks_diff
+    
+    TIMEOUT_US = 500_000  # 500ms
     
     # 受信
     for i in range(0, BIN_FRAME_LENGTH):
-        while _get_clk() == 0:
-            pass # High待ち
+        t = _ticks_us()
+        while _get_clk() == 0:  # High待ち
+            if _ticks_diff(_ticks_us(), t) > TIMEOUT_US:
+                stop_request()
+                return STATE_ERROR, ERR_TIMEOUT
         while _get_clk() == 1:
             pass # Low待ち（エッジ検知）
         bits_buffer[i] = _get_dat()
