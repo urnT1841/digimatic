@@ -1,8 +1,23 @@
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
-from validation_rule import CHECK_RULES
 from state_process import ERR_DECODE, STATE_ERROR
+
+
+# バリデーションルール
+# d6~d11 (index 5~10) はすべてBCD (0-9)
+CHECK_RULES = {
+    0: lambda v: v == 0xF, # d1: Header
+    1: lambda v: v == 0xF, # d2
+    2: lambda v: v == 0xF, # d3
+    3: lambda v: v == 0xF, # d4
+    4: lambda v: v in (0, 8), # d5: Sign
+    # d6~d11 はループ内で一括定義もありだが
+    # わかりやすさのために個別に、あるいは判定ロジック側で処理
+    11: lambda v: 0 <= v <= 5, # d12: PointPos
+    12: lambda v: v in (0, 1),  # d13: Unit
+    }
+
 
 def validator(bits_buffer):
     """
@@ -29,13 +44,13 @@ def validator(bits_buffer):
             # 個別ルールチェック
             if i in CHECK_RULES:
                 if not CHECK_RULES[i](val):
-                    return STATE_ERROR, ERR_DECODE
+                    return None
 
             # BCDデータ領域チェック
             # マジックナンバーの意味は validation_ruleみること
             elif 5 <= i <= 10:
                 if not (0 <= val <= 9):
-                    return STATE_ERROR, ERR_DECODE
+                    return None
         
             # ALL 1 は F とする
             results.append("F" if val == 15 else str(val))
@@ -44,4 +59,4 @@ def validator(bits_buffer):
     
     except IndexError:
         # 52bitに満たないバッファが渡された時のセーフティネット
-        return STATE_ERROR, ERR_DECODE
+        return None
