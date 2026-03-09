@@ -83,9 +83,11 @@ def process_validate(bits_buffer=rx_buffer):
     """
     StateMachine の作法に合わせるバリデーション処理 (ラッパー)
     """
+    # 返値は成功時 デコードされた文字列 -> FFFF0~
+    #      失敗時は None この時はErr Statusへ
     validated = validator(bits_buffer)
     
-    if validated:
+    if validated is not None:
         # 成功：ホストへ送って IDLE へ
         send_to_host(validated)
         return STATE_IDLE, ERR_NONE
