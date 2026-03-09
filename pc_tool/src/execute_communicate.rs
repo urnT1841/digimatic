@@ -33,7 +33,7 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
         let pico_port_path = match find_pico_port() {
             Ok(path) => path,
             Err(_) => {
-                std::thread::sleep(Duration::from_secs(1));
+                std::thread::sleep(Duration::from_millis(400));
                 pico_waiting += 1;
                 continue;
             }
@@ -44,7 +44,10 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
         // port open
         let rx_port = match open_pico_port(&pico_port_path) {
             Ok(port) => port,
-            Err(_) => continue,
+            Err(_) => {
+                std::thread::sleep(Duration::from_millis(500)); // すぐに戻ると見失うこともあるのでちょい待ちを入れる
+                continue;
+            }
         };
         let mut rx_receiver = CdcReceiver::new(rx_port);
         // 保存用にライター準備
@@ -76,8 +79,13 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
                 Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
                 // それ以外のエラー
                 //切断などの致命的な場合，このループを脱げて外側に出る
-                Err(e) if CdcReceiver::is_fatal_error(&e) => break,
-                _ => continue,
+                Err(e) => {
+                    eprintln!("受信エラー種別: {:?} / {}", e.kind(), e);
+                    if CdcReceiver::is_fatal_error(&e) {
+                        break;
+                    }
+                    continue;
+                }
             }
         }
     }
