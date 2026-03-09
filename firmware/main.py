@@ -1,66 +1,33 @@
 
-import time
 import gc
 
 import pin_definitions as pins
-from validation_rule import STATE_IDLE, STATE_ERROR, STATE_RECEIVE, STATE_REQUEST, STATE_VALIDATE
-from validation_rule import ERR_DECODE, ERR_NONE, ERR_READ, ERR_TIMEOUT
-from state_process import *
-from decoder import BIN_FRAME_LENGTH
-from communicator import get_command_from_pc, phy_sw_request
+from state_process import state_map, STATE_IDLE, ERR_NONE
 
 
 # 諸々の初期化とか定数確保が終わったらいったんGCを走らせる
 pins.init_hardware()
-current_state = STATE_IDLE
-err_state = ERR_NONE
 gc.collect()
 
-
 def main():
-    # 受信用バッファ
-    # 当初は 普通のリストを使っていたが,bit受信なので bytearray に変更
-    rx_buffer = bytearray(BIN_FRAME_LENGTH)
-
-    time.sleep(3)
+    """ 
+    StateMachineで受付
+    各Stateは State_process.pyで定義
+    """
 
     try:
         current_state = STATE_IDLE
         err_state = ERR_NONE
         while True:
-            if current_state == STATE_IDLE:
-                current_state , err_state = process_idle()
-
-            elif current_state == STATE_REQUEST:
-                current_state , err_state = process_request()
-        
-            elif current_state == STATE_RECEIVE:
-                current_state , err_state = process_receive_busy(rx_buffer)
-
-            elif current_state == STATE_VALIDATE:
-                current_state, err_state = process_validate(rx_buffer)
-                
-            elif current_state == STATE_ERROR:
-                # error messageを送出 err_stateによって分岐
-                # TODO: rust側が対応できていないので 現状はpass(何もしない)
-                time.sleep(3)
-                current_state = STATE_IDLE
-
+            # マッチした状態に遷移
+            state_handler = state_map.get(current_state)
+            if state_handler:
+                current_state, err_state = state_handler()
             else:
                 current_state = STATE_IDLE
-            
-            # ここにPCからのキー入力受付を入れる
-            cmd = get_command_from_pc()
-            if cmd == "STOP":
-                break
-            elif cmd == "REQ":
-                current_state = STATE_RECEIVE
-
-            # 外部スイッチからのReq信号生成受付
-            if phy_sw_request():
-                current_state = STATE_REQUEST
 
     except KeyboardInterrupt:
+        # TODO: 未実装
         pass
         # print("Interrrupt by user (ctlr-c etc)")
     
