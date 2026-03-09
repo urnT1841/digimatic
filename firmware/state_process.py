@@ -98,8 +98,9 @@ def process_validate(bits_buffer=rx_buffer):
 
 
 def process_err_handler():
-    #未実装
-    pass
+    #未実装 エラーハンドリングを行う
+    # 下記は体裁を整えただけ
+    return STATE_IDLE, ERR_NONE
 
 # 状態定義
 state_map = {
