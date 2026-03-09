@@ -1,82 +1,59 @@
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
-from validation_rule import CHECK_RULES
+# バリデーションルール
+# d6~d11 (index 5~10) はすべてBCD (0-9)
+CHECK_RULES = {
+    0: lambda v: v == 0xF, # d1: Header
+    1: lambda v: v == 0xF, # d2
+    2: lambda v: v == 0xF, # d3
+    3: lambda v: v == 0xF, # d4
+    4: lambda v: v in (0, 8), # d5: Sign
+    # d6~d11 はループ内で一括定義もありだが
+    # わかりやすさのために個別に、あるいは判定ロジック側で処理
+    11: lambda v: 0 <= v <= 5, # d12: PointPos
+    12: lambda v: v in (0, 1),  # d13: Unit
+    }
 
 
-def validate(nib13_frame):
-    for i, nib in enumerate(nib13_frame):
-        val = to_int(nib)
-        
-        # 個別ルール
-        if i in CHECK_RULES:
-            if not CHECK_RULES[i](val):
-                return None
-
-        # BCD領域(d6~d11)の共通チェック
-        elif 5 <= i <= 10:
-            if not (0 <= val <= 9):
-                return None
-
-    return True
-
-
-def validator(bit_list):
+def validator(bits_buffer):
     """
-    受信した52ビットの検証
-    digimaticの意味付けに戻す
-      長さ：13 (52Bit = 4bit x 13)
-      d1~d4(header) : ALL 1 -> "F"
-      d5:(sign) : BCD数値( 0 or 8 only)
-      d6~d11(data) : BCD数値(0~9)
-      d12(pointPos) : BCD数値(0~9)
-      d13(unit) : BCD数値(0~9)
+    受信したbit列の検証とBCD変換
+    リスト内包記法による重いスライスやリスト作成などの処理を行わないようにした版
+    52bitはよろしくないので64bitで処理。ただし使うのは52Bit迄
     """
 
-    REQUIRED_BIT_LENGTH = 52
-    validated_frame = []
+    REQUIRED_BIT_LENGTH = 52  # ビット列の長さ これを超えるものは無視する
+    NIBBLE = 4
+    NIBBLE_CHUNK_COUNT = REQUIRED_BIT_LENGTH // NIBBLE   # デジマチックフレーム の nibble の数 4bit x 13 = 52
 
-    #長さチェック    
-    if len(bit_list) != REQUIRED_BIT_LENGTH:
-        raise ValueError(f"abnormal frame length {len(bit_list)}")
+    # 長さチェック 長さの合わないものははじく
+    # 元はチェックしていたが今は頭のビットから52bitまでの処理とする
+
+    try:
+        results = []
     
-    # 妥当な長さであったので 13個のnibble にスライス
-    # ここでlsb -> msb に直しておく。詰めるのはタプル(中身をいじらないという意思)
-    nib13_frame = [tuple(bit_list[i*4 : i*4+4][::-1]) for i in range(13)]
+        for i in range(NIBBLE_CHUNK_COUNT):
+            base = i * NIBBLE
+            val = (bits_buffer[base + 3] << 3) | (bits_buffer[base + 2] << 2) | \
+                  (bits_buffer[base + 1] << 1) | bits_buffer[base]
+        
+            # 個別ルールチェック
+            if i in CHECK_RULES:
+                if not CHECK_RULES[i](val):
+                    return None
 
-    # ここから本番バリデーションして，BCD変換
-    # 実際のチェックは validate で実施
-    if validate(nib13_frame):
-        # 通ったのでnibble -> bcd, かつ13Byteの連続した文字列
-        validated = to_bcd_output(nib13_frame)
-        return validated
-    else:
-        # バリテーション失敗
+            # BCDデータ領域チェック
+            # マジックナンバーの意味は validation_ruleみること
+            elif 5 <= i <= 10:
+                if not (0 <= val <= 9):
+                    return None
+        
+            # ALL 1 は F とする
+            results.append("F" if val == 15 else str(val))
+    
+        return "".join(results)
+    
+    except IndexError:
+        # 52bitに満たないバッファが渡された時のセーフティネット
         return None
-
-
-def to_bcd_output(nib13_list):
-    # all 1(15)はF, 他は intへの変換でOK
-    digi_frame_str = ["F" if to_int(nib) == 15 else str(to_int(nib)) for nib in nib13_list]
-
-    return "".join( digi_frame_str)
-
-
-# 以下の関数はリスト内法表記にしたので使わなくなった
-# が，まだデバッグで使うかもなので残しておく
-def reverse_nibble(nib_list):
-    """ lsb -> msb, 或いは msb -> lsb への並び替え
-        arg:    list ["0","1","0","1"]
-        return: list ["1","0","1","0"]   (arg list reversed)
-        order: lsb -> sort to lsb 
-               msb -> sort to msb (default)
-    """
-    # 受け取るのは正しい(問題のない) nibble前提
-    return nib_list[::-1]
-
-
-def to_int(nib):
-    #msb想定
-    return (nib[0] << 3) | (nib[1] << 2) | (nib[2] << 1) | nib[3]
-
-
