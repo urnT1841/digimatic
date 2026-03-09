@@ -1,9 +1,6 @@
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
-from state_process import ERR_DECODE, STATE_ERROR
-
-
 # バリデーションルール
 # d6~d11 (index 5~10) はすべてBCD (0-9)
 CHECK_RULES = {
