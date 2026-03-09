@@ -3,7 +3,7 @@ import sys
 import select
 
 
-from pin_definitions import rx_data, clk, req, req_sw, tx_data, send_request, stop_request, ON, OFF
+from pin_definitions import rx_data, clk, req, req_sw, tx_data, ON, OFF
 from led_switch import led_switch as led
 from led_switch import LED_ON, LED_OFF
 
