@@ -80,7 +80,7 @@ pub fn run_actual_loop() -> Result<(), Box<dyn std::error::Error>> {
                 // それ以外のエラー
                 //切断などの致命的な場合，このループを脱げて外側に出る
                 Err(e) => {
-                    eprintln!("受信エラー種別: {:?} / {}", e.kind(), e);
+                    //eprintln!("受信エラー種別: {:?} / {}", e.kind(), e);
                     if CdcReceiver::is_fatal_error(&e) {
                         break;
                     }

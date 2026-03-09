@@ -23,7 +23,6 @@ pub fn find_pico_port1() -> Result<String, Box<dyn std::error::Error>> {
             SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. })
                 if *vid == PICO_VID && *pid == PICO_PID =>
             {
-                println!("✅ Pico matched! port={}", p.port_name);
                 return Ok(p.port_name.clone());
             }
             _ => continue,
@@ -45,7 +44,6 @@ pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
             SerialPortType::UsbPort(UsbPortInfo { vid, pid, .. })
                 if *vid == PICO_VID && *pid == PICO_PID =>
             {
-                println!("✅ Pico matched! port={}", p.port_name);
                 return Ok(p.port_name.clone());
             }
             _ => continue,
