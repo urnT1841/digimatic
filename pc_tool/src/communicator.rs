@@ -67,13 +67,11 @@ impl CdcReceiver {
     }
 
     pub fn is_fatal_error(err: &std::io::Error) -> bool {
-        use std::io::ErrorKind;
         match err.kind() {
-            ErrorKind::ConnectionAborted
-            | ErrorKind::BrokenPipe
-            | ErrorKind::NotFound
-            | ErrorKind::PermissionDenied => true,
-            _ => false,
+            // 継続可能なエラーだけ明示
+            ErrorKind::TimedOut | ErrorKind::WouldBlock => false,
+            // 未知のエラーも含めて全部致命的
+            _ => true,
         }
     }
 }
@@ -106,7 +104,10 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
 /// portのpathを受け取って Open する
 ///
 pub const BAUD_RATE: u32 = 115200;
-pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>, serialport::Error> {
+pub fn open_cdc_port(
+    path: &str,
+    _baud_rate: u32,
+) -> Result<Box<dyn SerialPort>, serialport::Error> {
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))
         .open()?;
