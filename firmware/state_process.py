@@ -62,7 +62,7 @@ def process_receive_busy(bits_buffer=rx_buffer):
         それも視野に入れておく
     """
 
-    # メソッドをローカル変数に格納（これで辞書検索をスキップし、C言語並みに速くなる）
+    # メソッドをローカル変数に格納（これで辞書検索をスキップ。速くなる）
     _get_clk = clk.value
     _get_dat = rx_data.value
     

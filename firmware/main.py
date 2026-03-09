@@ -11,7 +11,7 @@ gc.collect()
 
 def main():
     """ 
-    StateMachineで受付
+    StateMachineで待ち受け
     各Stateは State_process.pyで定義
     """
 
