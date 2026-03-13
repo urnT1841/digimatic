@@ -2,12 +2,13 @@
 import gc
 
 import pin_definitions as pins
-from state_process import state_map, STATE_IDLE, ERR_NONE
+from state_process import state_map, STATE_IDLE, ERR_NONE, session
 
 
 # 諸々の初期化とか定数確保が終わったらいったんGCを走らせる
 pins.init_hardware()
 gc.collect()
+
 
 def main():
     """ 

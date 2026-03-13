@@ -1,10 +1,8 @@
 import time
 from micropython import const
 
-from pin_definitions import rx_data, clk, req, req_sw, send_request, stop_request, ON, OFF
-from led_switch import led_switch as led
-from led_switch import LED_ON, LED_OFF
-from decoder import BIN_FRAME_LENGTH, validator
+from pin_definitions import rx_data, clk, send_request, stop_request, ON, OFF
+from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host,send_request, stop_request, get_command_from_pc, phy_sw_request
 
 # StateMachine 状態定義
@@ -21,32 +19,39 @@ ERR_TIMEOUT = const(1)  # 信号が来ない
 ERR_READ    = const(2)  # クロックが途中で途切れた、物理的ノイズ  # TODO: 返す部分は未実装
 ERR_DECODE  = const(3)  # バリデーション（FFFFヘッダ等）失敗
 
-
-# 受信用バッファ
-# 当初は 普通のリストを使っていたが,bit受信なので bytearray に変更
-# ついでに52bitはきりが悪いので Byteの倍数として64Bit確保  → 12Bit足す
-
-
-
 class DigimaticSession:
+    # 以下の2つの組み合わせのみを想定
+    MODE_STR = ("MSB", "STR")
+    MODE_BIN = ("LSB", "BIN")
+
     def __init__(self):
         # 設定 (Config)
-        self.mode = "LSB"      # nibble_maker / validator 用
-        self.format = "BIN"    # sender 用
+        self.config = self.MODE_STR      # nibble_maker / validator 用
 
-        # バッファ (Data)
-        self.rx_buffer = bytearray(BIN_FRAME_LENGTH+12)   # 受信生ビット 52Bit+12Bit(Padding分) => 64Bit確保
+        self.rx_buffer = bytearray(BIN_FRAME_LENGTH + 12)   # 受信生ビット 52Bit+12Bit(Padding分) => 64Bit確保
         self.nibbles = []      # 検証済み数値リスト
+    
+    @property
+    def mode(self):
+        return self.config[0]   # MSB or LSB
+    
+    @property
+    def format(self):
+        return self.config[1]   # Str or Bin  PCに送るフォーマット
 
     def reset_data(self):
         """データ受信前にバッファをクリア"""
         self.rx_buffer[:] = b'\x00' * len(self.rx_buffer)
         self.nibbles = []
 
-# グローバルに1つだけ実体を作る
+# ここで実体生成
 session = DigimaticSession()
 
-
+def mode_switcher(cmd):
+    if cmd == "BIN":
+        session.config = session.MODE_BIN
+    elif cmd == "STR":
+        session.config = session.MODE_STR
 
 
 
@@ -62,10 +67,10 @@ def process_idle():
         raise SystemExit
     elif cmd == "REQ":
         next_state = STATE_REQUEST
-    elif cmd == ("BIN", "STR"):
-        # 送信フレームをバイナリにするかSTR(文字列)にするか
-        # デフォルトはSTR
-        frame_switcher(cmd)
+    elif cmd in ("BIN", "STR"):
+        # bit列扱いのモード設定
+        # デフォルトはMSBにしてSTR送信 (classコンストラクタで設定)
+        mode_switcher(cmd)
 
     # 外部スイッチからのReq信号生成受付
     if phy_sw_request():
@@ -76,13 +81,16 @@ def process_idle():
 
 def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
+    # sessionをリセットしてから受信開始
+    session.reset_data()
+    
     send_request()
 
     return STATE_RECEIVE , ERR_NONE
 
 
 @micropython.native
-def process_receive_busy(bits_buffer=rx_buffer):
+def process_receive_busy():
     """
         取りこぼし対策として .native を使う
 
@@ -95,6 +103,7 @@ def process_receive_busy(bits_buffer=rx_buffer):
     _get_dat = rx_data.value
     _ticks_us = time.ticks_us
     _ticks_diff = time.ticks_diff
+    _bits = session.rx_buffer
     
     TIMEOUT_US = 500_000  # 500ms
     
@@ -107,24 +116,25 @@ def process_receive_busy(bits_buffer=rx_buffer):
                 return STATE_ERROR, ERR_TIMEOUT
         while _get_clk() == 1:
             pass # Low待ち（エッジ検知）
-        bits_buffer[i] = _get_dat()
+        _bits[i] = _get_dat()
 
     # ここで止めるのはホントは遅すぎるし処理重い
     stop_request()
     return STATE_VALIDATE, ERR_NONE
 
 
-def process_validate(bits_buffer=rx_buffer):
+def process_validate():
     """
     StateMachine の作法に合わせるバリデーション処理 (ラッパー)
     """
     # 返値は成功時 デコードされた文字列 -> FFFF0~
     #      失敗時は None この時はErr Statusへ
-    validated = validator(bits_buffer)
+    validated = validator(session.rx_buffer, session.mode)
     
     if validated is not None:
         # 成功：ホストへ送って IDLE へ
-        send_to_host(validated)
+        send_frame = decode_frame(validated, session.mode)
+        send_to_host(send_frame)
         return STATE_IDLE, ERR_NONE
     else:
         # 失敗：エラー状態へ

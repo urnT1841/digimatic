@@ -1,12 +1,7 @@
-import time
 import sys
 import select
 
-
-from pin_definitions import rx_data, clk, req, req_sw, tx_data, ON, OFF
-from led_switch import led_switch as led
-from led_switch import LED_ON, LED_OFF
-
+from pin_definitions import req_sw
 
 
 def get_command_from_pc():
@@ -16,7 +11,6 @@ def get_command_from_pc():
     if select.select([sys.stdin], [], [], 0)[0]:
         return sys.stdin.readline().strip()
     return None
-
 
 
 last_sw_state = 1  # 1:押されていない , 0: 押下
@@ -40,6 +34,13 @@ def phy_sw_request():
     return sw_pressed
 
 
-def send_to_host(digi_frame):
-    # USB-CDC (print) で Host PC へ
-    print(digi_frame)
+def send_to_host(data):
+    """
+    data が文字列なら print (USB-CDC経由)
+    data がバイナリなら sys.stdout.buffer.write (バイナリ直送)
+    """
+    if isinstance(data, str):
+        print(data) # 改行込みで送信
+    else:
+        sys.stdout.buffer.write(data) # バイナリをそのまま流す
+        sys.stdout.buffer.flush()
