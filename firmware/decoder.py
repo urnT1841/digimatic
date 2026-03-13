@@ -2,6 +2,10 @@
 import struct
 
 
+BIN_FRAME_LENGTH = 52
+
+
+
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
 
@@ -29,7 +33,7 @@ LSB_CHECK_RULES = {
 }
 
 
-def nibble_maker(bits, mode="LSB"):
+def nibble_maker(bits, mode="MSB"):
     """
     bits: [b0, b1, b2, b3] (b0が最初、b3が最後)
     """
@@ -48,7 +52,7 @@ def nibble_maker(bits, mode="LSB"):
         # 例: [1, 0, 0, 0] が届いたら、それを 1 (0001) に変換する
         return b[0] | (b[1] << 1) | (b[2] << 2) | (b[3] << 3)
 
-def validator(bits_buffer, mode="LSB"):
+def validator(bits_buffer, mode="MSB"):
     rules = LSB_CHECK_RULES if mode == "LSB" else MSB_CHECK_RULES
     nibbles = []
     try:
