@@ -13,6 +13,7 @@ STATE_REQUEST = const(1)
 STATE_RECEIVE = const(2)
 STATE_VALIDATE = const(3)
 STATE_ERROR = const(4)
+STATE_SWITCH = const(5)
 
 #エラー定義
 ERR_NONE = const(0)
@@ -24,7 +25,30 @@ ERR_DECODE  = const(3)  # バリデーション（FFFFヘッダ等）失敗
 # 受信用バッファ
 # 当初は 普通のリストを使っていたが,bit受信なので bytearray に変更
 # ついでに52bitはきりが悪いので Byteの倍数として64Bit確保  → 12Bit足す
-rx_buffer = bytearray(BIN_FRAME_LENGTH+12)
+
+
+
+class DigimaticSession:
+    def __init__(self):
+        # 設定 (Config)
+        self.mode = "LSB"      # nibble_maker / validator 用
+        self.format = "BIN"    # sender 用
+
+        # バッファ (Data)
+        self.rx_buffer = bytearray(BIN_FRAME_LENGTH+12)   # 受信生ビット 52Bit+12Bit(Padding分) => 64Bit確保
+        self.nibbles = []      # 検証済み数値リスト
+
+    def reset_data(self):
+        """データ受信前にバッファをクリア"""
+        self.rx_buffer[:] = b'\x00' * len(self.rx_buffer)
+        self.nibbles = []
+
+# グローバルに1つだけ実体を作る
+session = DigimaticSession()
+
+
+
+
 
 def process_idle():
     """  待ち受け    """    
@@ -38,6 +62,10 @@ def process_idle():
         raise SystemExit
     elif cmd == "REQ":
         next_state = STATE_REQUEST
+    elif cmd == ("BIN", "STR"):
+        # 送信フレームをバイナリにするかSTR(文字列)にするか
+        # デフォルトはSTR
+        frame_switcher(cmd)
 
     # 外部スイッチからのReq信号生成受付
     if phy_sw_request():
@@ -117,3 +145,4 @@ state_map = {
     STATE_VALIDATE: process_validate,
     STATE_ERROR: process_err_handler,         # 未実装
 }
+
