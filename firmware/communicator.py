@@ -1,7 +1,7 @@
 import sys
 import select
 
-from pin_definitions import req_sw
+from pin_definitions import req_sw, data_btn
 
 
 def get_command_from_pc():
@@ -13,20 +13,27 @@ def get_command_from_pc():
     return None
 
 
-last_sw_state = 1  # 1:押されていない , 0: 押下
+# 外部ボタンのリストと初期状態設定 (PullUpされているのでON(1) がデフォ )
+# 1:押されていない , 0: 押下
+buttons = [req_sw, data_btn]
+last_sw_states = [1] * len(buttons)
+
 def phy_sw_request():
-    global last_sw_state
     """
-      Databボタンやタクトスイッチなど外部からReqを出せるように
+    Databボタンやタクトスイッチなど外部からReqを出せるように
+    pull-upているPinに対してスイッチが押されることでGNDへ落ちる
+      → send_request を送る (mainで State_request になってprocess_requestへ入る)
     """
-    # pull-upているPinに対してスイッチが押されることでGNDへ落ちる
-    # → send_request を送る (mainで State_request になってprocess_requestへ入る)
+    global last_sw_states
+    sw_pressed = False
 
-    current_sw_state = req_sw.value()
-
-    # 離れていて押した最初だけ反応
-    sw_pressed = last_sw_state == 1 and current_sw_state == 0
-    last_sw_state = current_sw_state
+    for i in range(len(buttons)):
+        current_val = buttons[i].value()
+        # 立ち下がりエッジ (1 -> 0) を検知
+        if last_states[i] == 1 and current_val == 0:
+            sw_pressed = True
+        
+        last_states[i] = current_val
 
     # チャタリング対策は不要
     #  Trueの場合(押下検知) は Stateが変更されるのでちゃたってもここのロジックを通らない
