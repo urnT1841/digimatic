@@ -30,10 +30,10 @@ def phy_sw_request():
     for i in range(len(buttons)):
         current_val = buttons[i].value()
         # 立ち下がりエッジ (1 -> 0) を検知
-        if last_states[i] == 1 and current_val == 0:
+        if last_sw_states[i] == 1 and current_val == 0:
             sw_pressed = True
         
-        last_states[i] = current_val
+        last_sw_states[i] = current_val
 
     # チャタリング対策は不要
     #  Trueの場合(押下検知) は Stateが変更されるのでちゃたってもここのロジックを通らない
