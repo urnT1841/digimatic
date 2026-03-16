@@ -28,8 +28,8 @@ def main():
                 current_state = STATE_IDLE
 
     except KeyboardInterrupt:
-        # TODO: 未実装
-        pass
+        # Finnalyに飛ばすだけ
+        raise SystemExit
         # print("Interrrupt by user (ctlr-c etc)")
     
     finally:
