@@ -19,8 +19,8 @@ impl MyAppData {
 impl eframe::App for MyAppData {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // --- データ受信チェック ---
-        // try_recv() は「データがあれば取る、なければすぐ次へ」という動きをします
-        // while を使うことで、溜まっているデータをすべて処理できます
+        // try_recv() は「データがあれば取る、なければすぐ次へ」という動き
+        // while を使うことで、溜まっているデータをすべて処理する
         while let Ok(new_val) = self.receiver.try_recv() {
             self.dice_value = new_val;
             // データが更新されたので、次のフレームを待たずに再描画を予約する
@@ -46,11 +46,9 @@ impl eframe::App for MyAppData {
 }
 
 fn main() -> eframe::Result {
-    // 1. 糸電話（チャネル）を作成。u32型のデータをやり取りします。
     let (tx, rx) = std::sync::mpsc::channel::<u32>();
 
-    // 2. 裏方スレッドを起動
-    // move をつけることで、tx（送信機）の所有権をスレッドの中に移します
+    // スレッドを起動  move をつけることで、tx（送信機）の所有権をスレッドの中に移します
     std::thread::spawn(move || {
         loop {
             // 自作の「インチキサイコロ」を振る
