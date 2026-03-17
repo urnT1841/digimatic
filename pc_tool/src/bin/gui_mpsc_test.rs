@@ -1,15 +1,16 @@
-use rand::Rng;
 use std::sync::mpsc::Receiver;
+use std::time::Duration;
+use rand::Rng;
 use eframe::egui;
 
 struct MyAppData {
     dice_value: u32,
-    receiver: std::sync::mpsc::Receiver<u32>, // 受信機を格納
+    receiver: Receiver<u32>, // 受信機を格納
 }
 
 impl MyAppData {
     // 起動時に受信機を受け取るための専用の初期化関数
-    fn with_receiver(rx: std::sync::mpsc::Receiver<u32>) -> Self {
+    fn with_receiver(rx: Receiver<u32>) -> Self {
         Self {
             dice_value: 0,
             receiver: rx,
@@ -39,9 +40,9 @@ impl eframe::App for MyAppData {
                         .strong(),
                 );
             });
-            // ここのほうが書き換えが強制される？
-            ctx.request_repaint();
         });
+        // 次の update を1秒後に予約
+        ctx.request_repaint_after(Duration::from_secs(1));
     }
 }
 
