@@ -68,12 +68,33 @@ fn main() -> eframe::Result {
     // 3. アプリ起動
     let options = eframe::NativeOptions::default();
     eframe::run_native(
-        "Digimatic Sim",
+        "Digimatic Display v0.33",
         options,
-        // 受信機（rx）を構造体に託す
-        Box::new(|_cc| Ok(Box::new(MyAppData::with_receiver(rx)))),
+        Box::new(|cc| {
+            let mut fonts = egui::FontDefinitions::default();
+
+            fonts.font_data.insert(
+                "my_font".to_owned(),
+                // .into() を足すことで FontData -> Arc<FontData> に変換
+                egui::FontData::from_static(include_bytes!("C:\\Windows\\Fonts\\msmincho.ttc"))
+                    .into(),
+            );
+            // 3. プロポーショナルフォント（通常の文字）の最優先に設定
+            fonts
+                .families
+                .get_mut(&egui::FontFamily::Proportional)
+                .unwrap()
+                .insert(0, "my_font".to_owned());
+
+            // 4. コンテキストに反映
+            cc.egui_ctx.set_fonts(fonts);
+
+            Ok(Box::new(MyAppData::with_receiver(rx)))
+        }),
     )
 }
+
+
 fn big_num_dice() -> u32 {
     let mut rng = rand::rng();
     let dice = rng.random_range(1..=150_00);
