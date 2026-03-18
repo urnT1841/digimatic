@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
+[[bin]]
+name = "gui"
+path = "src/gui_main.rs"
+
 [dependencies]
 chrono = "0.4.43"
 csv = "1.4.0"
