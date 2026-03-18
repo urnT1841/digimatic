@@ -1,5 +1,5 @@
-use std::sync::mpsc::Receiver;
 use eframe::egui;
+use std::sync::mpsc::Receiver;
 
 use digimatic::sim::generator::generator;
 
@@ -9,14 +9,35 @@ struct DisplayApp {
 }
 
 impl DisplayApp {
-    // 起動時に受信機を受け取るための専用の初期化関数
-    fn with_receiver(rx: Receiver<f64>) -> Self {
+    // 初期化実施関数
+    pub fn new(cc: &eframe::CreationContext<'_>, rx: std::sync::mpsc::Receiver<f64>) -> Self {
+        Self::setup_custom_fonts(&cc.egui_ctx);
+
         Self {
             measurement_data: 0.0,
             receiver: rx,
         }
     }
+
+    // font設定
+    fn setup_custom_fonts(ctx: &egui::Context) {
+        let mut fonts = egui::FontDefinitions::default();
+
+        fonts.font_data.insert(
+            "my_font".to_owned(),
+            egui::FontData::from_static(include_bytes!(r"C:\Windows\Fonts\\msmincho.ttc")).into(),
+        );
+
+        fonts
+            .families
+            .get_mut(&egui::FontFamily::Proportional)
+            .unwrap()
+            .insert(0, "my_font".to_owned());
+
+        ctx.set_fonts(fonts);
+    }
 }
+
 impl eframe::App for DisplayApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // データ受信チェック
@@ -59,24 +80,14 @@ fn main() -> eframe::Result {
                 loop {
                     let val = generator();
                     if tx.send(val).is_err() {
-                         break;
+                        break;
                     }
                     ctx_for_thread.request_repaint();
                     std::thread::sleep(std::time::Duration::from_millis(1200));
                 }
             });
-
-            // フォントの設定
-            let mut fonts = egui::FontDefinitions::default();
-            fonts.font_data.insert(
-                "my_font".to_owned(),
-                egui::FontData::from_static(include_bytes!("C:\\Windows\\Fonts\\msmincho.ttc")).into(),
-            );
-            fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "my_font".to_owned());
-            cc.egui_ctx.set_fonts(fonts);
-
             // rxを送って窓開始
-            Ok(Box::new(DisplayApp::with_receiver(rx)))
+            Ok(Box::new(DisplayApp::new(cc, rx)))
         }),
     )
 }
