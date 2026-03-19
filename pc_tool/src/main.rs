@@ -12,7 +12,11 @@ fn main() {
 
     let result = match MODE {
         "sim" => execute_sim::run_simmulation_loop(),
-        "actual" => execute_communicate::run_actual_loop(),
+        "actual" => {
+            // guiへの窓口 acutual_loopの引数で必要なので個々で生成
+            let (tx, _rx) = std::sync::mpsc::channel::<f64>();
+            execute_communicate::run_actual_loop(tx)
+        }
         _ => Err("なんかエラー".into()),
     };
 

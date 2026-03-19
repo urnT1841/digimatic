@@ -58,7 +58,12 @@ impl eframe::App for DisplayApp {
             ui.vertical_centered(|ui| {
                 ui.label(egui::RichText::new("計測中").size(20.0));
 
-                let val_mm = self.measurement_data as f64 / 100.0;
+                // sim の generator 空を直接受けるときは100で割る必要アリ
+                //let val_mm = self.measurement_data as f64 / 100.0;
+
+                // 本番ノギスデータは最終状態で送られてくるのでそのまま
+                let val_mm = self.measurement_data;
+
                 ui.label(
                     egui::RichText::new(format!("{:.2} mm", val_mm))
                         .size(120.0)
@@ -78,17 +83,19 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             // 送受信窓口
             let (tx, rx) = std::sync::mpsc::channel::<f64>();
-            let ctx_for_thread = cc.egui_ctx.clone();
 
             // スレッド起動
             std::thread::spawn(move || {
                 loop {
-                    let val = generator();
-                    if tx.send(val).is_err() {
-                        break;
+                    let tx_clone = tx.clone();
+                    // let val = generator();
+                    // if tx.send(val).is_err() {
+                    //     break;
+                    // }
+                    // ノギスと接続させて表示(本番)
+                    if let Err(e) = digimatic::execute_communicate::run_actual_loop(tx_clone) {
+                        eprintln!("通信エラー： {} ", e);
                     }
-                    ctx_for_thread.request_repaint();
-                    std::thread::sleep(std::time::Duration::from_millis(1200));
                 }
             });
             // rxを送って窓開始
