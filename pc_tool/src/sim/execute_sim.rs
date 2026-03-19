@@ -15,7 +15,7 @@ use crate::sim::frame_array_builder::build_frame_array;
 use crate::sim::generator::generator;
 use crate::sim::port_prepare::port_prepare;
 use crate::sim::sender::{SendMode, send};
-use crate::validater_rx_frame::parse_rx_frame;
+use crate::validater::parse_rx_frame;
 
 pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
     // ポート準備

@@ -17,7 +17,7 @@ fn main() -> eframe::Result {
             fonts.font_data.insert(
                 "my_font".to_owned(),
                 // .into() を足すことで FontData -> Arc<FontData> に変換
-                egui::FontData::from_static(include_bytes!("C:\\Windows\\Fonts\\msmincho.ttc"))
+                egui::FontData::from_static(include_bytes!("../../assets/UDEVGothic35LG-Regular.ttf"))
                     .into(),
             );
             // 3. プロポーショナルフォント（通常の文字）の最優先に設定
