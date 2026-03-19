@@ -35,6 +35,7 @@ PC (Linux / Windows)
   - rp pico :firmware 
               {main.py, pin_definitions.py, led_switch.py, state_process.py, 
                decoder.py, communicator.py}
+               
             をPicoへ転送してください。picoを再起動するとmainが起動します。
 
 
@@ -50,6 +51,6 @@ PC (Linux / Windows)
   - レベルシフタへの電源供給：LDO AP2112
 
 ## TODO
-[ ] シリアル通信の統合: generator を CdcReceiver に差し替え、実機の数値を DisplayApp に流す。
-[ ] 設定UIの実装: フォントサイズや色の変更を egui のウィンドウから行えるようにする。
-[ ] 単位表示の追加: 数値の横に "mm" などの単位を添える
+- [ ] シリアル通信の統合: generator を CdcReceiver に差し替え、実機の数値を DisplayApp に流す。
+- [ ] 設定UIの実装: フォントサイズや色の変更を egui のウィンドウから行えるようにする。
+- [ ] 単位表示の追加: 数値の横に "mm" などの単位を添える。
