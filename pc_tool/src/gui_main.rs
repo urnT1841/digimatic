@@ -8,6 +8,8 @@ struct DisplayApp {
     receiver: Receiver<f64>, // 受信機を格納
 }
 
+const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
+
 impl DisplayApp {
     // 初期化実施関数
     pub fn new(cc: &eframe::CreationContext<'_>, rx: std::sync::mpsc::Receiver<f64>) -> Self {
@@ -24,16 +26,19 @@ impl DisplayApp {
         let mut fonts = egui::FontDefinitions::default();
 
         fonts.font_data.insert(
-            "my_font".to_owned(),
-            egui::FontData::from_static(include_bytes!(r"C:\Windows\Fonts\\msmincho.ttc")).into(),
+            "digital_num".to_owned(),
+            egui::FontData::from_static(FONT_DATA).into(),
+            //egui::FontData::from_static(include_bytes!("../assets/IBMPlexSansJP-SemiBold.ttf")).into(),
         );
 
-        fonts
-            .families
-            .get_mut(&egui::FontFamily::Proportional)
-            .unwrap()
-            .insert(0, "my_font".to_owned());
-
+        // 数字をこのフォントで出すために、全ファミリーの最優先に設定
+        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace].iter_mut() {
+            fonts
+                .families
+                .get_mut(family)
+                .unwrap()
+                .insert(0, "digital_num".to_owned());
+        }
         ctx.set_fonts(fonts);
     }
 }
