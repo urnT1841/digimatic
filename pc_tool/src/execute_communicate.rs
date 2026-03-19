@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
 use crate::logger::*;
-use crate::scanner_of_pico_connection::find_pico_port;
-use crate::validater_rx_frame::parse_rx_frame;
+use crate::scanner::find_pico_port;
+use crate::validater::parse_rx_frame;
 
 ///
 /// pico 実機を探して接続，USB-CDCで待ち受けデータ受信

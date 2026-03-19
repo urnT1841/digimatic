@@ -85,7 +85,7 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
     let start_time = std::time::Instant::now();
 
     loop {
-        if let Ok(path) = crate::scanner_of_pico_connection::find_pico_port() {
+        if let Ok(path) = crate::scanner::find_pico_port() {
             return Ok(path);
         }
         let elapsed = start_time.elapsed();
