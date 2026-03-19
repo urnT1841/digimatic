@@ -38,7 +38,7 @@ impl RxDataLog {
 }
 
 /// 測定データ保存用
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct MeasurementLog {
     pub timestamp: String,
     pub val: f64,
@@ -61,5 +61,11 @@ impl MeasurementLog {
         wtr.serialize(self)?;
         wtr.flush()?;
         Ok(())
+    }
+
+    // Display GUI へ送る分 (測定データだけ)
+    pub fn display_data(&self) -> f64 {
+        let disp = self.val.clone(); // .clone()はほんとは不要 (f64なのでコピーされる)
+        disp
     }
 }
