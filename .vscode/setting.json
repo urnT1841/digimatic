@@ -1,5 +1,10 @@
 {
     "rust-analyzer.linkedProjects": [
         "./pc_tool/Cargo.toml"
+    ],
+
+    "python.analysis.extraPaths": [
+        "./firmware",
+        "./firmware/diagnostics"
     ]
 }
