@@ -67,6 +67,8 @@ def process_idle():
         raise SystemExit
     elif cmd == "REQ":
         next_state = STATE_REQUEST
+    elif cmd == "DIAG":
+        next_tsate = STATE_DIAG
     elif cmd in ("BIN", "STR"):
         # bit列扱いのモード設定
         # デフォルトはMSBにしてSTR送信 (classコンストラクタで設定)
@@ -75,6 +77,9 @@ def process_idle():
     # 外部スイッチからのReq信号生成受付
     if phy_sw_request():
         next_state = STATE_REQUEST
+
+    time.sleep(1)
+    next_state = STATE_REQUEST
 
     return next_state , ERR_NONE
 
@@ -140,6 +145,10 @@ def process_validate():
         # 失敗：エラー状態へ
         return STATE_ERROR, ERR_DECODE
 
+def process_diag_handler():
+    # dig mode へはいる
+
+    return STATE_IDEL, ERR_NONE
 
 
 def process_err_handler():
@@ -153,6 +162,7 @@ state_map = {
     STATE_REQUEST: process_request,
     STATE_RECEIVE: process_receive_busy, # 引数がある場合はlambdaで包む
     STATE_VALIDATE: process_validate,
-    STATE_ERROR: process_err_handler,         # 未実装
+    STATE_ERROR: process_err_handler,         # TODO:未実装
+    STATE_DIAG: process_diag_handler,
 }
 
