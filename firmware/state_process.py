@@ -4,6 +4,7 @@ from micropython import const
 from pin_definitions import rx_data, clk, send_request, stop_request, ON, OFF
 from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host, get_command_from_pc, phy_sw_request
+import diagnostics.diag as daig
 
 # StateMachine 状態定義
 STATE_IDLE = const(0)
@@ -12,6 +13,7 @@ STATE_RECEIVE = const(2)
 STATE_VALIDATE = const(3)
 STATE_ERROR = const(4)
 STATE_SWITCH = const(5)
+STATE_DIAG = const(6)
 
 #エラー定義
 ERR_NONE = const(0)
@@ -68,7 +70,7 @@ def process_idle():
     elif cmd == "REQ":
         next_state = STATE_REQUEST
     elif cmd == "DIAG":
-        next_tsate = STATE_DIAG
+        next_state = STATE_DIAG
     elif cmd in ("BIN", "STR"):
         # bit列扱いのモード設定
         # デフォルトはMSBにしてSTR送信 (classコンストラクタで設定)
@@ -147,8 +149,12 @@ def process_validate():
 
 def process_diag_handler():
     # dig mode へはいる
+    print("\n-- Enter Diagnostic Mode --")
+    diag.main_loop()
+    # dig mode から出てくる
+    print("\n -- Finish Diagnostic Mode -- ")
 
-    return STATE_IDEL, ERR_NONE
+    return STATE_IDLE, ERR_NONE
 
 
 def process_err_handler():
