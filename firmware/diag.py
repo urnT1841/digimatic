@@ -146,15 +146,17 @@ def main_loop():
         show_menu()
         sel = input("Select > ")
 
-        # キーで検索
-        match = next((func for key, label, func in MENU_OPTIONS if key == sel), None)
-        
-        if match:
-            match()
+        # 検索と呼び出しを分ける
+        matched = [(key, func) for key, label, func in MENU_OPTIONS if key == sel]
+
+        if matched:
+            key, func = matched[0]
+            func()
             if sel == "99":
                 break
         else:
             print("Invalid.")
+
 
 
 # テスト実行用
