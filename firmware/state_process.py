@@ -81,8 +81,7 @@ def process_idle():
     if phy_sw_request():
         next_state = STATE_REQUEST
 
-    time.sleep(1)
-    next_state = STATE_REQUEST
+    time.sleep_ms(100)
 
     return next_state , ERR_NONE
 
