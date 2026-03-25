@@ -1,7 +1,15 @@
 import machine
-import utils
+
+import time
 import pin_register as pr
 
+def get_reg_val(base, offset):
+    return machine.mem32[base + offset]
+
+# 現状の全GPIOの状態（32bitの塊）をそのまま返す
+def get_raw_gpio_in():
+    # SIO_BASE + GPIO_IN_OFFSET を見に行く
+    return machine.mem32[pin_register.SIO_BASE + pin_register.GPIO_IN_OFFSET]
 
 
 def pins_state():
@@ -32,7 +40,7 @@ def pin_setting_menu():
     
     # ReqPinへのガード処理
     # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
-    # 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
+    #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
     if gpio_num == pr.MAP["D8"]: # または直接 pr.PIN_REQ と比較
         print(f"⚠️  GUARD: {label} (REQ) cannot be Pull-up/down via this menu.")
         print("Reason: To prevent unintended request signals to the caliper.")
@@ -42,6 +50,7 @@ def pin_setting_menu():
     print(" 1: INPUT (None)")
     print(" 2: INPUT (Pull-Up)")
     print(" 3: INPUT (Pull-Down)")
+    print(" 4: Moving (repot Or/OFf)")
     mode = input("Select Mode > ")
 
     try:
@@ -54,8 +63,46 @@ def pin_setting_menu():
         elif mode == "3":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
+        elif mode == "4":
+            print("Pin stat is moving (repoat on/off)")
+            pin_repeat(gpio_num)
     except Exception as e:
         print(f"Error: {e}")
+
+
+def pin_repeat(label, gpio_num):
+
+    print(f"\n-- Voltage/Logic Test: {label} (GPIO{gpio_num}) --")
+    print("[Enter]: Toggle 3.3V/0V (Manual)")
+    print("[数字] : Auto Loop (sec)")
+    print("[q]    : Back to Menu")
+    
+    p = machine.Pin(gpio_num, machine.Pin.OUT)
+    val = 0
+    p.value(val)
+
+    while True:
+        v_str = "3.3V" if val else "0V"
+        cmd = input(f"({label} Output: {v_str}) > ").strip().lower()
+
+        if cmd == 'q':
+            p.init(mode=machine.Pin.IN) 
+            break
+            
+        try:
+            sec = float(cmd)
+            print(f"Looping {v_str} every {sec}s... Ctrl+C to stop.")
+            try:
+                while True:
+                    val = 1 - val
+                    p.value(val)
+                    time.sleep(sec)
+            except KeyboardInterrupt:
+                continue
+
+        except ValueError:
+            val = 1 - val
+            p.value(val)
 
 
 def exit_diag():
@@ -67,6 +114,7 @@ def exit_diag():
 MENU_OPTIONS = {
     "1": ("Pin状態確認", pins_state),
     "2": ("Pin 設定", pin_setting_menu), # 次に作る関数
+    "3": ("Pin状態を動的に変化", pin_repeat),
     "99": ("終了", exit_diag)
 }
 
