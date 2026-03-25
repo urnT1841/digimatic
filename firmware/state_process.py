@@ -4,7 +4,7 @@ from micropython import const
 from pin_definitions import rx_data, clk, send_request, stop_request, ON, OFF
 from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host, get_command_from_pc, phy_sw_request
-import diagnostics.diag as daig
+import diagnostics.diag as diag
 
 # StateMachine 状態定義
 STATE_IDLE = const(0)
