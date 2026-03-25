@@ -97,15 +97,28 @@ def pin_repeat(label, gpio_num):
             break
             
         try:
-            sec = float(cmd)
-            print(f"Looping {v_str} every {sec}s... Ctrl+C to stop.")
-            try:
-                while True:
-                    val = 1 - val
-                    p.value(val)
+            print(f"Looping every {sec}s... [s + Enter]で停止")
+
+            running = [True]
+
+            def loop():
+                v = [0]
+                while running[0]:
+                    v[0] = 1 - v[0]
+                    p.value(v[0])
                     time.sleep(sec)
-            except KeyboardInterrupt:
-                continue
+                    p.value(0)
+
+            _thread.start_new_thread(loop, ())
+
+            while True:
+                cmd = input()
+                if cmd.strip().lower() == 's':
+                    running[0] = False
+                    time.sleep(sec)  # スレッドが止まるのを待つ
+                    break
+                else:
+                    print("'s' + Enterで停止")
 
         except ValueError:
             val = 1 - val
@@ -127,6 +140,7 @@ def exit_diag():
 
 
 # メニュー構成を定義
+# 辞書だとメニュー順が崩れたのでタプルで斉実装
 MENU_OPTIONS = [
     ("1",  "Pin状態確認",          pins_state),
     ("2",  "Pin設定",              pin_setting_menu),

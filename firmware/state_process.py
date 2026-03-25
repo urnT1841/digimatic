@@ -6,6 +6,7 @@ from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host, get_command_from_pc, phy_sw_request
 import diag as diag
 
+
 # StateMachine 状態定義
 STATE_IDLE = const(0)
 STATE_REQUEST = const(1)
