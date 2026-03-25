@@ -24,39 +24,45 @@ def pins_state():
         val = (all_bits >> pos) & 1
         
         status = "HIGH" if val else "LOW "
-        print(f"{label:4s} (GPIO{pos:02d}): {status}")
+        print(f"{label:4s} (GPIO{pos:02d}): {status}  [{(all_bits >> pos) & 1}]")
 
     return 0
+
+def select_pin(guard_req=True):
+    label = input("Target Pin (e.g., D10) > ").strip().upper()
+    if label not in pr.MAP:
+        print("Invalid Pin Label.")
+        return None, None
+
+    gpio_num = pr.MAP[label]
+
+    # ReqPinへのガード処理
+    # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
+    #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
+    if guard_req and gpio_num == pr.MAP["D8"]:
+        print(f"⚠️  GUARD: {label} (REQ) is restricted.")
+        return None, None
+
+    return label, gpio_num
 
 
 def pin_setting_menu():
     print("\n--- Pin Configuration ---")
-    label = input("Target Pin (e.g., D10) > ").strip().upper()
     
-    if label not in pr.MAP:
-        print("Invalid Pin Label.")
-        return
-
-    gpio_num = pr.MAP[label]
-    
-    # ReqPinへのガード処理
-    # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
-    #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
-    if gpio_num == pr.MAP["D8"]: # または直接 pr.PIN_REQ と比較
-        print(f"⚠️  GUARD: {label} (REQ) cannot be Pull-up/down via this menu.")
-        print("Reason: To prevent unintended request signals to the caliper.")
+    label, gpio_num = select_pin()
+    if label is None:
         return
 
     print(f"Configuring {label} (GPIO{gpio_num})")
     print(" 1: INPUT (None)")
     print(" 2: INPUT (Pull-Up)")
     print(" 3: INPUT (Pull-Down)")
-    print(" 4: Moving (repot Or/OFf)")
+    print(" 4: Moving (repeat Or/OFf)")
     mode = input("Select Mode > ")
 
     try:
         if mode == "1":
-            machine.Pin(gpio_num, machine.Pin.IN, None)
+            machine.Pin(gpio_num, machine.Pin.IN)
             print(f"DONE: {label} set to INPUT")
         elif mode == "2":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_UP)
@@ -65,7 +71,7 @@ def pin_setting_menu():
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
         elif mode == "4":
-            print("Pin stat is moving(w/o PU/PD) (repoat on/off)")
+            print("Pin stat is moving(w/o PU/PD) (repeat on/off)")
             pin_repeat(label, gpio_num)
     except Exception as e:
         print(f"Error: {e}")
@@ -106,16 +112,25 @@ def pin_repeat(label, gpio_num):
             p.value(val)
 
 
+def pin_repeat_menu():
+    # pin_repeatは引数有なのでラッパーでくるむ
+    label, gpio_num = select_pin(guard_req=False)
+    if label is None:
+        return
+    pin_repeat(label, gpio_num)
+
+
 def exit_diag():
     print("Exiting...")
     # returnで呼び出し元へ戻す
     return
 
+
 # メニュー構成を定義
 MENU_OPTIONS = {
     "1": ("Pin状態確認", pins_state),
-    "2": ("Pin 設定", pin_setting_menu), # 次に作る関数
-    "3": ("Pin状態を動的に変化", pin_repeat),
+    "2": ("Pin 設定", pin_setting_menu),
+    "3": ("Pin状態を動的に変化", pin_repeat_menu),
     "99": ("終了", exit_diag)
 }
 
@@ -131,8 +146,12 @@ def main_loop():
         sel = input("Select > ")
 
         if sel in MENU_OPTIONS:
-            # 辞書から関数を取り出して実行！
-            MENU_OPTIONS[sel][1]()
+            if sel == "99":
+                MENU_OPTIONS[sel][1]()
+                break
+            else:
+                # 辞書から関数を取り出して実行！
+                MENU_OPTIONS[sel][1]()
         else:
             print("Invalid.")
 
