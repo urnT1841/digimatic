@@ -3,19 +3,20 @@ import machine
 import time
 import pin_register as pr
 
+
 def get_reg_val(base, offset):
     return machine.mem32[base + offset]
 
 # 現状の全GPIOの状態（32bitの塊）をそのまま返す
 def get_raw_gpio_in():
     # SIO_BASE + GPIO_IN_OFFSET を見に行く
-    return machine.mem32[pin_register.SIO_BASE + pin_register.GPIO_IN_OFFSET]
+    return machine.mem32[pr.SIO_BASE + pr.GPIO_IN_OFFSET]
 
 
 def pins_state():
     print("=== XIAO RP2040 Pin Status ===")
     # 32bitの塊を1回だけ取得
-    all_bits = utils.get_raw_gpio_in()
+    all_bits = get_raw_gpio_in()
 
     # MAP (D0-D10) に登録されている順に表示
     for label, pos in pr.MAP.items():
@@ -64,8 +65,8 @@ def pin_setting_menu():
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
         elif mode == "4":
-            print("Pin stat is moving (repoat on/off)")
-            pin_repeat(gpio_num)
+            print("Pin stat is moving(w/o PU/PD) (repoat on/off)")
+            pin_repeat(label, gpio_num)
     except Exception as e:
         print(f"Error: {e}")
 
