@@ -3,7 +3,7 @@ import machine
 import time
 import sys
 import select
-import pin_register as pr
+import pin_definitions as pdef
 
 
 def get_reg_val(base, offset):
@@ -12,7 +12,7 @@ def get_reg_val(base, offset):
 # 現状の全GPIOの状態（32bitの塊）をそのまま返す
 def get_raw_gpio_in():
     # SIO_BASE + GPIO_IN_OFFSET を見に行く
-    return machine.mem32[pr.SIO_BASE + pr.GPIO_IN_OFFSET]
+    return machine.mem32[pdef.SIO_BASE + pdef.GPIO_IN_OFFSET]
 
 
 def pins_state():
@@ -21,7 +21,7 @@ def pins_state():
     all_bits = get_raw_gpio_in()
 
     # MAP (D0-D10) に登録されている順に表示
-    for label, pos in pr.MAP.items():
+    for label, pos in pdef.MAP.items():
         # 塊から特定のビット(pos)を抽出
         val = (all_bits >> pos) & 1
         
@@ -32,16 +32,16 @@ def pins_state():
 
 def select_pin(guard_req=True):
     label = input("Target Pin (e.g., D10) > ").strip().upper()
-    if label not in pr.MAP:
+    if label not in pdef.MAP:
         print("Invalid Pin Label.")
         return None, None
 
-    gpio_num = pr.MAP[label]
+    gpio_num = pdef.MAP[label]
 
     # ReqPinへのガード処理
     # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
     #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
-    if guard_req and gpio_num == pr.MAP["D8"]:
+    if guard_req and gpio_num == pdef.MAP["D8"]:
         print(f"⚠️  GUARD: {label} (REQ) is restricted.")
         return None, None
 
@@ -146,7 +146,7 @@ def exit_diag():
 
 
 # メニュー構成を定義
-# 辞書だとメニュー順が崩れたのでタプルで斉実装
+# 辞書だとメニュー順が崩れたのでタプルで再実装
 MENU_OPTIONS = [
     ("1",  "Pin状態確認",          pins_state),
     ("2",  "Pin設定",              pin_setting_menu),

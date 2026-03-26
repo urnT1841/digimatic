@@ -3,17 +3,35 @@ import machine
 from micropython import const
 
 # seeed studio xiao rp2040 pin difinition
-D0 = 26
-D1 = 27
-D2 = 28
-D3 = 29
-D4 = 6
-D5 = 7
-D6 = 0
-D7 = 1
-D8 = 2
-D9 = 4
-D10 = 3
+# GPIO pin と pin_no の対応
+MAP = {
+    "D0": 26, "D1": 27, "D2": 28, "D3": 29,
+    "D4": 6,  "D5": 7,  "D6": 0,  "D7": 1,
+    "D8": 2,  "D9": 4,  "D10": 3
+}
+
+### レジスタ情報は rp2040 datasheet の下記の賞を参照
+### 2.2 Address Map
+### 2.3 Processer subsystem
+### 2.19 GPIO
+# Base Addresses
+SIO_BASE        = const(0xd0000000)
+PADS_BANK0_BASE = const(0x4001c000)
+
+# Offsets
+GPIO_IN_OFFSET  = const(0x004) # 入力値(H/L)
+GPIO_OE_OFFSET  = const(0x024) # 出力イネーブル(方向)
+
+# Bit Shifts
+# PADS_BANK0 レジスタ内の各ビット
+DRIVE_SHIFT     = const(4) # 2bit分 (4,5)
+PUE_BIT_SHIFT   = const(3) # Pull-up Enable
+PDE_BIT_SHIFT   = const(2) # Pull-down Enable
+SCHMITT_SHIFT   = const(1) # Schmitt Trigger (ノギス信号には重要！)
+
+
+def get_bit_pos(label):
+    return MAP.get(label)
 
 # 論理定数 正論理 DataPinはこれで制御
 # LED Pinに関してはLDEの中で定義。なおLEDは負論理 high = off
@@ -25,20 +43,20 @@ OFF = const(0)  # Low
 # LEDは別設定 -> led_switch.py 参照
 
 # システム電源・制御設定
-EN_1_2V_PIN = D9      # AP2112 EN: レベルシフタ用1.2V電源有効化
-DIR_CONTROL_PIN = D10 # SN74LXC8T245 DIR: A->B(受信)固定用
+EN_1_2V_PIN = MAP["D9"]      # AP2112 EN: レベルシフタ用1.2V電源有効化
+DIR_CONTROL_PIN = MAP["D10"] # SN74LXC8T245 DIR: A->B(受信)固定用
 
 # デジマチック信号入力 (XIAO側)
-RX_DATA_PIN = D1
-RX_CLK_PIN = D2
-RX_DATA_BTN = D3
+RX_DATA_PIN = MAP["D1"]
+RX_CLK_PIN = MAP["D2"]
+RX_DATA_BTN = MAP["D3"]
 
 # 自己テスト用
-TX_DATA_PIN = D0
-REQ_SW_PIN = D8
+TX_DATA_PIN = MAP["D0"]
+REQ_SW_PIN = MAP["D8"]
 
 # 要求信号出力 (10kΩ抵抗越し)
-REQ_OUT_PIN = D7
+REQ_OUT_PIN = MAP["D7"]
 
 #pinオブジェクト生成
 en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT,value=0)          # 生成時は出力なし
@@ -64,7 +82,6 @@ def init_hardware():
     time.sleep_ms(1)  # 系全体の安定待ち （念のため過ぎるか?)
     
 
-# Pinオブジェクトの解放
 def cleanup_hardware():
     # LDOへの電源落とすのとReqは Hi-Zにするのは先にやる
     en.value(OFF)
