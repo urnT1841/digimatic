@@ -63,7 +63,7 @@ pub fn run_actual_loop(
         let mut m_wtr = create_log_writer("measurement.csv")?;
 
         // 受信と処理
-        if let Err(e) = receiveer(&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = receiver(&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if CdcReceiver::is_fatal_error(&e) {
                 break Ok(()); // エラーで致命なら終了
             }
@@ -96,7 +96,7 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 ///
 /// data recievr & pcocesser
 ///
-fn receiveer(
+fn receiver(
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut Writer<File>,
