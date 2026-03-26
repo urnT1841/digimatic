@@ -42,11 +42,16 @@ pub fn run_actual_loop(
         };
         // 見つかったのでリセット
         pico_waiting = 0;
+        println!("\rPicoを発見しました! 接続sします。... ");
 
         // port open
         let rx_port = match open_pico_port(&pico_port_path) {
-            Ok(port) => port,
-            Err(_) => {
+            Ok(port) => {
+                println!("ポートオープン成功: {}", pico_port_path);
+                port
+            }
+            Err(e) => {
+                println!("port open fail! retry : {}", e);
                 std::thread::sleep(Duration::from_millis(500)); // すぐに戻ると見失うこともあるのでちょい待ちを入れる
                 continue;
             }
