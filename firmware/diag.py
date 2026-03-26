@@ -1,6 +1,8 @@
 import machine
 
 import time
+import sys
+import select
 import pin_register as pr
 
 
@@ -78,11 +80,10 @@ def pin_setting_menu():
 
 
 def pin_repeat(label, gpio_num):
-
     print(f"\n-- Voltage/Logic Test: {label} (GPIO{gpio_num}) --")
-    print("[Enter]: Toggle 3.3V/0V (Manual)")
-    print("[数字] : Auto Loop (sec)")
-    print("[q]    : Back to Menu")
+    print(" [Enter]: Toggle 3.3V/0V (Manual)")
+    print(" [数字] : Auto Loop (sec)")
+    print(" [q]    : Back to Menu")
     
     p = machine.Pin(gpio_num, machine.Pin.OUT)
     val = 0
@@ -90,6 +91,7 @@ def pin_repeat(label, gpio_num):
 
     while True:
         v_str = "3.3V" if val else "0V"
+        # ユーザーの入力を待つ
         cmd = input(f"({label} Output: {v_str}) > ").strip().lower()
 
         if cmd == 'q':
@@ -97,28 +99,32 @@ def pin_repeat(label, gpio_num):
             break
             
         try:
-            print(f"Looping every {sec}s... [s + Enter]で停止")
-
-            running = [True]
-
-            def loop():
-                v = [0]
-                while running[0]:
-                    v[0] = 1 - v[0]
-                    p.value(v[0])
-                    time.sleep(sec)
-                    p.value(0)
-
-            _thread.start_new_thread(loop, ())
-
+            sec = float(cmd)
+            print(f"Looping every {sec}s... [Press Enter to Stop]")
+            
+            #非ブロッキングで回す
             while True:
-                cmd = input()
-                if cmd.strip().lower() == 's':
-                    running[0] = False
-                    time.sleep(sec)  # スレッドが止まるのを待つ
+                val = 1 - val
+                p.value(val)
+                
+                # 指定秒数待つ間に、キー入力があったかチェック
+                # 0.1秒ごとに分割してスリープし、その間に stdin を監視する
+                start_time = time.ticks_ms()
+                interrupted = False
+                
+                while time.ticks_diff(time.ticks_ms(), start_time) < (sec * 1000):
+                    # stdin(キーボード入力)があるか 0秒待機で確認
+                    r, _, _ = select.select([sys.stdin], [], [], 0)
+                    if r:
+                        sys.stdin.readline() # 入力バッファを空にする
+                        interrupted = True
+                        break
+                    time.sleep_ms(50) # CPU負荷を抑えるための微小スリープ
+                
+                if interrupted:
+                    print("Stopped Auto Loop.")
+                    p.value(0)
                     break
-                else:
-                    print("'s' + Enterで停止")
 
         except ValueError:
             val = 1 - val
