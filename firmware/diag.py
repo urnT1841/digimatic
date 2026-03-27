@@ -63,13 +63,20 @@ def pin_setting_menu():
     mode = input("Select Mode > ")
 
     try:
+        # Req pinには触らせない
+        current_pin = machine.Pin(gpio_num)
+        pin_name = pdef.get_pin_name(current_pin)  # 逆引きで名前確保
+        if pin_name == "req":
+            print(f"❌ PROTECTED: This is the '{pin_name}' pin. Manual config is forbidden.")
+            return
+
         if mode == "1":
             machine.Pin(gpio_num, machine.Pin.IN)
             print(f"DONE: {label} set to INPUT")
         elif mode == "2":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_UP)
             print(f"DONE: {label} set to PULL_UP")
-        elif mode == "3":
+        elif mode ==    "3":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
         elif mode == "4":

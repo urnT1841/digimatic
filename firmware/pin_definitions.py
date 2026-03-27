@@ -71,6 +71,13 @@ PINS = {
     "unused_D6": machine.Pin(GPIO_MAP["D6"]),
 }
 
+# Pinオブジェクトをキー、登録名を値にする逆引き辞書
+PIN_NAMES = {v: k for k, v in PINS.items()}
+
+def get_pin_name(pin_obj):
+    """ Pinオブジェクトから登録名（"req" など）を返す """
+    return PIN_NAMES.get(pin_obj, "unknown")
+
 
 # 電気的な接続は specification にある electrical_connect_image.png
 # LEDは別設定 -> led_switch.py 参照
