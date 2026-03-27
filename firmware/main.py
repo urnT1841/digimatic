@@ -1,4 +1,4 @@
-
+import time
 import gc
 
 import pin_definitions as pins
@@ -38,6 +38,18 @@ def main():
         # print("pico stoped")
 
 
+def splash_welcome():
+    splash_text = """
+    === digimatic data receiver with XIAO RP2040 ===
+    Waiting for frames...
+    Enter "DIAG" or "SIM" to switch to the corresponding mode.
+    """
+
+    print(splash_text)
+
+
+
 if __name__ == '__main__':
+    splash_welcome()
     main()
     

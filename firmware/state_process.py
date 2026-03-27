@@ -153,6 +153,9 @@ def process_diag_handler():
     diag.main_loop()
     # dig mode から出てくる
     print("\n -- Finish Diagnostic Mode -- ")
+    
+    from main import splash_welcome
+    splash_welcome()
 
     return STATE_IDLE, ERR_NONE
 

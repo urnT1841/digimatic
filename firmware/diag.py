@@ -16,13 +16,15 @@ def get_raw_gpio_in():
 
 def pins_state():
     print("=== XIAO RP2040 Pin Status ===")
-    all_bits = get_raw_gpio_in()
+    # 32bitの塊を1回だけ取得
+    all_bits = machine.mem32[pdef.SIO_BASE + pdef.GPIO_IN_OFFSET]
+    all_oe   = machine.mem32[pdef.SIO_BASE + pdef.GPIO_OE_OFFSET]
 
     for label, pos in pdef.GPIO_MAP.items():
         val = (all_bits >> pos) & 1
+        dir_str = "OUT" if ((all_oe >> pos) & 1) else "IN"
         status = "HIGH" if val else "LOW "
-        print(f"{label:4s} (GPIO{pos:02d}): {status}  [{val}]")
-    return 0
+        print(f"{label:4s} (GPIO:{pos:02d}): {status} [{dir_str}]  [{val}]")
 
 
 def select_pin(guard_req=True):
