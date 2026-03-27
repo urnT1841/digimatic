@@ -32,11 +32,11 @@ def pins_state():
 
 def select_pin(guard_req=True):
     label = input("Target Pin (e.g., D10) > ").strip().upper()
-    if label not in pdef.MAP:
+    if label not in pdef.GPIO_MAP:
         print("Invalid Pin Label.")
         return None, None
 
-    gpio_num = pdef.MAP[label]
+    gpio_num = pdef.GPIO_MAP[label]
 
     # ReqPinへのガード処理
     # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
