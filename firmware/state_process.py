@@ -1,7 +1,7 @@
 import time
 from micropython import const
 
-from pin_definitions import rx_data, clk, send_request, stop_request, ON, OFF
+import pin_definitions as pdef
 from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host, get_command_from_pc, phy_sw_request
 import diag as diag
@@ -91,7 +91,7 @@ def process_request():
     # sessionをリセットしてから受信開始
     session.reset_data()
     
-    send_request()
+    pdef.send_request()
 
     return STATE_RECEIVE , ERR_NONE
 
@@ -106,8 +106,8 @@ def process_receive_busy():
     """
 
     # メソッドをローカル変数に格納（これで辞書検索をスキップ。速くなる）
-    _get_clk = clk.value
-    _get_dat = rx_data.value
+    _get_clk = pdef.PINS["clk"].value
+    _get_dat = pdef.PINS["rx_data"].value
     _ticks_us = time.ticks_us
     _ticks_diff = time.ticks_diff
     _bits = session.rx_buffer
@@ -119,14 +119,14 @@ def process_receive_busy():
         t = _ticks_us()
         while _get_clk() == 0:  # High待ち
             if _ticks_diff(_ticks_us(), t) > TIMEOUT_US:
-                stop_request()
+                pdef.stop_request()
                 return STATE_ERROR, ERR_TIMEOUT
         while _get_clk() == 1:
             pass # Low待ち（エッジ検知）
         _bits[i] = _get_dat()
 
     # ここで止めるのはホントは遅すぎるし処理重い
-    stop_request()
+    pdef.stop_request()
     return STATE_VALIDATE, ERR_NONE
 
 

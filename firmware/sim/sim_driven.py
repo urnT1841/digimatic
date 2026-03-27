@@ -1,7 +1,7 @@
 
 import time
 
-import pin_difinitions as pins
+import pin_definitions as pins
 import model_caliper
 import led_switch as led
 from led_switch import LED_ON, LED_OFF

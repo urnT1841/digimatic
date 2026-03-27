@@ -1,7 +1,7 @@
 import sys
 import select
 
-from pin_definitions import req_sw, data_btn
+import pin_definitions as pdef
 
 
 def get_command_from_pc():
@@ -15,7 +15,7 @@ def get_command_from_pc():
 
 # 外部ボタンのリストと初期状態設定 (PullUpされているのでON(1) がデフォ )
 # 1:押されていない , 0: 押下
-buttons = [req_sw, data_btn]
+buttons = [pdef.PINS["req_sw"], pdef.PINS["data_btn"]]
 last_sw_states = [1] * len(buttons)
 
 def phy_sw_request():

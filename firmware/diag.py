@@ -21,7 +21,7 @@ def pins_state():
     all_bits = get_raw_gpio_in()
 
     # MAP (D0-D10) に登録されている順に表示
-    for label, pos in pdef.MAP.items():
+    for label, pos in pdef.GPIO_MAP.items():
         # 塊から特定のビット(pos)を抽出
         val = (all_bits >> pos) & 1
         
@@ -41,7 +41,7 @@ def select_pin(guard_req=True):
     # ReqPinへのガード処理
     # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
     #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
-    if guard_req and gpio_num == pdef.MAP["D8"]:
+    if guard_req and gpio_num == pdef.GPIO_MAP["D7"]:
         print(f"⚠️  GUARD: {label} (REQ) is restricted.")
         return None, None
 
