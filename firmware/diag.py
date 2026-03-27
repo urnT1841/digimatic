@@ -1,5 +1,4 @@
 import machine
-
 import time
 import sys
 import select
@@ -9,26 +8,22 @@ import pin_definitions as pdef
 def get_reg_val(base, offset):
     return machine.mem32[base + offset]
 
-# 現状の全GPIOの状態（32bitの塊）をそのまま返す
+
+# 現状の全GPIOの状態（32bit）を返す
 def get_raw_gpio_in():
-    # SIO_BASE + GPIO_IN_OFFSET を見に行く
     return machine.mem32[pdef.SIO_BASE + pdef.GPIO_IN_OFFSET]
 
 
 def pins_state():
     print("=== XIAO RP2040 Pin Status ===")
-    # 32bitの塊を1回だけ取得
     all_bits = get_raw_gpio_in()
 
-    # MAP (D0-D10) に登録されている順に表示
     for label, pos in pdef.GPIO_MAP.items():
-        # 塊から特定のビット(pos)を抽出
         val = (all_bits >> pos) & 1
-        
         status = "HIGH" if val else "LOW "
-        print(f"{label:4s} (GPIO{pos:02d}): {status}  [{(all_bits >> pos) & 1}]")
-
+        print(f"{label:4s} (GPIO{pos:02d}): {status}  [{val}]")
     return 0
+
 
 def select_pin(guard_req=True):
     label = input("Target Pin (e.g., D10) > ").strip().upper()
@@ -38,11 +33,9 @@ def select_pin(guard_req=True):
 
     gpio_num = pdef.GPIO_MAP[label]
 
-    # ReqPinへのガード処理
-    # REQピン (D8 / GPIO 2) への Pull-up 設定をブロック
-    #  -> 3.3Vを入れると ノギスが壊れる懸念がある。Pinは再確認
-    if guard_req and gpio_num == pdef.GPIO_MAP["D7"]:
-        print(f"⚠️  GUARD: {label} (REQ) is restricted.")
+    # GUI/設定でのガード
+    if guard_req and pdef.is_protected(gpio_num):
+        print(f"⚠️  GUARD: {label} (GPIO{gpio_num}) is restricted.")
         return None, None
 
     return label, gpio_num
@@ -50,8 +43,7 @@ def select_pin(guard_req=True):
 
 def pin_setting_menu():
     print("\n--- Pin Configuration ---")
-    
-    label, gpio_num = select_pin()
+    label, gpio_num = select_pin(guard_req=True)
     if label is None:
         return
 
@@ -59,15 +51,13 @@ def pin_setting_menu():
     print(" 1: INPUT (None)")
     print(" 2: INPUT (Pull-Up)")
     print(" 3: INPUT (Pull-Down)")
-    print(" 4: Moving (repeat Or/OFf)")
+    print(" 4: Moving (repeat On/Off)")
     mode = input("Select Mode > ")
 
     try:
-        # Req pinには触らせない
-        current_pin = machine.Pin(gpio_num)
-        pin_name = pdef.get_pin_name(current_pin)  # 逆引きで名前確保
-        if pin_name == "req":
-            print(f"❌ PROTECTED: This is the '{pin_name}' pin. Manual config is forbidden.")
+        # 最終防御: 直接ピンを保護
+        if pdef.is_protected(gpio_num):
+            print(f"❌ PROTECTED: {label} (GPIO{gpio_num})")
             return
 
         if mode == "1":
@@ -76,7 +66,7 @@ def pin_setting_menu():
         elif mode == "2":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_UP)
             print(f"DONE: {label} set to PULL_UP")
-        elif mode ==    "3":
+        elif mode == "3":
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
         elif mode == "4":
@@ -87,6 +77,11 @@ def pin_setting_menu():
 
 
 def pin_repeat(label, gpio_num):
+    # 最終防御
+    if pdef.is_protected(gpio_num):
+        print(f"❌ PROTECTED: {label} (GPIO{gpio_num})")
+        return
+
     print(f"\n-- Voltage/Logic Test: {label} (GPIO{gpio_num}) --")
     print(" [Enter]: Toggle 3.3V/0V (Manual)")
     print(" [数字] : Auto Loop (sec)")
@@ -98,7 +93,6 @@ def pin_repeat(label, gpio_num):
 
     while True:
         v_str = "3.3V" if val else "0V"
-        # ユーザーの入力を待つ
         cmd = input(f"({label} Output: {v_str}) > ").strip().lower()
 
         if cmd == 'q':
@@ -108,25 +102,21 @@ def pin_repeat(label, gpio_num):
         try:
             sec = float(cmd)
             print(f"Looping every {sec}s... [Press Enter to Stop]")
-            
-            #非ブロッキングで回す
+
             while True:
                 val = 1 - val
                 p.value(val)
                 
-                # 指定秒数待つ間に、キー入力があったかチェック
-                # 0.1秒ごとに分割してスリープし、その間に stdin を監視する
                 start_time = time.ticks_ms()
                 interrupted = False
                 
                 while time.ticks_diff(time.ticks_ms(), start_time) < (sec * 1000):
-                    # stdin(キーボード入力)があるか 0秒待機で確認
                     r, _, _ = select.select([sys.stdin], [], [], 0)
                     if r:
-                        sys.stdin.readline() # 入力バッファを空にする
+                        sys.stdin.readline()
                         interrupted = True
                         break
-                    time.sleep_ms(50) # CPU負荷を抑えるための微小スリープ
+                    time.sleep_ms(50)
                 
                 if interrupted:
                     print("Stopped Auto Loop.")
@@ -139,8 +129,7 @@ def pin_repeat(label, gpio_num):
 
 
 def pin_repeat_menu():
-    # pin_repeatは引数有なのでラッパーでくるむ
-    label, gpio_num = select_pin(guard_req=False)
+    label, gpio_num = select_pin(guard_req=True)
     if label is None:
         return
     pin_repeat(label, gpio_num)
@@ -148,12 +137,9 @@ def pin_repeat_menu():
 
 def exit_diag():
     print("Exiting...")
-    # returnで呼び出し元へ戻す
     return
 
 
-# メニュー構成を定義
-# 辞書だとメニュー順が崩れたのでタプルで再実装
 MENU_OPTIONS = [
     ("1",  "Pin状態確認",          pins_state),
     ("2",  "Pin設定",              pin_setting_menu),
@@ -173,22 +159,17 @@ def main_loop():
         show_menu()
         sel = input("Select > ")
 
-        # 検索と呼び出しを分ける
         matched = [(key, func) for key, label, func in MENU_OPTIONS if key == sel]
 
         if matched:
             key, func = matched[0]
             func()
             if sel == "99":
-                # いじったピンが残っていると危ないので初期化
                 pdef.init_hardware()
                 break
         else:
             print("Invalid.")
 
 
-
-# テスト実行用
 if __name__ == "__main__":
     main_loop()
-

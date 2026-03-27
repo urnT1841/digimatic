@@ -28,7 +28,6 @@ ON = const(1)   # High
 OFF = const(0)  # Low
 
 
-
 # seeed studio xiao rp2040 pin difinition
 # GPIO pin と pin_no の対応
 GPIO_MAP = {
@@ -53,6 +52,14 @@ REQ_SW_PIN = GPIO_MAP["D8"]
 
 # 要求信号出力 (10kΩ抵抗越し)
 REQ_OUT_PIN = GPIO_MAP["D7"]
+REQ_GPIO = REQ_OUT_PIN
+PROTECTED_GPIO = {
+    REQ_GPIO
+}
+
+def is_protected(gpio_num):
+    return gpio_num in PROTECTED_GPIO
+
 
 PINS = {
     "en": machine.Pin(EN_1_2V_PIN),
@@ -70,13 +77,6 @@ PINS = {
     "unused_D5": machine.Pin(GPIO_MAP["D5"]),
     "unused_D6": machine.Pin(GPIO_MAP["D6"]),
 }
-
-# Pinオブジェクトをキー、登録名を値にする逆引き辞書
-PIN_NAMES = {v: k for k, v in PINS.items()}
-
-def get_pin_name(pin_obj):
-    """ Pinオブジェクトから登録名（"req" など）を返す """
-    return PIN_NAMES.get(pin_obj, "unknown")
 
 
 # 電気的な接続は specification にある electrical_connect_image.png
