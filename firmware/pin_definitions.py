@@ -41,7 +41,13 @@ OFF = const(0)  # Low
 
 # 電気的な接続は specification にある electrical_connect_image.png
 # LEDは別設定 -> led_switch.py 参照
+#まずは安全側へ。全GPIOをInput設定  MAPにあるPinNoで指定
+def gpio_init():
+    for label, pin_no in MAP.items():
+        machine.Pin(pin_no, machine.Pin.IN, machine.Pin.PULL_DOWN)
 
+
+# 使用Pinにラベル付け
 # システム電源・制御設定
 EN_1_2V_PIN = MAP["D9"]      # AP2112 EN: レベルシフタ用1.2V電源有効化
 DIR_CONTROL_PIN = MAP["D10"] # SN74LXC8T245 DIR: A->B(受信)固定用
@@ -58,29 +64,44 @@ REQ_SW_PIN = MAP["D8"]
 # 要求信号出力 (10kΩ抵抗越し)
 REQ_OUT_PIN = MAP["D7"]
 
-#pinオブジェクト生成
-en = machine.Pin(EN_1_2V_PIN, machine.Pin.OUT,value=0)          # 生成時は出力なし
-dir_p = machine.Pin(DIR_CONTROL_PIN, machine.Pin.OUT, value=0)  # 生成時は出力なし (レベルシフタも動かない
+#使用するPinに対して名前つけてpinオブジェクト生成
+en      = machine.Pin(EN_1_2V_PIN, machine.Pin.IN)
+dir_p   = machine.Pin(DIR_CONTROL_PIN, machine.Pin.IN)  # 生成時は出力なし (レベルシフタも動かない
 rx_data = machine.Pin(RX_DATA_PIN, machine.Pin.IN)      # data (rx)
-tx_data = machine.Pin(TX_DATA_PIN, machine.Pin.OUT, value=0)     # tx 
-clk = machine.Pin(RX_CLK_PIN, machine.Pin.IN)           # clk
+tx_data = machine.Pin(TX_DATA_PIN, machine.Pin.IN)     # tx 
+clk     = machine.Pin(RX_CLK_PIN, machine.Pin.IN)           # clk
 data_btn = machine.Pin(RX_DATA_BTN, machine.Pin.IN)     # data btn
 # req は input (Hi-Z) なのでvalue=0はここでの実質的な意味を持たない
 # ただしsignalを送るとき Outputモードに遷移するのであらかじめ 0(Low,OFF) を指定しておく
 # このPinに対しては Pull_UPしたり Hi にしたりはNG -> 3.3Vが出力されて最悪ノギスが壊れる
-req = machine.Pin(REQ_OUT_PIN, machine.Pin.IN)  # req Hi-Z 設定
-req.value(OFF)
-req_sw = machine.Pin(REQ_SW_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
+req     = machine.Pin(REQ_OUT_PIN, machine.Pin.IN)  # req Hi-Z 設定
+req_sw = machine.Pin(REQ_SW_PIN, machine.Pin.IN)
+
 
 def init_hardware():
     """  pinオブジェクトの初期化関数 """
+    # diag実施後も init_hardware を呼ぶようにするので，全品初期化から。
+    gpio_init()
+
+    # 使用Pin初期化
     # LDO電源有効かとパスコンの準電待ち 時間は適当。当然計算もしてない
-    en.value(ON)
+    en.init(mode=machine.Pin.OUT, value=ON)
     time.sleep_ms(2)
 
-    dir_p.value(ON) # 方向制御をA->Bに固定 生成時の待ちで安定済み，すぐに設定
+    dir_p.init(mode=machine.Pin.OUT, value=ON)
     time.sleep_ms(1)  # 系全体の安定待ち （念のため過ぎるか?)
-    
+
+    rx_data.init(mode=machine.Pin.IN)
+    tx_data.init(mode=machine.Pin.IN)
+    clk.init(mode=machine.Pin.IN)
+    data_btn.init(mode=machine.Pin.IN)
+    req.init(mode=machine.Pin.OUT, value=OFF) #先にOFFで設定してからHi-Zへ移行
+    req.init(mode=machine.Pin.IN)
+    req_sw.init(mode=machine.Pin.IN)
+
+
+
+
 
 def cleanup_hardware():
     # LDOへの電源落とすのとReqは Hi-Zにするのは先にやる
