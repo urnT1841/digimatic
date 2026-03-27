@@ -8,9 +8,16 @@ from led_switch import LED_ON, LED_OFF
 
 
 # pin設定
-rx_data, clk, req, tx_data = pins.init_hardware()
-led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
+# 初期化を実行（内部で PINS 辞書がセットアップされる）
+pins.init_hardware()
 
+# 2. 必要なオブジェクトを辞書から引き出す
+rx_data = pins.PINS["rx_data"]
+clk     = pins.PINS["clk"]
+req     = pins.PINS["req"]
+tx_data = pins.PINS["tx_data"]
+
+led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
 
 def main():
