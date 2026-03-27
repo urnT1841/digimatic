@@ -173,6 +173,8 @@ def main_loop():
             key, func = matched[0]
             func()
             if sel == "99":
+                # いじったピンが残っていると危ないので初期化
+                pdef.init_hardware()
                 break
         else:
             print("Invalid.")

@@ -64,7 +64,8 @@ REQ_SW_PIN = MAP["D8"]
 # 要求信号出力 (10kΩ抵抗越し)
 REQ_OUT_PIN = MAP["D7"]
 
-#使用するPinに対して名前つけてpinオブジェクト生成
+# 使用するPinに対して名前つけてpinオブジェクト生成
+# 生成時は INPUTにして外部に対してHi-Zで守る
 en      = machine.Pin(EN_1_2V_PIN, machine.Pin.IN)
 dir_p   = machine.Pin(DIR_CONTROL_PIN, machine.Pin.IN)  # 生成時は出力なし (レベルシフタも動かない
 rx_data = machine.Pin(RX_DATA_PIN, machine.Pin.IN)      # data (rx)
@@ -80,7 +81,7 @@ req_sw = machine.Pin(REQ_SW_PIN, machine.Pin.IN)
 
 def init_hardware():
     """  pinオブジェクトの初期化関数 """
-    # diag実施後も init_hardware を呼ぶようにするので，全品初期化から。
+    # diag実施後も init_hardware を呼ぶようにするので，全Pin初期化から。
     gpio_init()
 
     # 使用Pin初期化
