@@ -42,7 +42,7 @@ pub fn run_actual_loop(
         };
         // 見つかったのでリセット
         pico_waiting = 0;
-        println!("\rPicoを発見しました! 接続sします。... ");
+        println!("\rPicoを発見しました! 接続します。... ");
 
         // port open
         let rx_port = match open_pico_port(&pico_port_path) {
