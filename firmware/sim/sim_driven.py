@@ -1,7 +1,7 @@
 
 import time
 
-import pin_definitions as pins
+import pin_definitions as pdef
 import model_caliper
 import led_switch as led
 from led_switch import LED_ON, LED_OFF
@@ -9,13 +9,7 @@ from led_switch import LED_ON, LED_OFF
 
 # pin設定
 # 初期化を実行（内部で PINS 辞書がセットアップされる）
-pins.init_hardware()
-
-# 2. 必要なオブジェクトを辞書から引き出す
-rx_data = pins.PINS["rx_data"]
-clk     = pins.PINS["clk"]
-req     = pins.PINS["req"]
-tx_data = pins.PINS["tx_data"]
+pdef.init_hardware()
 
 led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
@@ -39,10 +33,6 @@ def main():
     print(f"send   : {digi_frame}")
     print(f"receive: {captured}")
      
-    # デコード関数を呼び出す not yet
-    # result = decode_digimatic_frame(captured)
-    # print(f"デコード結果: {result}")
-
     led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
 
@@ -53,12 +43,12 @@ def test_send_and_receive(send_list):
     print("--- 送受信テスト開始 ---")
     for i, bit in enumerate(send_list):
         # 送信
-        tx_data.value(bit)
+        pdef.PINS["tx_data"].value(bit)
         time.sleep_us(20)
         
         # 受信 (送信した直後のピンの状態を読み取る)
         # 物理的に tx_pin と rx_pin がつながっていれば、bit と同じ値が読めるはず
-        read_val = rx_data.value()
+        read_val = pdef.PINS["rx_data"].value()
         captured_bits.append(read_val)
         
         # デバッグ表示（4ビットごとに区切ると見やすい）
@@ -68,8 +58,6 @@ def test_send_and_receive(send_list):
 
     print("\n--- 受信完了 ---")
     return captured_bits
-
-
 
 
 if __name__ == '__main__':
