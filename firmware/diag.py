@@ -43,7 +43,9 @@ def pin_setting_menu():
     print(" 1: INPUT (None)")
     print(" 2: INPUT (Pull-Up)")
     print(" 3: INPUT (Pull-Down)")
-    print(" 4: Moving (repeat On/Off)")
+    print(" 4: OUTPUT (ON 3.3V)")
+    print(" 5: OUTPUT (OFF 0V)")
+    print(" 6: Moving (repeat On/Off)")
     mode = input("Select Mode > ")
 
     try:
@@ -62,6 +64,12 @@ def pin_setting_menu():
             machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
             print(f"DONE: {label} set to PULL_DOWN")
         elif mode == "4":
+            machine.Pin(gpio_num, machine.Pin.OUT, value=ON)
+            print(f"DONE: {label} set to OUTPUT ON (3.3V)")
+        elif mode == "5":
+            machine.Pin(gpio_num, machine.Pin.OUT, value=OFF)
+            print(f"DONE: {label} set to OUTPUT OFF (0.0V)")
+        elif mode == "6":
             print("Pin stat is moving(w/o PU/PD) (repeat on/off)")
             pin_repeat(label, gpio_num)
     except Exception as e:
@@ -133,35 +141,83 @@ def exit_diag():
 
 
 MENU_OPTIONS = [
-    ("1",  "Pin状態確認",          pins_state),
-    ("2",  "Pin設定",              pin_setting_menu),
-    ("3",  "Pin状態を動的に変化",  pin_repeat_menu),
-    ("99", "終了",                 exit_diag),
+    ("1", "Pin状態確認", pins_state, None),
+    ("2", "Pin設定", None, [
+        ("1", "入力設定", pin_input, None),
+        ("2", "出力設定", pin_output, None),
+        ("3", "詳細設定", None,[
+            ("1", "Pull設定", pin_pull, None),
+            ("2", "Drive設定", pin_drive, None),
+            ("9", "戻る", None, None),
+            ]),
+        ("9", "戻る", None, None),
+    ]),
+    ("3", "Pin状態を動的に変化", pin_repeat_menu, None),
+    ("99", "終了", exit_diag, None),
 ]
-
 
 def show_menu():
     print("\n--- RP2040 DIAG MENU ---")
-    for key, label, _ in MENU_OPTIONS:
+    for key, label, *_ in MENU_OPTIONS:
         print(f" {key:>2}: {label}")
 
 
-def main_loop():
+def main_loop(menu, parent=None):
     while True:
         show_menu()
         sel = input("Select > ")
 
-        matched = [(key, func) for key, label, func in MENU_OPTIONS if key == sel]
+        matched = [item for item in MENU_OPTIONS if item[0] == sel]
+        #matched = [(key, func) for key, label, func in MENU_OPTIONS if key == sel]
 
-        if matched:
-            key, func = matched[0]
-            func()
-            if sel == "99":
-                pdef.init_hardware()
-                break
-        else:
+        if not matched:
+            print("Invaild.")
+            continue
+
+def show_menu(menu, path):
+    if path:
+        print(f"\n--- RP2040 DIAG MENU [{path}] ---")
+    else:
+        print("\n--- RP2040 DIAG MENU ---")
+
+    for key, label, *_ in menu:
+        print(f" {key:>2}: {label}")
+
+
+def main_loop(menu, path=""):
+    while True:
+        show_menu(menu, path)
+
+        sel = input("Select > ").strip()
+
+        # 該当項目検索
+        item = next((m for m in menu if m[0] == sel), None)
+
+        if not item:
             print("Invalid.")
+            continue
+
+        key, label, func, submenu = item
+
+        # 戻る（トップでは無効）
+        if key == "9":
+            return
+
+        # サブメニューへ
+        if submenu:
+            new_path = f"{path}.{key}" if path else key
+            main_loop(submenu, new_path)
+            continue
+
+        # 関数実行
+        if func:
+            func()
+
+        # 終了
+        if key == "99":
+            pdef.init_hardware()
+            return
 
 
 if __name__ == "__main__":
-    main_loop()
+    main_loop(MENU_OPTIONS)
