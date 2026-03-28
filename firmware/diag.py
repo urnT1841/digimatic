@@ -132,12 +132,14 @@ def pin_repeat(label, gpio_num):
 
         try:
             sec = float(cmd)
+            sys.stdin.read(1)  # 入力バッファの改行を捨てる
             print(f"Loop {sec}s (Enter to stop)")
 
             while True:
                 val = 1 - val
                 p.value(val)
-
+                v_str = "3.3V" if val else "0V"
+                print(f"\r  {label}: {v_str}    ", end="")  # 今のモードを表示
                 start = time.ticks_ms()
 
                 while time.ticks_diff(time.ticks_ms(), start) < (sec * 1000):
@@ -218,7 +220,6 @@ def main_loop(menu=None, path=""):
         
         item = None
         for m in menu:
-            print("checking:", m[0], "==", sel)
             if m[0] == sel:
                 item = m
                 break
