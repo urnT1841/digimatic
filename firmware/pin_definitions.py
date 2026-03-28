@@ -13,7 +13,7 @@ PADS_BANK0_BASE = const(0x4001c000)
 
 # Offsets
 GPIO_IN_OFFSET  = const(0x004) # 入力値(H/L)
-GPIO_OE_OFFSET  = const(0x024) # 出力イネーブル(方向)
+GPIO_OE_OFFSET  = const(0x020) # 出力イネーブル(方向)
 
 # Bit Shifts
 # PADS_BANK0 レジスタ内の各ビット

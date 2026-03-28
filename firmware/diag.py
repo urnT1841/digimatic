@@ -196,38 +196,52 @@ def show_menu(menu, path):
         print(f" {key:>2}: {label}")
 
 
-def main_loop(menu, path=""):
+def main_loop(menu=None, path=""):
+    if menu is None:
+        menu = MENU_OPTIONS
+    
     while True:
         show_menu(menu, path)
-
         sel = input("Select > ").strip()
 
-        item = next((m for m in menu if m[0] == sel), None)
+        # 9(戻り)処理
+        if sel == "9":
+            if path:
+                return
+            else:
+                print("Already top level.")
+                continue
+        
+        # 選択要素アンパック
+        # 下記のジェネレータ式だとうまくいかなかった。Micropythonの制限?
+        # item = next((m for m in menu if m[0] == sel), None)
+        
+        item = None
+        for m in menu:
+            print("checking:", m[0], "==", sel)
+            if m[0] == sel:
+                item = m
+                break
 
         if not item:
-            print("Invalid.")
+            print("Invaild selection")
             continue
 
         key, label, func, submenu = item
 
-        if key == "9":
-            if path:
-                return
-            else:
-                print("Already top.")
-                continue
-
+        # サブメニュー対応
         if submenu:
             new_path = f"{path}.{key}" if path else key
             main_loop(submenu, new_path)
             continue
-
+        
         if func:
+            print("calling:", func)  # ← 追加
             func()
-
         if key == "99":
-            pdef.init_hardware()
             return
+
+
 
 if __name__ == "__main__":
     main_loop(MENU_OPTIONS)

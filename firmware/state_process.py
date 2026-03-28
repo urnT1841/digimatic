@@ -150,7 +150,7 @@ def process_validate():
 def process_diag_handler():
     # dig mode へはいる
     print("\n-- Enter Diagnostic Mode --")
-    diag.main_loop()
+    diag.main_loop(diag.MENU_OPTIONS)
     # dig mode から出てくる
     print("\n -- Finish Diagnostic Mode -- ")
     
