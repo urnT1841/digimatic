@@ -4,16 +4,6 @@ import sys
 import select
 import pin_definitions as pdef
 
-
-def get_reg_val(base, offset):
-    return machine.mem32[base + offset]
-
-
-# 現状の全GPIOの状態（32bit）を返す
-def get_raw_gpio_in():
-    return machine.mem32[pdef.SIO_BASE + pdef.GPIO_IN_OFFSET]
-
-
 def pins_state():
     print("=== XIAO RP2040 Pin Status ===")
     # 32bitの塊を1回だけ取得
