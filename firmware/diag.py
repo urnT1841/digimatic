@@ -67,9 +67,10 @@ def menu_set_input():
     options = {"1": "INPUT", "2": "Pull-Up", "3": "Pull-Down"}
     def apply(num, sel):
         p = machine.Pin(num, machine.Pin.IN, 
-                        machine.Pin.PULL_UP if sel=="2" else 
-                        machine.Pin.PULL_DOWN if sel=="3" else None)
+            machine.Pin.PULL_UP if sel=="2" else 
+            machine.Pin.PULL_DOWN if sel=="3" else None)
     generic_pin_config("入力設定", options, apply)
+
 
 def menu_set_output():
     options = {"1": "ON (3.3V)", "2": "OFF (0V)"}
@@ -175,9 +176,9 @@ MENU_OPTIONS = [
 ]
 
 # メニュー実行
-def show_menu(menu, path):
-    if path:
-        print(f"\n--- MENU [{path}] ---")
+def show_menu(menu, path_key="", path_label=""):
+    if path_key:
+        print(f"\n--- MENU [{path_key} / {path_label}] ---")
     else:
         print("\n--- MENU ---")
 
@@ -185,17 +186,17 @@ def show_menu(menu, path):
         print(f" {key:>2}: {label}")
 
 
-def main_loop(menu=None, path=""):
+def main_loop(menu=None, path_key="", path_label=""):
     if menu is None:
         menu = MENU_OPTIONS
     
     while True:
-        show_menu(menu, path)
+        show_menu(menu, path_key, path_label)
         sel = input("Select > ").strip()
 
         # 9(戻り)処理
         if sel == "9":
-            if path:
+            if path_key:
                 return
             else:
                 print("Already top level.")
@@ -212,15 +213,16 @@ def main_loop(menu=None, path=""):
                 break
 
         if not item:
-            print("Invaild selection")
+            print("Invalid selection")
             continue
 
         key, label, func, submenu = item
 
         # サブメニュー対応
         if submenu:
-            new_path = f"{path}.{key}" if path else key
-            main_loop(submenu, new_path)
+            new_path_key = f"{path_key}.{key}" if path_key else key
+            new_path_label = f"{path_label}/{label}" if path_label else label  # 人間にはこっちのほうが読みやすい
+            main_loop(submenu, new_path_key, new_path_label)
             continue
         
         if func:
