@@ -45,7 +45,7 @@ def splash_welcome():
 
     print(splash_text)
     print(f"\n{t('welcome')}")
-    print('Enter "DIAG", "SIM" or "LANG EN" to start.')
+
 
 
 
