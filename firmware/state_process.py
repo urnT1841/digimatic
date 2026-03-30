@@ -15,6 +15,7 @@ STATE_VALIDATE = const(3)
 STATE_ERROR = const(4)
 STATE_SWITCH = const(5)
 STATE_DIAG = const(6)
+STATE_SIM = const(7)
 
 #エラー定義
 ERR_NONE = const(0)
@@ -55,7 +56,6 @@ def mode_switcher(cmd):
         session.config = session.MODE_BIN
     elif cmd == "STR":
         session.config = session.MODE_STR
-
 
 
 def process_idle():
@@ -160,6 +160,26 @@ def process_diag_handler():
     return STATE_IDLE, ERR_NONE
 
 
+def process_sim_handler():
+    """ Sim モード SimでFrame迄組み立ててPCへ送る"""
+    import model_caliper
+
+    # 測定データフレーム生成，文字列化
+    val_str = model_caliper.sim_measure()
+    frame_list = model_caliper.build_frame(val_str)
+    send_frame = "".join([str(v) for v in frame_list])
+
+    send_to_host(send_frame)
+
+    # SIM継続判定
+    time.sleep_ms(500)
+    cmd = get_command_from_pc() #
+    if cmd == "STOP":
+        return STATE_IDLE, ERR_NONE
+        
+    return STATE_SIM, ERR_NONE
+
+
 def process_err_handler():
     #未実装 エラーハンドリングを行う
     # 下記は体裁を整えただけ
@@ -173,5 +193,6 @@ state_map = {
     STATE_VALIDATE: process_validate,
     STATE_ERROR: process_err_handler,         # TODO:未実装
     STATE_DIAG: process_diag_handler,
+    STATE_SIM: process_sim_handler,
 }
 
