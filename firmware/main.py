@@ -3,7 +3,7 @@ import gc
 
 import pin_definitions as pins
 from state_process import state_map, STATE_IDLE, ERR_NONE, session
-
+from i18n import t
 
 # 諸々の初期化とか定数確保が終わったらいったんGCを走らせる
 pins.init_hardware()
@@ -41,11 +41,11 @@ def main():
 def splash_welcome():
     splash_text = """
     === digimatic data receiver with XIAO RP2040 ===
-    Waiting for frames...
-    Enter "DIAG" or "SIM" to switch to the corresponding mode.
-    """
+    """ 
 
     print(splash_text)
+    print(f"\n{t('welcome')}")
+    print('Enter "DIAG", "SIM" or "LANG EN" to start.')
 
 
 
