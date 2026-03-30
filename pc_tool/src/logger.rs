@@ -65,7 +65,6 @@ impl MeasurementLog {
 
     // Display GUI へ送る分 (測定データだけ)
     pub fn display_data(&self) -> f64 {
-        let disp = self.val.clone(); // .clone()はほんとは不要 (f64なのでコピーされる)
-        disp
+        self.val
     }
 }
