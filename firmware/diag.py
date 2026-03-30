@@ -4,6 +4,7 @@ import sys
 import select
 import pin_definitions as pdef
 
+
 def pins_state():
     print("=== XIAO RP2040 Pin Status ===")
 
@@ -32,74 +33,58 @@ def select_pin(guard_req=True):
 
     return label, gpio_num
 
-# input設定系
-def pin_input():
-    print("\n--- INPUT設定 ---")
-    label, gpio_num = select_pin()
+
+def generic_pin_config(title, options_dict, apply_callback):
+    print(f"\n--- {title} ---")
+    
+    # 操作禁止なピン（REQ等）を select_pin 側で弾く
+    label, gpio_num = select_pin(guard_req=True) 
     if label is None:
         return
 
-    print(" 1: INPUT")
-    print(" 2: Pull-Up")
-    print(" 3: Pull-Down")
+    for key, desc in options_dict.items():
+        print(f" {key}: {desc}")
 
-    mode = input("Select > ").strip()
+    sel = input("Select > ").strip()
+    
+    if sel in options_dict:
+        # 追加のモード別ガード
+        # 例: PULL_UP (sel="2") かつ REQピン (GPIO 1) の場合は、
+        # select_pin を抜けてきてもここで最終ブロック
+        if title == "入力設定" and sel == "2" and gpio_num == pdef.REQ_GPIO:
+             print(f"❌ SAFETY ERROR: {label} cannot be PULL_UP.")
+             return
 
-    if mode == "1":
-        machine.Pin(gpio_num, machine.Pin.IN)
-    elif mode == "2":
-        machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_UP)
-    elif mode == "3":
-        machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
+        try:
+            apply_callback(gpio_num, sel)
+            print(f"DONE: {label} configured as {options_dict[sel]}")
+        except Exception as e:
+            print(f"Error: {e}")
     else:
-        print("Invalid.")
-        return
+        print("Invalid selection.")
 
-    print(f"DONE: {label} INPUT configured")
+def menu_set_input():
+    options = {"1": "INPUT", "2": "Pull-Up", "3": "Pull-Down"}
+    def apply(num, sel):
+        p = machine.Pin(num, machine.Pin.IN, 
+                        machine.Pin.PULL_UP if sel=="2" else 
+                        machine.Pin.PULL_DOWN if sel=="3" else None)
+    generic_pin_config("入力設定", options, apply)
 
-# output設定系
-def pin_output():
-    print("\n--- OUTPUT設定 ---")
-    label, gpio_num = select_pin()
-    if label is None:
-        return
+def menu_set_output():
+    options = {"1": "ON (3.3V)", "2": "OFF (0V)"}
+    def apply(num, sel):
+        machine.Pin(num, machine.Pin.OUT, value=(1 if sel=="1" else 0))
+    generic_pin_config("出力設定", options, apply)
 
-    print(" 1: ON (3.3V)")
-    print(" 2: OFF (0V)")
+def menu_set_pull():
+    options = {"1": "Pull-Up", "2": "Pull-Down"}
+    def apply(num, sel):
+        # 既存のピン状態を維持しつつPullだけ変えるのは難しいので再初期化
+        machine.Pin(num, machine.Pin.IN, 
+                    machine.Pin.PULL_UP if sel=="1" else machine.Pin.PULL_DOWN)
+    generic_pin_config("Pull設定", options, apply)
 
-    mode = input("Select > ").strip()
-
-    if mode == "1":
-        machine.Pin(gpio_num, machine.Pin.OUT, value=1)
-    elif mode == "2":
-        machine.Pin(gpio_num, machine.Pin.OUT, value=0)
-    else:
-        print("Invalid.")
-        return
-
-    print(f"DONE: {label} OUTPUT configured")
-
-# Pull up / Pull down
-def pin_pull():
-    print("\n--- Pull設定 ---")
-    label, gpio_num = select_pin()
-    if label is None:
-        return
-
-    print(" 1: Pull-Up")
-    print(" 2: Pull-Down")
-
-    mode = input("Select > ").strip()
-
-    if mode == "1":
-        machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_UP)
-    elif mode == "2":
-        machine.Pin(gpio_num, machine.Pin.IN, machine.Pin.PULL_DOWN)
-    else:
-        print("Invalid.")
-        return
-
-    print(f"DONE: {label} pull configured")
 
 
 def pin_drive():
@@ -132,7 +117,9 @@ def pin_repeat(label, gpio_num):
 
         try:
             sec = float(cmd)
-            sys.stdin.read(1)  # 入力バッファの改行を捨てる
+            while select.select([sys.stdin], [], [], 0)[0]:
+                sys.stdin.read(1)
+    
             print(f"Loop {sec}s (Enter to stop)")
 
             while True:
@@ -174,10 +161,10 @@ def exit_diag():
 MENU_OPTIONS = [
     ("1", "Pin状態確認", pins_state, None),
     ("2", "Pin設定", None, [
-        ("1", "入力設定", pin_input, None),
-        ("2", "出力設定", pin_output, None),
+        ("1", "入力設定", menu_set_input, None),
+        ("2", "出力設定", menu_set_output, None),
         ("3", "詳細設定", None, [
-            ("1", "Pull設定", pin_pull, None),
+            ("1", "Pull設定", menu_set_pull, None),
             ("2", "Drive設定", pin_drive, None),
             ("9", "戻る", None, None),
         ]),
