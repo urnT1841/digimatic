@@ -73,6 +73,8 @@ def process_idle():
         next_state = STATE_REQUEST
     elif cmd == "DIAG":
         next_state = STATE_DIAG
+    elif cmd == "SIM":
+        next_stage = STATE_SIM
     elif cmd in ("BIN", "STR"):
         # bit列扱いのモード設定
         # デフォルトはMSBにしてSTR送信 (classコンストラクタで設定)
