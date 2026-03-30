@@ -17,6 +17,7 @@ STATE_ERROR = const(4)
 STATE_SWITCH = const(5)
 STATE_DIAG = const(6)
 STATE_SIM = const(7)
+STATE_STOP = const(8)
 
 #エラー定義
 ERR_NONE = const(0)
@@ -59,34 +60,31 @@ def mode_switcher(cmd):
         session.config = session.MODE_STR
 
 
+
 def process_idle():
-    """  待ち受け    """    
-    # 外部からの入力監視を行う
-    next_state = STATE_IDLE
+    """ 
+    完全にフラットになった待ち受けロジック。
+    個別の判定（if-elif）を捨て、マップによる解決に統一。
+    """
 
     cmd = get_command_from_pc()
-    if cmd == "STOP":
-        # STOP を受信したときはスクリプトを止める
-        # main のFinnalyを実施後に停止となる
-        raise SystemExit
-    elif cmd == "REQ":
-        next_state = STATE_REQUEST
-    elif cmd == "DIAG":
-        next_state = STATE_DIAG
-    elif cmd == "SIM":
-        next_stage = STATE_SIM
-    elif cmd in ("BIN", "STR"):
-        # bit列扱いのモード設定
-        # デフォルトはMSBにしてSTR送信 (classコンストラクタで設定)
-        mode_switcher(cmd)
+    
+    # 状態遷移check
+    if cmd in CMD_TO_STATE_MAP:
+        return CMD_TO_STATE_MAP[cmd], ERR_NONE
+        
+    # Action CHeck
+    if cmd in CMD_ACTION_MAP:
+        CMD_ACTION_MAP[cmd]()
+        return STATE_IDLE, ERR_NONE
 
-    # 外部スイッチからのReq信号生成受付
+    # Physical sw check
     if phy_sw_request():
-        next_state = STATE_REQUEST
+        return STATE_REQUEST, ERR_NONE
 
     time.sleep_ms(100)
+    return STATE_IDLE, ERR_NONE
 
-    return next_state , ERR_NONE
 
 
 def process_request():
@@ -189,6 +187,14 @@ def process_sim_handler():
 
     return STATE_SIM, ERR_NONE
 
+def process_stop_handler():
+    """ 終了処理ハンドラー """
+
+    print("\n[System] Stopping by PC command...")
+    
+    # 最終的に例外を投げてメインループを抜ける
+    raise SystemExit
+
 
 def process_err_handler():
     #未実装 エラーハンドリングを行う
@@ -201,8 +207,21 @@ state_map = {
     STATE_REQUEST: process_request,
     STATE_RECEIVE: process_receive_busy, # 引数がある場合はlambdaで包む
     STATE_VALIDATE: process_validate,
+    STATE_STOP: process_stop_handler,
     STATE_ERROR: process_err_handler,         # TODO:未実装
     STATE_DIAG: process_diag_handler,
     STATE_SIM: process_sim_handler,
 }
 
+#コマンド受付マッピング
+CMD_TO_STATE_MAP = {
+    "STOP": STATE_STOP,  # 終了状態へ
+    "REQ":  STATE_REQUEST,
+    "DIAG": STATE_DIAG,
+    "SIM":  STATE_SIM,
+}
+
+CMD_ACTION_MAP = {
+    "BIN": lambda: mode_switcher("BIN"),
+    "STR": lambda: mode_switcher("STR"),
+}
