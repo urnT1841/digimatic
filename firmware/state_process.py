@@ -1,4 +1,5 @@
 import time
+import gc
 from micropython import const
 
 import pin_definitions as pdef
@@ -147,6 +148,7 @@ def process_validate():
         # 失敗：エラー状態へ
         return STATE_ERROR, ERR_DECODE
 
+
 def process_diag_handler():
     # dig mode へはいる
     print("\n-- Enter Diagnostic Mode --")
@@ -154,6 +156,9 @@ def process_diag_handler():
     # dig mode から出てくる
     print("\n -- Finish Diagnostic Mode -- ")
     
+    #階層メニューで再起を使っているので。念のためGC実施
+    gc.collect()
+
     from main import splash_welcome
     splash_welcome()
 
@@ -177,6 +182,9 @@ def process_sim_handler():
     if cmd == "STOP":
         return STATE_IDLE, ERR_NONE
         
+    #念のためGC実施
+    gc.collect()
+
     return STATE_SIM, ERR_NONE
 
 
