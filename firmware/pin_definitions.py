@@ -38,20 +38,20 @@ GPIO_MAP = {
 
 # 使用Pinにラベル付け
 # システム電源・制御設定
-EN_1_2V_PIN = GPIO_MAP["D9"]      # AP2112 EN: レベルシフタ用1.2V電源有効化
-DIR_CONTROL_PIN = GPIO_MAP["D10"] # SN74LXC8T245 DIR: A->B(受信)固定用
+EN_1_2V_PIN = GPIO_MAP["D1"]      # AP2112 EN: レベルシフタ用1.2V電源有効化
+DIR_CONTROL_PIN = GPIO_MAP["D2"] # SN74LXC8T245 DIR: A->B(受信)固定用
 
 # デジマチック信号入力 (XIAO側)
-RX_DATA_PIN = GPIO_MAP["D1"]
-RX_CLK_PIN = GPIO_MAP["D2"]
-RX_DATA_BTN = GPIO_MAP["D3"]
+RX_DATA_PIN = GPIO_MAP["D10"]
+RX_CLK_PIN = GPIO_MAP["D9"]
+RX_DATA_BTN = GPIO_MAP["D8"]
 
 # 自己テスト用
 TX_DATA_PIN = GPIO_MAP["D0"]
-REQ_SW_PIN = GPIO_MAP["D8"]
+REQ_SW_PIN = GPIO_MAP["D7"]
 
 # 要求信号出力 (10kΩ抵抗越し)
-REQ_OUT_PIN = GPIO_MAP["D7"]
+REQ_OUT_PIN = GPIO_MAP["D6"]
 REQ_GPIO = REQ_OUT_PIN
 PROTECTED_GPIO = {
     REQ_GPIO
@@ -104,7 +104,7 @@ def init_hardware():
     PINS["tx_data"].init(mode=machine.Pin.IN)
     PINS["clk"].init(mode=machine.Pin.IN)
     PINS["data_btn"].init(mode=machine.Pin.IN)
-    PINS["req"].init(mode=machine.Pin.OUT, value=OFF) #先にOFFで設定してからHi-Zへ移行
+    PINS["req"].init(mode=machine.Pin.OUT, value=OFF)  #先にOFFで設定してからHi-Zへ移行
     PINS["req"].init(mode=machine.Pin.IN)
     PINS["req_sw"].init(mode=machine.Pin.IN)
 
