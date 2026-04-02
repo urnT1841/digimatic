@@ -19,19 +19,22 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
         ));
     }
 
+    // asciiしか来ないけど上でチェックしたうえでバイト列に変換
+    let bytes = frame.as_bytes();
+
     // 構造をタプルに分解してチェック
     // byteに変換するほうが安全
     match (
-        frame.len(),
-        &frame[D1..D5],       // ヘッダ (D1-D4)
-        &frame[D5..D6],       // 符号  sign  D5
-        &frame[D6..D12],      // 数値 (D6-D11)
-        &frame[D12..D13],     // 小数点 point pos (D12)
-        &frame[D13..D13 + 1], // 単位   unit (D13)
+        bytes.len(),
+        &bytes[D1..D5],       // ヘッダ (D1-D4)
+        &bytes[D5..D6],       // 符号  sign  D5
+        &bytes[D6..D12],      // 数値 (D6-D11)
+        &bytes[D12..D13],     // 小数点 point pos (D12)
+        &bytes[D13..D13 + 1], // 単位   unit (D13)
     ) {
         // 全ての条件が揃った「正解の形」を Measurement構造体に詰める
         // くどい処理だがシリアル経由の値が相手なので用心側に。とはいえやりすぎ感はある。
-        (FRAME_LENGTH, "FFFF", s, val_str, p, u) => Ok(Measurement {
+        (FRAME_LENGTH, b"FFFF", s, val_str, p, u) => Ok(Measurement {
             raw_val: convert_val(val_str)?,
             sign: convert_sign(s)?,
             point: convert_point(p)?,
@@ -50,43 +53,47 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
 }
 
 // 以下は本体側を見やすくするためのヘルパー関数群
+// 安全のためバイト列との比較をする  → b"" という形にする
 // val parse
-fn convert_val(val_str: &str) -> Result<String, Error> {
-    // 全ての文字が数字であることを確認(これくらいはやっておく)
-    if val_str.chars().all(|c| c.is_ascii_digit()) {
-        Ok(val_str.to_string()) // 実体を作って返す
+fn convert_val(val_bytes: &[u8]) -> Result<String, Error> {
+    // 全てのバイトが ASCII 数字かチェック
+    if val_bytes.iter().all(|b| b.is_ascii_digit()) {
+        // バイト列を文字列に変換（安全にunwrapできる）
+        Ok(std::str::from_utf8(val_bytes)
+            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid UTF-8"))?
+            .to_string())
     } else {
         Err(Error::new(ErrorKind::InvalidData, "Invalid numeric data"))
     }
 }
 
 // sign parse
-fn convert_sign(s: &str) -> Result<Sign, Error> {
+fn convert_sign(s: &[u8]) -> Result<Sign, Error> {
     match s {
-        "0" => Ok(Sign::Plus),
-        "8" => Ok(Sign::Minus),
+        b"0" => Ok(Sign::Plus),
+        b"8" => Ok(Sign::Minus),
         _ => Err(std::io::Error::new(ErrorKind::InvalidData, "Unknown sign")),
     }
 }
 
 // pointposision parse
-fn convert_point(p: &str) -> Result<PointPosition, Error> {
+fn convert_point(p: &[u8]) -> Result<PointPosition, Error> {
     match p {
-        "0" => Ok(PointPosition::Zero),  // 000000.
-        "1" => Ok(PointPosition::One),   // 00000.0
-        "2" => Ok(PointPosition::Two),   // 0000.00
-        "3" => Ok(PointPosition::Three), // 000.000
-        "4" => Ok(PointPosition::Four),  // 00.0000
-        "5" => Ok(PointPosition::Five),  // 0.00000
+        b"0" => Ok(PointPosition::Zero),  // 000000.
+        b"1" => Ok(PointPosition::One),   // 00000.0
+        b"2" => Ok(PointPosition::Two),   // 0000.00
+        b"3" => Ok(PointPosition::Three), // 000.000
+        b"4" => Ok(PointPosition::Four),  // 00.0000
+        b"5" => Ok(PointPosition::Five),  // 0.00000
         _ => Err(std::io::Error::new(ErrorKind::InvalidData, "Illigal point")),
     }
 }
 
 // unit parse
-fn convert_unit(u: &str) -> Result<Unit, Error> {
+fn convert_unit(u: &[u8]) -> Result<Unit, Error> {
     match u {
-        "0" => Ok(Unit::Mm),
-        "1" => Ok(Unit::_Inch),
+        b"0" => Ok(Unit::Mm),
+        b"1" => Ok(Unit::_Inch),
         _ => Err(std::io::Error::new(ErrorKind::InvalidData, "Unknown unit")),
     }
 }
