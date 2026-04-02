@@ -68,19 +68,22 @@ pub struct Measurement {
     pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
 }
 
+/// Measurement構造体の値をf64に変換
+/// 失敗した場合はNaNを返す
 impl Measurement {
-    pub fn to_f64(&self) -> f64 {
-        // 整数として保存している部分を数値に変換
-        let val = self.raw_val.parse::<f64>().unwrap_or(NAN);
+    pub fn to_f64_checked(&self) -> Result<f64, std::num::ParseFloatError> {
+        let val = self.raw_val.parse::<f64>()?;
 
-        //小数点の桁数分で割って測定値に変換。そのあと符号適用
         let divisor = 10f64.powi(self.point as i32);
         let sign_dir = match self.sign {
             Sign::Plus => 1.0,
             Sign::Minus => -1.0,
         };
 
-        // 最終的な f64 の測定値
-        (val / divisor) * sign_dir
+        Ok((val / divisor) * sign_dir)
+    }
+
+    pub fn to_f64(&self) -> f64 {
+        self.to_f64_checked().unwrap_or(NAN)
     }
 }
