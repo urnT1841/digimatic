@@ -50,7 +50,7 @@ pub enum PointPosition {
     Five = 0x05,  // 0.00000
 }
 
-// 作ったけど使ってない
+// rx frame を受ける入れ物 measurement構造体前に使う
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DigimaticFrame {
     pub header: [u8; 4],
@@ -59,6 +59,21 @@ pub struct DigimaticFrame {
     pub point_pos: PointPosition,
     pub unit: Unit,
 }
+
+impl DigimaticFrame {
+    pub fn to_measurement(&self) -> Measurement {
+        Measurement {
+            raw_val: std::str::from_utf8(&self.data)
+                .unwrap_or("0")
+                .to_string(),
+            sign: self.sign,
+            point: self.point_pos,
+            unit: self.unit,
+        }
+    }
+
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Measurement {
