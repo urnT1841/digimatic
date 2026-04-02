@@ -5,6 +5,8 @@
 //!
 //!
 
+use std::f64::NAN;
+
 // デジマッチック データフレームの位置
 // インデックスだとずれるので
 pub const D1: usize = 0; // header
@@ -69,7 +71,7 @@ pub struct Measurement {
 impl Measurement {
     pub fn to_f64(&self) -> f64 {
         // 整数として保存している部分を数値に変換
-        let val = self.raw_val.parse::<f64>().unwrap_or(0.0);
+        let val = self.raw_val.parse::<f64>().unwrap_or(NAN);
 
         //小数点の桁数分で割って測定値に変換。そのあと符号適用
         let divisor = 10f64.powi(self.point as i32);
