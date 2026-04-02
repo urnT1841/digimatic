@@ -7,37 +7,32 @@
 use crate::frame::*;
 use std::io::{Error, ErrorKind};
 
-/// 文字列として送られてきたdigimatic frameをパースしてMeasurement構造体に詰め込む
-pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
+/// 文字列として送られてきた digimatic frame をパースして DigimaticFrame に変換
+/// Measurement構造体に詰めるのをDigimaticFrameに変更
+pub fn parse_rx_frame_string(rx_frame: &str) -> Result<DigimaticFrame, Error> {
     // 受信文字列の整形 (Receiverで取り除いているけど念のため) とASCII文字チェック
     let frame = rx_frame.trim();
 
     if !frame.is_ascii() {
-        return Err(std::io::Error::new(
-            ErrorKind::InvalidData,
-            "Frame contains non-ASCII characters",
-        ));
+        return Err(Error::new(ErrorKind::InvalidData, "Frame contains non-ASCII characters"));
     }
 
     // asciiしか来ないけど上でチェックしたうえでバイト列に変換
     let bytes = frame.as_bytes();
 
-    // 構造をタプルに分解してチェック
-    // byteに変換するほうが安全
     match (
         bytes.len(),
-        &bytes[D1..D5],       // ヘッダ (D1-D4)
-        &bytes[D5..D6],       // 符号  sign  D5
-        &bytes[D6..D12],      // 数値 (D6-D11)
-        &bytes[D12..D13],     // 小数点 point pos (D12)
-        &bytes[D13..D13 + 1], // 単位   unit (D13)
+        &bytes[D1..D5],       // ヘッダ
+        &bytes[D5..D6],       // 符号
+        &bytes[D6..D12],      // 数値
+        &bytes[D12..D13],     // 小数点
+        &bytes[D13..=D13],     // 単位
     ) {
-        // 全ての条件が揃った「正解の形」を Measurement構造体に詰める
-        // くどい処理だがシリアル経由の値が相手なので用心側に。とはいえやりすぎ感はある。
-        (FRAME_LENGTH, b"FFFF", s, val_str, p, u) => Ok(Measurement {
-            raw_val: convert_val(val_str)?,
+        (FRAME_LENGTH, b"FFFF", s, val_bytes, p, u) => Ok(DigimaticFrame {
+            header: [b'F', b'F', b'F', b'F'],
             sign: convert_sign(s)?,
-            point: convert_point(p)?,
+            data: val_bytes.try_into().unwrap_or([b'0'; 6]),
+            point_pos: convert_point(p)?,
             unit: convert_unit(u)?,
         }),
         // 文字数が違う場合
@@ -46,11 +41,10 @@ pub fn parse_rx_frame(rx_frame: &str) -> Result<Measurement, Error> {
             ErrorKind::InvalidData,
             format!("Invalid length: {}", len),
         )),
-
-        // それ以外の「形が違う」場合（ヘッダ違いなど）
         _ => Err(Error::new(ErrorKind::InvalidData, "Invalid frame format")),
     }
 }
+
 
 // 以下は本体側を見やすくするためのヘルパー関数群
 // 安全のためバイト列との比較をする  → b"" という形にする
@@ -101,6 +95,16 @@ fn convert_unit(u: &[u8]) -> Result<Unit, Error> {
 // TODO: 未実装
 // 文字列に変換したものではなく 生のバイナリデータで送られてきたものの復号
 // 送られてくるのは nibble x 13 の52bit 各nibbleはLSB → ひっくり返してデコード
-// pub fn parse_rx_frame_bin(rx_stream: &Vec<u8>) {
-//
-// }
+pub fn parse_rx_frame_bin(rx_stream: &Vec<u8>) {
+    let bin_frame = trim_bytes(rx_stream);
+
+ }
+
+// バイナリパーサの下請け関数
+pub fn trim_bytes(rx_stream: &Vec<u8>) -> Vec<u8> {
+    rx_stream
+        .iter()
+        .copied()
+        .filter(|b| *b != b'\n' && *b != b'\r')
+        .collect()
+}
