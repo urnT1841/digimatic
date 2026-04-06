@@ -9,9 +9,9 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
+use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::scanner::find_pico_port;
-use crate::validater::parse_rx_frame;
 
 ///
 /// pico 実機を探して接続，USB-CDCで待ち受けデータ受信
@@ -99,40 +99,50 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 fn receiver(
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<f64>,
-    rx_wtr: &mut Writer<File>,
-    m_wtr: &mut Writer<File>,
+    rx_wtr: &mut csv::Writer<std::fs::File>,
+    m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), std::io::Error> {
     loop {
         match rx_receiver.read_str_measurement() {
             Ok(data) => {
-                // 受信記録記録を生成して記録
+                // 受信記録を生成してCSVに保存
                 if let Err(e) = RxDataLog::new(&data).save_flush(rx_wtr) {
-                    eprintln!("Failed to save data: {}", e)
+                    eprintln!("Failed to save raw data: {}", e);
                 }
-                // rx文字列(フレーム)のバリデーション
-                match parse_rx_frame(&data) {
-                    Ok(measurement) => {
+
+                // 文字列フレームをDigimaticFrameに変換
+                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
+                    Ok(frame) => {
+                        // Measurement生成
+                        let measurement = Measurement {
+                            raw_val: std::str::from_utf8(&frame.data).unwrap_or("0").to_string(),
+                            sign: frame.sign,
+                            point: frame.point_pos,
+                            unit: frame.unit,
+                        };
+
                         let val_f64 = measurement.to_f64();
-                        //保存失敗は表示
+
+                        // 測定値保存
                         if let Err(e) = MeasurementLog::new(val_f64).save_flush(m_wtr) {
-                            eprintln!("CSV保存失敗 ： {}", e);
+                            eprintln!("Failed to save measurement: {}", e);
                         }
-                        // ターミナルへ表示
-                        print_rx_decode_result(&data, val_f64);
-                        // gui アダプタ へデータ送る
-                        // 送信失敗は無視
+
+                        // ターミナル表示
+                        println!("[Rx] {:>6} mm  [dec] {} mm", data.trim(), val_f64);
+
+                        // GUI用チャンネル送信 (送信失敗は無視)
                         let _ = tx.send(val_f64);
                     }
                     Err(e) => {
-                        eprintln!("データ異常（パース失敗）: {} | 原因: {}", data, e);
+                        eprintln!("Frame parse error: {} | 原因: {}", data, e);
                     }
                 }
             }
-            // タイムアウト時は何もしない
+            // タイムアウトは無視
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
-            // それ以外の命的な場合，このループを脱げて外側に出る
+            // 致命的エラーなら外側に伝える
             Err(e) => {
-                //eprintln!("受信エラー種別: {:?} / {}", e.kind(), e);
                 if CdcReceiver::is_fatal_error(&e) {
                     return Err(e);
                 }
@@ -141,7 +151,6 @@ fn receiver(
         }
     }
 }
-
 // 生成データ,受信文字列,復号データを出力
 fn print_rx_decode_result(rx_data: &str, deco_data: f64) {
     println!("[Rx] {:>6} mm  [dec] {} mm", rx_data.trim(), deco_data);
