@@ -110,47 +110,38 @@ fn receiver(
                     eprintln!("Failed to save raw data: {}", e);
                 }
 
-                // 文字列フレームをDigimaticFrameに変換
-                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
+                // 文字列フレームをDigimaticFrameに変換 -> Measurement構造体へ
+                match DigimaticFrame::try_from(data.as_str()) {
                     Ok(frame) => {
-                        // Measurement生成
-                        let measurement = Measurement {
-                            raw_val: std::str::from_utf8(&frame.data).unwrap_or("0").to_string(),
-                            sign: frame.sign,
-                            point: frame.point_pos,
-                            unit: frame.unit,
-                        };
+                        match Measurement::try_from(frame) {
+                            Ok(measurement) => {
+                                let val_f64 = measurement.to_f64();
 
-                        let val_f64 = measurement.to_f64();
-
-                        // 測定値保存
-                        if let Err(e) = MeasurementLog::new(val_f64).save_flush(m_wtr) {
-                            eprintln!("Failed to save measurement: {}", e);
+                                // GUIへ送信とターミナルへの表示
+                                let _ = tx.send(val_f64);
+                                println!("[Rx] {} -> [dec] {:.2} mm", data.trim(), val_f64);
+                            }
+                            Err(e) => eprintln!("Measurement 変換エラー: {}", e),
                         }
-
-                        // ターミナル表示
-                        println!("[Rx] {:>6} mm  [dec] {} mm", data.trim(), val_f64);
-
-                        // GUI用チャンネル送信 (送信失敗は無視)
-                        let _ = tx.send(val_f64);
                     }
-                    Err(e) => {
-                        eprintln!("Frame parse error: {} | 原因: {}", data, e);
-                    }
+                    Err(e) => eprintln!("Frame パースエラー: {} | 原因: {}", data, e),
                 }
-            }
+            } // ← ここで Ok(data) のブロックが終了します
+
             // タイムアウトは無視
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+
             // 致命的エラーなら外側に伝える
             Err(e) => {
                 if CdcReceiver::is_fatal_error(&e) {
                     return Err(e);
                 }
-                continue;
+                continue; // 致命的でなければループを続行
             }
-        }
+        } // ← ここで rx_receiver.read_str_measurement() の match が終了します
     }
 }
+
 // 生成データ,受信文字列,復号データを出力
 fn print_rx_decode_result(rx_data: &str, deco_data: f64) {
     println!("[Rx] {:>6} mm  [dec] {} mm", rx_data.trim(), deco_data);
