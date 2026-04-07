@@ -8,15 +8,15 @@ use chrono::Local;
 use csv::{Writer, WriterBuilder};
 use std::fs::{File, OpenOptions};
 use std::{thread, time::Duration};
+use std::convert::TryFrom;
 
 use crate::communicator::CdcReceiver;
+use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::sim::frame_array_builder::build_frame_array;
 use crate::sim::generator::generator;
 use crate::sim::port_prepare::port_prepare;
 use crate::sim::sender::{SendMode, send};
-use crate::frame::{DigimaticFrame, Measurement};
-use std::convert::TryFrom;
 
 
 pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
@@ -56,9 +56,7 @@ pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
                 rx_wtr.flush()?;
 
                 // rx文字列(フレーム)のバリデーション
-                match DigimaticFrame::try_from(data.as_str())
-                    .and_then(Measurement::try_from)
-                {
+                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
                     Ok(measurement) => {
                         let val_f64 = measurement.to_f64();
                         // データ保存用構造体準備
