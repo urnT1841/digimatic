@@ -1,8 +1,6 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use digimatic::sim::generator::generator;
-
 struct DisplayApp {
     measurement_data: f64,
     receiver: Receiver<f64>, // 受信機を格納
@@ -57,9 +55,6 @@ impl eframe::App for DisplayApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.label(egui::RichText::new("計測中").size(20.0));
-
-                // sim の generator 空を直接受けるときは100で割る必要アリ
-                //let val_mm = self.measurement_data as f64 / 100.0;
 
                 // 本番ノギスデータは最終状態で送られてくるのでそのまま
                 let val_mm = self.measurement_data;
