@@ -5,7 +5,6 @@ use crate::frame::*;
 use std::convert::TryFrom;
 use std::io::{Error, ErrorKind};
 
-/// nibble_maker の Rust版
 fn nibble_maker(bits: &[u8; 4], mode: BitMode) -> u8 {
     match mode {
         BitMode::Lsb => (bits[0] << 3) | (bits[1] << 2) | (bits[2] << 1) | bits[3],
@@ -13,7 +12,6 @@ fn nibble_maker(bits: &[u8; 4], mode: BitMode) -> u8 {
     }
 }
 
-/// validator の Rust版
 /// bits_buffer: 52要素(13ニブル×4bit)のスライス
 pub fn validator_bits(bits_buffer: &[u8], mode: BitMode) -> Option<Vec<u8>> {
     let bits: &[u8; 52] = bits_buffer.try_into().ok()?;
@@ -24,9 +22,9 @@ pub fn validator_bits(bits_buffer: &[u8], mode: BitMode) -> Option<Vec<u8>> {
             let val = nibble_maker(nibble_bits, mode);
 
             let valid = match (i, mode) {
-                (0..=3, _)         => val == 0xF,
-                (4, BitMode::Msb)  => matches!(val, 0 | 8),
-                (4, BitMode::Lsb)  => matches!(val, 0 | 1),
+                (0..=3, _) => val == 0xF,
+                (4, BitMode::Msb) => matches!(val, 0 | 8),
+                (4, BitMode::Lsb) => matches!(val, 0 | 1),
                 (5..=10, BitMode::Msb) => val <= 9,
                 (5..=10, BitMode::Lsb) => [0u8, 8, 4, 12, 2, 10, 6, 14, 1, 9].contains(&val),
                 (11, BitMode::Msb) => val <= 5,
@@ -46,13 +44,14 @@ pub fn decode_frame(nibbles: &[u8]) -> Result<String, ()> {
     if nibbles.len() != 13 {
         return Err(());
     }
-    let s: String = nibbles.iter().map(|&v| {
-        match v {
+    let s: String = nibbles
+        .iter()
+        .map(|&v| match v {
             15 => 'F',
             10..=14 => (b'A' + v - 10) as char,
             _ => (b'0' + v) as char,
-        }
-    }).collect();
+        })
+        .collect();
     Ok(s)
 }
 
@@ -151,7 +150,6 @@ impl TryFrom<(&[u8], BitMode)> for DigimaticFrame {
         })
     }
 }
-
 
 //  Digimatic -> measurement
 impl TryFrom<DigimaticFrame> for Measurement {

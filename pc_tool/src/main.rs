@@ -6,7 +6,6 @@
 
 use digimatic::execute_communicate;
 use digimatic::sim::execute_sim;
-use std::env;
 
 #[derive(Debug)]
 enum AppMode {
