@@ -21,7 +21,7 @@ impl RxDataLog {
         Self {
             timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
             raw_len: raw.len(),
-            raw_data: format!("{:?}", raw),
+            raw_data: raw.to_string(),
             error_log: None,
         }
     }
