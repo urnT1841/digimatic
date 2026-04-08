@@ -76,6 +76,27 @@ impl CdcReceiver {
     }
 }
 
+pub struct SimReceiver {
+    buffer: std::collections::VecDeque<String>,
+}
+
+impl SimReceiver {
+    pub fn new() -> Self {
+        Self { buffer: std::collections::VecDeque::new() }
+    }
+
+    pub fn push(&mut self, data: String) {
+        self.buffer.push_back(data);
+    }
+
+    pub fn read_str_measurement(&mut self) -> Result<String, Error> {
+        match self.buffer.pop_front() {
+            Some(line) => Ok(line),
+            None => Err(Error::new(ErrorKind::TimedOut, "no data")),
+        }
+    }
+}
+
 ///
 /// pico探す
 ///
