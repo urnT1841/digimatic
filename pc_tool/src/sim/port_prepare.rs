@@ -34,7 +34,13 @@ pub fn port_prepare() -> Result<PortPair, Error> {
         .spawn()?;
 
     // socatの作業待ち (時間待ち。べつにsocatの出力を監視しているわけではないので注意)
-    thread::sleep(Duration::from_millis(200));
+    for _ in 0..10 {
+    if std::path::Path::new(&tx_path).exists() &&
+       std::path::Path::new(&rx_path).exists() {
+        break;
+    }
+        thread::sleep(Duration::from_millis(50));
+    }
 
     // tx,rx のそれぞれのポートを開く
     let tx = serialport::new(&tx_path, 9600)
