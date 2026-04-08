@@ -35,10 +35,9 @@ pub fn port_prepare() -> Result<PortPair, Error> {
 
     // socatの作業待ち (時間待ち。べつにsocatの出力を監視しているわけではないので注意)
     for _ in 0..10 {
-    if std::path::Path::new(&tx_path).exists() &&
-       std::path::Path::new(&rx_path).exists() {
-        break;
-    }
+        if std::path::Path::new(&tx_path).exists() && std::path::Path::new(&rx_path).exists() {
+            break;
+        }
         thread::sleep(Duration::from_millis(50));
     }
 

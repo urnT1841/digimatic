@@ -1,6 +1,8 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
+use crate::{execute_communicate,sim};
+
 struct DisplayApp {
     measurement_data: f64,
     receiver: Receiver<f64>, // 受信機を格納
@@ -69,38 +71,44 @@ impl eframe::App for DisplayApp {
     }
 }
 
-fn gui_run() -> eframe::Result {
+// switcher から呼ばれる公開エントリポイント
+pub fn launch_display(is_sim: bool) -> Result<(), String> {
+    gui_run(is_sim).map_err(|e| e.to_string())
+}
+
+fn gui_run(is_sim: bool) -> eframe::Result {
     let options = eframe::NativeOptions::default();
 
     eframe::run_native(
         "Digimatic Data Display v0.33",
         options,
-        Box::new(|cc| {
-            // 送受信窓口
+        Box::new(move |cc| {
+            // ← move 追加（is_sim をクロージャに渡すため）
             let (tx, rx) = std::sync::mpsc::channel::<f64>();
 
-            // スレッド起動
             std::thread::spawn(move || {
                 loop {
                     let tx_clone = tx.clone();
-                    // let val = generator();
-                    // if tx.send(val).is_err() {
-                    //     break;
-                    // }
-                    // ノギスと接続させて表示(本番)
-                    if let Err(e) = crate::execute_communicate::run_actual_loop(tx_clone) {
-                        eprintln!("通信エラー： {} ", e);
+                    if is_sim {
+                        // sim実行
+                        if let Err(e) = sim::execute_sim::run_simulation_loop_with_tx(tx_clone) {
+                            eprintln!("シミュレーションエラー: {}", e);
+                        }
+                    } else {
+                        // 実機
+                        if let Err(e) = execute_communicate::run_actual_loop(tx_clone) {
+                            eprintln!("通信エラー: {}", e);
+                        }
                     }
                 }
             });
-            // rxを送って窓開始
             Ok(Box::new(DisplayApp::new(cc, rx)))
         }),
     )
 }
 
-#[allow(dead_code)]
-fn main() -> eframe::Result {
-    gui_run(false).map_err(|e| eframe::Error::NotSupported(e))?;
-    Ok(())
+fn main() {
+    if let Err(e) = launch_display(false) {
+        eprintln!("起動エラー: {}", e);
+    }
 }
