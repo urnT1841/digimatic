@@ -120,8 +120,18 @@ pub fn run_simulation_loop_with_tx(tx: std::sync::mpsc::Sender<f64>) -> Result<(
 
         // あとはActualと同じパス
         match receiver.read_str_measurement() {
-            Ok(data) => { /* 既存のまま */ }
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            Ok(data) => {
+                if data.is_empty() { continue; }
+                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
+                    Ok(measurement) => {
+                        let val_f64 = measurement.to_f64();
+                        if tx.send(val_f64).is_err() {
+                            return Ok(());
+                        }
+                    }
+                    Err(e) => eprintln!("パース失敗: {}", e),
+                }
+            }            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => eprintln!("受信エラー {}", e),
         }
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));
