@@ -68,6 +68,7 @@ impl eframe::App for DisplayApp {
                 );
             });
         });
+        ctx.request_repaint_after(std::time::Duration::from_millis(500));
     }
 }
 
