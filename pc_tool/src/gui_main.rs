@@ -69,7 +69,7 @@ impl eframe::App for DisplayApp {
     }
 }
 
-fn main() -> eframe::Result {
+fn gui_run() -> eframe::Result {
     let options = eframe::NativeOptions::default();
 
     eframe::run_native(
@@ -88,7 +88,7 @@ fn main() -> eframe::Result {
                     //     break;
                     // }
                     // ノギスと接続させて表示(本番)
-                    if let Err(e) = digimatic::execute_communicate::run_actual_loop(tx_clone) {
+                    if let Err(e) = crate::execute_communicate::run_actual_loop(tx_clone) {
                         eprintln!("通信エラー： {} ", e);
                     }
                 }
@@ -97,4 +97,10 @@ fn main() -> eframe::Result {
             Ok(Box::new(DisplayApp::new(cc, rx)))
         }),
     )
+}
+
+#[allow(dead_code)]
+fn main() -> eframe::Result {
+    gui_run(false).map_err(|e| eframe::Error::NotSupported(e))?;
+    Ok(())
 }

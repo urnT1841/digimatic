@@ -9,3 +9,5 @@ pub mod logger;
 pub mod parser;
 pub mod scanner;
 pub mod sim;
+pub mod switcher;
+pub mod gui_main;
