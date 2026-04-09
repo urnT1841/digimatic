@@ -26,17 +26,17 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
 - Decodes frames to retrieve measurement values.
 
 ### 2. Diagnostic Mode in Pico Firmware
-* Diagnostic mode features:
-  - Legacy Text Menue: Classic string-based interactive menu.
-  - Pin status confirmation:  Real-time monitoring of GPIO Pins status.
-  - Device configuration: Access and modify firmware settings.
-  - Moving Mode Toggle: Enable or disable the "Moving Mode" 
+* Diagnostic mode includes:
+- Simple text menu: Use a classic text-based menu
+- Pin status monitoring: View GPIO pin status in real time
+- Device settings: View and change settings (changes are not saved; settings are reset when you exit this mode)
+- Toggle mode: Automatically toggles pin output on and off
 
   Type Diag in the terminal to enter this mode.
 
 ### 2. GUI Display
 <a href="./pc_tool/assets/DisplayWindow(windows).png">
-  <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUI Mode Display" width="280">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUI Mode Display" width="220">
 </a>
 
 - The GUI mode is currently available for **Windows**. (Linux support is TBD).
@@ -80,7 +80,6 @@ Details for the hardware interface (Electronic construction):
   - LDO Regulator: AP2112 (for Level Shifter power supply)
 
 ## TODO
-[ ] Integrate Serial Communication: Replace the generator with CdcReceiver to stream real-time data from the actual caliper to the DisplayApp.
 
 [ ] Settings UI: Implement UI in egui to allow users to change font sizes and colors.
 
