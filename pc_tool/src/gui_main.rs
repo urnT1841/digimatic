@@ -108,8 +108,8 @@ fn gui_run(is_sim: bool) -> eframe::Result {
     )
 }
 
-fn main() {
-    if let Err(e) = launch_display(false) {
-        eprintln!("起動エラー: {}", e);
-    }
-}
+// fn main() {
+//     if let Err(e) = launch_display(false) {
+//         eprintln!("起動エラー: {}", e);
+//     }
+// }

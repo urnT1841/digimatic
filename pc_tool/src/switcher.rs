@@ -41,7 +41,7 @@ pub fn parse_args(args: Vec<String>) -> Result<AppMode, String> {
         "sim" | "s" => Ok(AppMode::Sim),
         // CLI実機
         "actual" | "a" => Ok(AppMode::Actual),
-        // GUIモード（追加の引数でシミュレーションか判定しても面白いです）
+        // GUIモード
         "gui" | "g" => {
             let is_sim = args.get(2).map(|s| s.contains('s')).unwrap_or(false);
             Ok(AppMode::Gui(is_sim))

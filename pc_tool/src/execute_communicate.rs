@@ -100,7 +100,7 @@ fn receiver(
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
-    m_wtr: &mut csv::Writer<std::fs::File>,
+    _m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), std::io::Error> {
     loop {
         match rx_receiver.read_str_measurement() {
@@ -140,9 +140,4 @@ fn receiver(
             }
         } // ← ここで rx_receiver.read_str_measurement() の match が終了します
     }
-}
-
-// 生成データ,受信文字列,復号データを出力
-fn print_rx_decode_result(rx_data: &str, deco_data: f64) {
-    println!("[Rx] {:>6} mm  [dec] {} mm", rx_data.trim(), deco_data);
 }
