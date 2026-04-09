@@ -12,6 +12,7 @@ RP Pico
 PC (Linux / Windows)
 
 
+
 ## 現状
 今の段階：
   - Simとして動きます (socatを使うのでLinux用)
@@ -20,7 +21,15 @@ PC (Linux / Windows)
       + 送受信用にそれぞれ仮想ポートを生成
       + ポートを介してデータを送受信
       + フレームをデコードして測定値を得る
-  
+
+  - GUI表示:
+    <a href="./pc_tool/assets/DisplayWindow(windows).png">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUIモード表示" width="280">
+</a>
+  + このGUIモードはWindows用です。Linuxではまだ。
+    * 起動: -gui -sim オプションをつけて起動
+    * cargo run --bin digimatic -gui -sim
+
   - ノギス実機との接続
       + breadBord上では通信を確認 → ユニバーサル基板へ組み込み中
 
