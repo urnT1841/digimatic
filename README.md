@@ -25,6 +25,15 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
 - Transmits and receives data via virtual ports.
 - Decodes frames to retrieve measurement values.
 
+### 2. Diagnostic Mode in Pico Firmware
+* Diagnostic mode features:
+  - Legacy Text Menue: Classic string-based interactive menu.
+  - Pin status confirmation:  Real-time monitoring of GPIO Pins status.
+  - Device configuration: Access and modify firmware settings.
+  - Moving Mode Toggle: Enable or disable the "Moving Mode" 
+
+  Type Diag in the terminal to enter this mode.
+
 ### 2. GUI Display
 <a href="./pc_tool/assets/DisplayWindow(windows).png">
   <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUI Mode Display" width="280">
@@ -55,6 +64,10 @@ Transfer the following files to the Pico. main.py will execute automatically upo
   - state_process.py
   - decoder.py
   - communicator.py
+  - diag.py
+  - model_caliper.py  (for sim)
+  - sim_driven.py  (for sim)
+  - i18n.py
 
 ### Required Components
 Details for the hardware interface (Electronic construction):
