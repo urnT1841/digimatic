@@ -28,7 +28,7 @@ pub fn run(mode: AppMode) -> Result<(), String> {
     }
 }
 
-pub fn parse_args(args: Vec<String>) -> Result<AppMode, String> {
+pub fn parse_args(args: &[String]) -> Result<AppMode, String> {
     // 第1引数（args[1]）を取り出す
     let arg = match args.get(1) {
         // 【案1】引数がないときは、デフォルトで GUI モード（実機）を返す

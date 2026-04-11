@@ -3,10 +3,11 @@ import time
 import sys
 import select
 import pin_definitions as pdef
+from i18n import t
 
 
 def pins_state():
-    print("=== XIAO RP2040 Pin Status ===")
+    print(t("pin_status_title"))
 
     all_bits = machine.mem32[pdef.SIO_BASE + pdef.GPIO_IN_OFFSET]
     all_oe   = machine.mem32[pdef.SIO_BASE + pdef.GPIO_OE_OFFSET]
@@ -19,23 +20,23 @@ def pins_state():
 
 
 def select_pin(guard_req=True):
-    label = input("Target Pin (e.g., D10) > ").strip().upper()
+    label = input(t("target_pin")).strip().upper()
 
     if label not in pdef.GPIO_MAP:
-        print("Invalid Pin Label.")
+        print(t("invalid_pin"))
         return None, None
 
     gpio_num = pdef.GPIO_MAP[label]
 
     if guard_req and pdef.is_protected(gpio_num):
-        print(f"⚠️ GUARD: {label} (GPIO{gpio_num}) is restricted.")
+        print(t("guard_error").format(label=label, gpio=gpio_num))
         return None, None
 
     return label, gpio_num
 
 
 def generic_pin_config(title, options_dict, apply_callback):
-    print(f"\n--- {title} ---")
+    print(f"\n--- {t(title)} ---")
     
     # 操作禁止なピン（REQ等）を select_pin 側で弾く
     label, gpio_num = select_pin(guard_req=True) 
@@ -45,23 +46,24 @@ def generic_pin_config(title, options_dict, apply_callback):
     for key, desc in options_dict.items():
         print(f" {key}: {desc}")
 
-    sel = input("Select > ").strip()
+    sel = input(t("select")).strip()
     
     if sel in options_dict:
         # 追加のモード別ガード
         # 例: PULL_UP (sel="2") かつ REQピン (GPIO 1) の場合は、
         # select_pin を抜けてきてもここで最終ブロック
-        if title == "入力設定" and sel == "2" and gpio_num == pdef.REQ_GPIO:
-             print(f"❌ SAFETY ERROR: {label} cannot be PULL_UP.")
+        if title == "input_config" and sel == "2" and gpio_num == pdef.REQ_GPIO:
+             print(t("safety_pullup_error").format(label=label))
              return
 
         try:
             apply_callback(gpio_num, sel)
-            print(f"DONE: {label} configured as {options_dict[sel]}")
+            print(t("done").format(label=label, mode=t(options_dict[sel])))
         except Exception as e:
-            print(f"Error: {e}")
+            print(t("error").format(err=e))
     else:
-        print("Invalid selection.")
+        print(t("invalid_selection"))
+
 
 def menu_set_input():
     options = {"1": "INPUT", "2": "Pull-Up", "3": "Pull-Down"}
@@ -69,40 +71,52 @@ def menu_set_input():
         p = machine.Pin(num, machine.Pin.IN, 
             machine.Pin.PULL_UP if sel=="2" else 
             machine.Pin.PULL_DOWN if sel=="3" else None)
-    generic_pin_config("入力設定", options, apply)
+    generic_pin_config("input_config", options, apply)
 
 
 def menu_set_output():
     options = {"1": "ON (3.3V)", "2": "OFF (0V)"}
     def apply(num, sel):
         machine.Pin(num, machine.Pin.OUT, value=(1 if sel=="1" else 0))
-    generic_pin_config("出力設定", options, apply)
+    generic_pin_config("output_config", options, apply)
+
+
+options = {
+    "1": "opt_input",
+    "2": "opt_pull_up",
+    "3": "opt_pull_down"
+}
 
 def menu_set_pull():
-    options = {"1": "Pull-Up", "2": "Pull-Down"}
-    def apply(num, sel):
-        # 既存のピン状態を維持しつつPullだけ変えるのは難しいので再初期化
-        machine.Pin(num, machine.Pin.IN, 
-                    machine.Pin.PULL_UP if sel=="1" else machine.Pin.PULL_DOWN)
-    generic_pin_config("Pull設定", options, apply)
+    options = {
+        "1": "opt_pull_up",
+        "2": "opt_pull_down"
+    }
 
+    def apply(num, sel):
+        machine.Pin(
+            num,
+            machine.Pin.IN,
+            machine.Pin.PULL_UP if sel == "1" else machine.Pin.PULL_DOWN
+        )
+
+    generic_pin_config("pull_config", options, apply)
 
 
 def pin_drive():
-    print("\n--- Drive設定 ---")
-    print("Not implemented yet.")
-
+    print("\n--- " + t("drive_config") + " ---")
+    print(t("not_implemented"))
 
 # 動作系
 def pin_repeat(label, gpio_num):
     if pdef.is_protected(gpio_num):
-        print(f"❌ PROTECTED: {label} (GPIO{gpio_num})")
+        print(t("protected").format(label=label, gpio=gpio_num))
         return
 
-    print(f"\n-- Voltage Test: {label} (GPIO{gpio_num}) --")
-    print(" [Enter]: Toggle")
-    print(" [数字] : Auto Loop (sec)")
-    print(" [q]    : Back")
+    print("\n" + t("voltage_test").format(label=label, gpio=gpio_num))
+    print(f" {t('enter_toggle')}")
+    print(f" {t('auto_loop')}")
+    print(f" {t('quit')}")
 
     p = machine.Pin(gpio_num, machine.Pin.OUT)
     val = 0
@@ -121,7 +135,7 @@ def pin_repeat(label, gpio_num):
             while select.select([sys.stdin], [], [], 0)[0]:
                 sys.stdin.read(1)
     
-            print(f"Loop {sec}s (Enter to stop)")
+            print(t("loop").format(sec=sec))
 
             while True:
                 val = 1 - val
@@ -138,7 +152,7 @@ def pin_repeat(label, gpio_num):
                     time.sleep_ms(50)
 
         except KeyboardInterrupt:
-            print("Stopped.")
+            print(t("stopped"))
             p.value(0)
 
         except:
@@ -155,35 +169,35 @@ def pin_repeat_menu():
 
 def exit_diag():
     pdef.init_hardware()
-    print("Exiting...")
+    print(t("exiting"))
 
 
 # メニュー構造
 MENU_OPTIONS = [
-    ("1", "Pin状態確認", pins_state, None),
-    ("2", "Pin設定", None, [
-        ("1", "入力設定", menu_set_input, None),
-        ("2", "出力設定", menu_set_output, None),
-        ("3", "詳細設定", None, [
-            ("1", "Pull設定", menu_set_pull, None),
-            ("2", "Drive設定", pin_drive, None),
-            ("9", "戻る", None, None),
+    ("1", "pin_status", pins_state, None),
+    ("2", "pin_config", None, [
+        ("1", "input_config", menu_set_input, None),
+        ("2", "output_config", menu_set_output, None),
+        ("3", "detail_config", None, [
+            ("1", "pull_config", menu_set_pull, None),
+            ("2", "drive_config", pin_drive, None),
+            ("9", "back", None, None),
         ]),
-        ("9", "戻る", None, None),
+        ("9", "back", None, None),
     ]),
-    ("3", "Pin状態を動的に変化", pin_repeat_menu, None),
-    ("99", "終了", exit_diag, None),
+    ("3", "dynamic_pin", pin_repeat_menu, None),
+    ("99", "exit", exit_diag, None),
 ]
 
 # メニュー実行
 def show_menu(menu, path_key="", path_label=""):
     if path_key:
-        print(f"\n--- MENU [{path_key} / {path_label}] ---")
+        print("\n" + t("menu_path").format(path_key=path_key, path_label=path_label))
     else:
-        print("\n--- MENU ---")
+        print("\n" + t("menu"))
 
     for key, label, *_ in menu:
-        print(f" {key:>2}: {label}")
+        print(f" {key:>2}: {t(label)}")
 
 
 def main_loop(menu=None, path_key="", path_label=""):
@@ -192,14 +206,14 @@ def main_loop(menu=None, path_key="", path_label=""):
     
     while True:
         show_menu(menu, path_key, path_label)
-        sel = input("Select > ").strip()
+        sel = input(t("select")).strip()
 
         # 9(戻り)処理
         if sel == "9":
             if path_key:
                 return
             else:
-                print("Already top level.")
+                print(t("already_top"))
                 continue
         
         # 選択要素アンパック
@@ -213,7 +227,7 @@ def main_loop(menu=None, path_key="", path_label=""):
                 break
 
         if not item:
-            print("Invalid selection")
+            print(t("invalid_selection"))
             continue
 
         key, label, func, submenu = item
@@ -221,7 +235,7 @@ def main_loop(menu=None, path_key="", path_label=""):
         # サブメニュー対応
         if submenu:
             new_path_key = f"{path_key}.{key}" if path_key else key
-            new_path_label = f"{path_label}/{label}" if path_label else label  # 人間にはこっちのほうが読みやすい
+            new_path_label = f"{path_label}/{t(label)}" if path_label else t(label) # 人間にはこっちのほうが読みやすい
             main_loop(submenu, new_path_key, new_path_label)
             continue
         

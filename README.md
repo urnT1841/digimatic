@@ -17,20 +17,23 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
 
 ## Current Status
 
-### 1. Simulator Functionality
-*Currently for Linux only, utilizing `socat`.*
-- Generates simulated caliper measurement data.
-- Generates frame strings conforming to Mitutoyo specifications.
-- Creates virtual ports for both transmission and reception.
-- Transmits and receives data via virtual ports.
-- Decodes frames to retrieve measurement values.
+### 1. CLI Simulator
+
+*Available on Linux/macOS (uses `socat`; not supported on Windows).*
+
+ - Generates simulated caliper measurement data
+ - Creates frame strings based on Mitutoyo specifications
+ - Uses virtual serial ports for communication
+ - Sends and receives data through virtual ports (more realistic than in-memory simulation)
+ - Decodes received frames to extract measurement values
 
 ### 2. Diagnostic Mode in Pico Firmware
-* Diagnostic mode includes:
-- Simple text menu: Use a classic text-based menu
-- Pin status monitoring: View GPIO pin status in real time
-- Device settings: View and change settings (changes are not saved; settings are reset when you exit this mode)
-- Toggle mode: Automatically toggles pin output on and off
+*Diagnostic mode includes:
+
+ - Simple text menu: Use a classic text-based menu
+ - Pin status monitoring: View GPIO pin status in real time
+ - Device settings: View and change settings (changes are not saved; settings are reset when you exit this mode)
+ - Toggle mode: Automatically toggles pin output on and off
 
   Type Diag in the terminal to enter this mode.
 
