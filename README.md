@@ -47,12 +47,27 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
   ```bash
   cargo run --bin digimatic -- -gui -sim
 
-### 3. Hardware Implementation
+### 3. Translation (Add Your Language)
+
+We welcome translations!
+
+1. Copy `lang_en.json` to `lang_xx.json` (e.g. `lang_fr.json`)
+2. Translate the values
+3. Keep all keys unchanged
+
+Notes:
+- English (`lang_en.json`) is used as the base language
+- Missing keys fall back to English automatically
+- Please do not modify the keys
+
+Feel free to contribute your language!
+
+### 4. Hardware Implementation
 Communication: Successfully verified on a breadboard.
 
 Assembly: Currently migrating the circuit to a universal board (perfboard).
 
-### 4. Software Progress
+### 5. Software Progress
   - Pico (MicroPython): Receives bitstreams from the caliper and forwards them to the PC.
   - PC (Rust): Receives string frames and logs them to CSV or displays them in the terminal.
 

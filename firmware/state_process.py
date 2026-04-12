@@ -6,6 +6,7 @@ import pin_definitions as pdef
 from decoder import BIN_FRAME_LENGTH, validator, decode_frame
 from communicator import send_to_host, get_command_from_pc, phy_sw_request
 import diag as diag
+from i18n import t
 
 
 # StateMachine 状態定義
@@ -18,6 +19,7 @@ STATE_SWITCH = const(5)
 STATE_DIAG = const(6)
 STATE_SIM = const(7)
 STATE_STOP = const(8)
+STATE_CONFIG = const(9)
 
 #エラー定義
 ERR_NONE = const(0)
@@ -196,6 +198,12 @@ def process_stop_handler():
     raise SystemExit
 
 
+def process_config_handler():
+    print(t("CONFIG"))
+    # TODO 実際の内容はこれから
+    # config.py でやる
+    return STATE_IDLE, ERR_NONE
+
 def process_err_handler():
     #未実装 エラーハンドリングを行う
     # 下記は体裁を整えただけ
@@ -210,6 +218,7 @@ state_map = {
     STATE_STOP: process_stop_handler,
     STATE_ERROR: process_err_handler,         # TODO:未実装
     STATE_DIAG: process_diag_handler,
+    STATE_CONFIG: process_config_handler,
     STATE_SIM: process_sim_handler,
 }
 
@@ -219,7 +228,7 @@ CMD_TO_STATE_MAP = {
     "REQ":  STATE_REQUEST,
     "DIAG": STATE_DIAG,
     "SIM":  STATE_SIM,
-    "CONFIG": STATE_CONF,  # TODO 未実装
+    "CONFIG": STATE_CONFIG,  # TODO 未実装
 }
 
 CMD_ACTION_MAP = {

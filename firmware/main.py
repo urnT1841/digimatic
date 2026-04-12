@@ -3,7 +3,16 @@ import gc
 
 import pin_definitions as pins
 from state_process import state_map, STATE_IDLE, ERR_NONE, session
-from i18n import t
+import config
+import i18n
+
+
+# 初期化
+cfg = config.load_config()
+
+# fallback（英語）+ 言語設定
+i18n.load_lang("en")
+i18n.load_lang(cfg.get("lang", "ja"))
 
 # 諸々の初期化とか定数確保が終わったらいったんGCを走らせる
 pins.init_hardware()
@@ -45,6 +54,7 @@ def splash_welcome():
 
     print(splash_text)
     print(f"\n{t('welcome')}")
+    print(f"Language: {cfg.get('lang')}")
 
 
 
