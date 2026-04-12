@@ -219,6 +219,7 @@ CMD_TO_STATE_MAP = {
     "REQ":  STATE_REQUEST,
     "DIAG": STATE_DIAG,
     "SIM":  STATE_SIM,
+    "CONFIG": STATE_CONF,  # TODO 未実装
 }
 
 CMD_ACTION_MAP = {
