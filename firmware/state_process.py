@@ -91,7 +91,6 @@ def process_idle():
     return STATE_IDLE, ERR_NONE
 
 
-
 def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
     # sessionをリセットしてから受信開始
@@ -233,7 +232,7 @@ CMD_TO_STATE_MAP = {
     "REQ":  STATE_REQUEST,
     "DIAG": STATE_DIAG,
     "SIM":  STATE_SIM,
-    "CONFIG": STATE_CONFIG,  # TODO 未実装
+    "CONFIG": STATE_CONFIG,
 }
 
 CMD_ACTION_MAP = {
