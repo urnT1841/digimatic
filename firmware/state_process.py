@@ -62,15 +62,12 @@ def mode_switcher(cmd):
         session.config = session.MODE_STR
 
 
-
 def process_idle():
     """ 
-    完全にフラットになった待ち受けロジック。
-    個別の判定（if-elif）を捨て、マップによる解決に統一。
+    Mapを使ってFlatな待ち受け
     """
 
-    cmd = get_command_from_pc()
-    
+    cmd = get_command_from_pc()    
     # 状態遷移check
     if cmd in CMD_TO_STATE_MAP:
         return CMD_TO_STATE_MAP[cmd], ERR_NONE
@@ -81,10 +78,14 @@ def process_idle():
         return STATE_IDLE, ERR_NONE
 
     # Physical sw check
-    if phy_sw_request():
-        return STATE_REQUEST, ERR_NONE
+    for _ in range(5):
+        if phy_sw_request():
+            time.sleep_ms(5)  # ノイズ除去
+            if phy_sw_request():
+                time.sleep_ms(5)  # 押しっぱなし対策 (いらないかな～?)
+                return STATE_REQUEST, ERR_NONE
+        time.sleep_ms(20)
 
-    time.sleep_ms(100)
     return STATE_IDLE, ERR_NONE
 
 
@@ -153,10 +154,10 @@ def process_validate():
 
 def process_diag_handler():
     # dig mode へはいる
-    print("\n-- Enter Diagnostic Mode --")
+    print(f"\n{t('enter_diag')}")
     diag.main_loop(diag.MENU_OPTIONS)
     # dig mode から出てくる
-    print("\n -- Finish Diagnostic Mode -- ")
+    print(f"\n{t('finish_diag')}")
     
     #階層メニューで再起を使っているので。念のためGC実施
     gc.collect()
@@ -192,7 +193,7 @@ def process_sim_handler():
 def process_stop_handler():
     """ 終了処理ハンドラー """
 
-    print("\n[System] Stopping by PC command...")
+    print(f"\n{t('stopped_sys')}")
     
     # 最終的に例外を投げてメインループを抜ける
     raise SystemExit
