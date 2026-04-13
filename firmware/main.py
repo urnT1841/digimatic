@@ -5,6 +5,7 @@ import pin_definitions as pins
 from state_process import state_map, STATE_IDLE, ERR_NONE, session
 import config
 import i18n
+from  i18n import t
 
 
 # 初期化

@@ -33,3 +33,11 @@ def get(key, default=None):
 def set(key, value):
     _cfg[key] = value
     save_config()
+
+
+# 便利なメソッド
+def get_language():
+    return get("lang", "en") # 保存されていなければ英語
+
+# 起動時にこう呼ぶイメージ
+# i18n.load_lang(config.get_language())

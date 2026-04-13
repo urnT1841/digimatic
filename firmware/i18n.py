@@ -27,10 +27,12 @@ def load_lang(code):
         _fallback = {}
 
     try:
-        with open("lang_{}.json".format(code)) as f:
+        filename = "lang_{}.json".format(code)
+        with open(filename) as f:
             _data = json.load(f)
             return True
     except:
+        _data = _fallback # 読み込めなかったらフォールバックを正とする
         return False
 
 
