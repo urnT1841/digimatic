@@ -35,6 +35,7 @@
         "error": "エラー: {err}",
         "call_func": "呼び出し:",
         "select_lang":"言語を選択",
+        "config_menu_title":"設定モード",
 
         "not_implemented": "未実装です",
 

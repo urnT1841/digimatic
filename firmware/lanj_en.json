@@ -35,6 +35,7 @@
         "error": "Error: {err}",
         "call_func": "Calling:",
         "select_lang":"Select Language",
+        "config_menu_title":"Config Mode",
 
         "not_implemented": "Not implemented yet",
 
