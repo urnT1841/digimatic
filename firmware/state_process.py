@@ -82,7 +82,8 @@ def process_idle():
         if phy_sw_request():
             time.sleep_ms(5)  # ノイズ除去
             if phy_sw_request():
-                time.sleep_ms(5)  # 押しっぱなし対策 (いらないかな～?)
+                while phy_sw_request():  # 押しっぱなし対策 (いらないかな～?)
+                    time.sleep_ms(5)
                 return STATE_REQUEST, ERR_NONE
         time.sleep_ms(20)
 
