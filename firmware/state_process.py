@@ -203,8 +203,10 @@ def process_stop_handler():
 
 def process_config_handler():
     print(t("CONFIG"))
-    # TODO 実際の内容はこれから
-    # config.py でやる
+    # 実際の設定はconfig.py でやる
+    from config import run_interactive_menu
+    run_interactive_menu()
+
     return STATE_IDLE, ERR_NONE
 
 def process_err_handler():

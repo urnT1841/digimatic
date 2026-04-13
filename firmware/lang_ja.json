@@ -34,6 +34,7 @@
         "done": "完了: {label} を {mode} に設定しました",
         "error": "エラー: {err}",
         "call_func": "呼び出し:",
+        "select_lang":"言語を選択",
 
         "not_implemented": "未実装です",
 
