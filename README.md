@@ -17,17 +17,28 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
 
 ## Current Status
 
-### 1. CLI Simulator
+### 1. CLI Simulator (Rust on PC and Pico)
 
-*Available on Linux/macOS (uses `socat`; not supported on Windows).*
+*PC: Available on Linux/macOS (uses `socat`; not supported on Windows).*
 
- - Generates simulated caliper measurement data
- - Creates frame strings based on Mitutoyo specifications
- - Uses virtual serial ports for communication
- - Sends and receives data through virtual ports (more realistic than in-memory simulation)
- - Decodes received frames to extract measurement values
+This CLI-based simulator allows testing of data flow between the Pico and the PC without real hardware.
 
-### 2. Diagnostic Mode in Pico Firmware
+* **Pico simulation mode**:
+  Generates simulated caliper measurement data and sends Digimatic frames as strings to the PC via CDC-USB (virtual serial port).
+
+* **PC simulation mode**:
+  Provides a socket-based environment for testing communication on the PC side.
+
+**Features:**
+
+* Generates simulated caliper measurement data
+* Creates frame strings based on Mitutoyo Digimatic specifications
+* Uses virtual serial ports for realistic communication
+* Sends and receives data through virtual ports (closer to real hardware behavior than in-memory simulation)
+* Decodes received frames to extract measurement values
+
+
+### 2. Pin Diagnostic Mode in Pico Firmware
 *Diagnostic mode includes:
 
  - Simple text menu: Use a classic text-based menu
@@ -35,7 +46,7 @@ The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a 
  - Device settings: View and change settings (changes are not saved; settings are reset when you exit this mode)
  - Toggle mode: Automatically toggles pin output on and off
 
-  Type Diag in the terminal to enter this mode.
+  Type "Diag" in the terminal to enter this mode.
 
 ### 2. GUI Display
 <a href="./pc_tool/assets/DisplayWindow(windows).png">
@@ -86,6 +97,9 @@ Transfer the following files to the Pico. main.py will execute automatically upo
   - model_caliper.py  (for sim)
   - sim_driven.py  (for sim)
   - i18n.py
+  - lang_en.json
+  - lang_ja.json (if you wants)
+  - config.py
 
 ### Required Components
 Details for the hardware interface (Electronic construction):
