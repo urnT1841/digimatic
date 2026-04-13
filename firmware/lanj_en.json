@@ -1,13 +1,12 @@
  {
         "welcome": "Waiting for frames...\n Enter 'DIAG' or 'SIM' to switch to the corresponding mode",
-        "diag_enter": "-- Enter Diagnostic Mode --",
         "lang_switched": "Language switched to: {lang}",
         "available": "Available languages",
 
         "menu": "--- MENU ---",
         "pin_status_title": "=== XIAO RP2040 Pin Status ===",
-        "safety_pullup_error": "❌ SAFETY ERROR: {label} cannot be set to PULL_UP",
-        "protected": "❌ PROTECTED: {label} (GPIO{gpio})",
+        "safety_pullup_error": "[ERROR] SAFETY ERROR: {label} cannot be set to PULL_UP",
+        "protected": "[ERROR] PROTECTED: {label} (GPIO{gpio})",
         "opt_input": "INPUT",
         "opt_pull_up": "Pull-Up",
         "opt_pull_down": "Pull-Down",
@@ -29,11 +28,10 @@
 
         "target_pin": "Target Pin (e.g., D10) > ",
         "invalid_pin": "Invalid pin label.",
-        "guard_error": "⚠️ GUARD: {label} (GPIO{gpio}) is restricted",
+        "guard_error": "[WARN] GUARD: {label} (GPIO{gpio}) is restricted",
 
         "done": "DONE: {label} configured as {mode}",
         "error": "Error: {err}",
-        "call_func": "Calling:",
         "select_lang":"Select Language",
         "config_menu_title":"Config Mode",
 

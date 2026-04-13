@@ -36,7 +36,7 @@ def select_pin(guard_req=True):
 
 
 def generic_pin_config(title, options_dict, apply_callback):
-    print(f"\n--- {t("title")} ---")
+    print(f"\n--- {t(title)} ---")
     
     # 操作禁止なピン（REQ等）を select_pin 側で弾く
     label, gpio_num = select_pin(guard_req=True) 
@@ -47,22 +47,28 @@ def generic_pin_config(title, options_dict, apply_callback):
         print(f" {key}: {desc}")
 
     sel = input(t("select")).strip()
-    
-    if sel in options_dict:
-        # 追加のモード別ガード
-        # 例: PULL_UP (sel="2") かつ REQピン (GPIO 1) の場合は、
-        # select_pin を抜けてきてもここで最終ブロック
-        if title == "input_config" and sel == "2" and gpio_num == pdef.REQ_GPIO:
-             print(t("safety_pullup_error").format(label=label))
-             return
 
-        try:
-            apply_callback(gpio_num, sel)
-            print(t("done").format(label=label, mode=t(options_dict[sel])))
-        except Exception as e:
-            print(t("error").format(err=e))
-    else:
+    # 異常系を先にはじく
+    # 空行と想定外はNG 
+    if sel == "":
+        continue
+
+    if sel not in options_dict:
         print(t("invalid_selection"))
+    
+    # 安全系に入る
+    # 追加のモード別ガード
+    # 例: PULL_UP (sel="2") かつ REQピン (GPIO 1) の場合は、
+    # select_pin を抜けてきてもここで最終ブロック
+    if title == "input_config" and sel == "2" and gpio_num == pdef.REQ_GPIO:
+        print(t("safety_pullup_error").format(label=label))
+        return
+    
+    try:
+        apply_callback(gpio_num, sel)
+        print(t("done").format(label=label, mode=t(options_dict[sel])))
+    except Exception as e:
+        print(t("error").format(err=e))
 
 
 def menu_set_input():
@@ -155,7 +161,7 @@ def pin_repeat(label, gpio_num):
             print(t("stopped"))
             p.value(0)
 
-        except:
+        except ValueError:
             val = 1 - val
             p.value(val)
 
@@ -240,7 +246,6 @@ def main_loop(menu=None, path_key="", path_label=""):
             continue
         
         if func:
-            print(t("call_func"), func)  # ← 追加
             func()
         if key == "99":
             return

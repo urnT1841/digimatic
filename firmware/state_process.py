@@ -1,5 +1,6 @@
 import time
 import gc
+import micropython
 from micropython import const
 
 import pin_definitions as pdef
@@ -32,11 +33,12 @@ class DigimaticSession:
     MODE_STR = ("MSB", "STR")
     MODE_BIN = ("LSB", "BIN")
 
+    FRAME_PADDING = 12  # Digimatic 52Bit + 12Bit = 64Bit確保
     def __init__(self):
         # 設定 (Config)
         self.config = self.MODE_STR      # nibble_maker / validator 用
 
-        self.rx_buffer = bytearray(BIN_FRAME_LENGTH + 12)   # 受信生ビット 52Bit+12Bit(Padding分) => 64Bit確保
+        self.rx_buffer = bytearray(BIN_FRAME_LENGTH + FRAME_PADDING)   # 受信生ビット 52Bit+12Bit(Padding分) => 64Bit確保
         self.nibbles = []      # 検証済み数値リスト
     
     @property
@@ -95,7 +97,6 @@ def process_request():
     """ スイッチ, PCからのトリガを受け caliperにRequestを送る  """
     # sessionをリセットしてから受信開始
     session.reset_data()
-    
     pdef.send_request()
 
     return STATE_RECEIVE , ERR_NONE
@@ -201,7 +202,7 @@ def process_stop_handler():
 
 
 def process_config_handler():
-    print(t("CONFIG"))
+    print(t("config_menu_title"))
     # 実際の設定はconfig.py でやる
     from config import run_interactive_menu
     run_interactive_menu()

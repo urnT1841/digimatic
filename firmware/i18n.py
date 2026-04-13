@@ -20,20 +20,21 @@ def list_languages():
 def load_lang(code):
     global _data, _fallback
 
-    try:
-        with open("lang_en.json") as f:
-            _fallback = json.load(f)
-    except:
-        _fallback = {}
+    if not _fallback:
+        try:
+            with open("lang_en.json") as f:
+                _fallback = json.load(f)
+        except OSError:
+            _fallback = {}
 
-    try:
-        filename = "lang_{}.json".format(code)
-        with open(filename) as f:
-            _data = json.load(f)
-            return True
-    except:
-        _data = _fallback # 読み込めなかったらフォールバックを正とする
-        return False
+        try:
+            filename = "lang_{}.json".format(code)
+            with open(filename) as f:
+                _data = json.load(f)
+                return True
+        except OSError:
+            _data = dict(_fallback) # 読み込めなかったらフォールバックを正とする
+            return False
 
 
 def t(key):
