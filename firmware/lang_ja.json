@@ -33,9 +33,12 @@
 
         "done": "完了: {label} を {mode} に設定しました",
         "error": "エラー: {err}",
+        "call_func": "呼び出し:",
 
         "not_implemented": "未実装です",
 
+        "enter_diag":"-- ダイアグモードに入ります --",
+        "finish_diag":"-- ダイアグモードを終了します --",        
         "voltage_test": "-- 電圧テスト: {label} (GPIO{gpio}) --",
         "enter_toggle": "[Enter]: トグル",
         "auto_loop": "[数字]: 自動ループ (秒)",
@@ -43,6 +46,7 @@
 
         "loop": "ループ {sec}秒 (Enterで停止)",
         "stopped": "停止しました",
+        "stopped_sys":"[System] PCからのコマンドで停止しました...",
 
         "exiting": "終了中..."
 }

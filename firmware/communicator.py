@@ -38,6 +38,7 @@ def phy_sw_request():
     # チャタリング対策は不要
     #  Trueの場合(押下検知) は Stateが変更されるのでちゃたってもここのロジックを通らない
     #  Falseの場合 Idle に入って100ms戻ってこないのでとうにチャタリングは収まっている
+    #     -> state_idle の中で簡易的に対応
     return sw_pressed
 
 

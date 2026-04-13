@@ -78,11 +78,12 @@ def process_idle():
         return STATE_IDLE, ERR_NONE
 
     # Physical sw check
+    # 初めは100ms ぼーっと待っていたが物理スイッチチェックは粒度を細かく
     for _ in range(5):
         if phy_sw_request():
-            time.sleep_ms(5)  # ノイズ除去
+            time.sleep_ms(5)  # ノイズ除去 (debounce)
             if phy_sw_request():
-                while phy_sw_request():  # 押しっぱなし対策 (いらないかな～?)
+                while phy_sw_request():  # 押しっぱなし対策  wait for btn release
                     time.sleep_ms(5)
                 return STATE_REQUEST, ERR_NONE
         time.sleep_ms(20)

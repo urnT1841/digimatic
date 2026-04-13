@@ -36,7 +36,7 @@ def select_pin(guard_req=True):
 
 
 def generic_pin_config(title, options_dict, apply_callback):
-    print(f"\n--- {t(title)} ---")
+    print(f"\n--- {t("title")} ---")
     
     # 操作禁止なピン（REQ等）を select_pin 側で弾く
     label, gpio_num = select_pin(guard_req=True) 
@@ -240,7 +240,7 @@ def main_loop(menu=None, path_key="", path_label=""):
             continue
         
         if func:
-            print("calling:", func)  # ← 追加
+            print(t("call_func"), func)  # ← 追加
             func()
         if key == "99":
             return
