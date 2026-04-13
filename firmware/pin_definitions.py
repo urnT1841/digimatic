@@ -27,7 +27,6 @@ SCHMITT_SHIFT   = const(1) # Schmitt Trigger (ノギス信号には重要！)
 ON = const(1)   # High
 OFF = const(0)  # Low
 
-
 # seeed studio xiao rp2040 pin difinition
 # GPIO pin と pin_no の対応
 GPIO_MAP = {
@@ -60,7 +59,6 @@ PROTECTED_GPIO = {
 def is_protected(gpio_num):
     return gpio_num in PROTECTED_GPIO
 
-
 PINS = {
     "en": machine.Pin(EN_1_2V_PIN),
     "dir": machine.Pin(DIR_CONTROL_PIN),
@@ -78,14 +76,12 @@ PINS = {
     "unused_D6": machine.Pin(GPIO_MAP["D6"]),
 }
 
-
 # 電気的な接続は specification にある electrical_connect_image.png
 # LEDは別設定 -> led_switch.py 参照
 # 全GPIOをInput設定 まずは安全側の input+pull-down
 def gpio_init():
     for p in PINS.values():
         p.init(machine.Pin.IN, machine.Pin.PULL_DOWN)
-
 
 def init_hardware():
     """  pinオブジェクトの初期化関数 """
@@ -108,7 +104,6 @@ def init_hardware():
     PINS["req"].init(mode=machine.Pin.IN)
     PINS["req_sw"].init(mode=machine.Pin.IN)
 
-
 def cleanup_hardware():
     # LDOへの電源落とすのとReqは Hi-Zにするのは先にやる
     PINS["en"].value(OFF)
@@ -117,8 +112,7 @@ def cleanup_hardware():
     # picoのPinをOFFに。レジスタ書き込みで一気におとす
     GPIO_OUT_CLR = 0xd0000018
     machine.mem32[GPIO_OUT_CLR] = 0x3FFFFFFF
-    
-    
+      
 def send_request():
     """
       データリクエスト送信
@@ -127,7 +121,6 @@ def send_request():
     """
     PINS["req"].init(mode=machine.Pin.OUT)
     PINS["req"].value(0)
-
 
 def stop_request():
     """

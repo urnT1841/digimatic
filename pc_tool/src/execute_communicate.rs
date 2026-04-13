@@ -126,7 +126,7 @@ fn receiver(
                     }
                     Err(e) => eprintln!("Frame パースエラー: {} | 原因: {}", data, e),
                 }
-            } // ← ここで Ok(data) のブロックが終了します
+            }
 
             // タイムアウトは無視
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
@@ -138,6 +138,6 @@ fn receiver(
                 }
                 continue; // 致命的でなければループを続行
             }
-        } // ← ここで rx_receiver.read_str_measurement() の match が終了します
+        }
     }
 }

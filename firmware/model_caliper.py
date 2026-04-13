@@ -1,4 +1,3 @@
-
 import random
 
 
@@ -7,7 +6,6 @@ def sim_measure():
     cd = random.randint(1, 15000) / 100
 
     return f"{cd:06.2f}"
-
 
 def build_frame(val_str):
     """
@@ -45,7 +43,6 @@ def build_frame(val_str):
     
     return digi_frame
 
-
 def make_nibble_list(frame):
     """ 受け取ったリストの要素をnibble(lsb)にする """
     digimatic_frame_nibble = []
@@ -56,7 +53,6 @@ def make_nibble_list(frame):
         digimatic_frame_nibble += e_nibble 
     
     return digimatic_frame_nibble
-
 
 def make_nibble_bits(digit, order="lsb"):
     """ 引数を4bit  nibble にして返す """
@@ -82,8 +78,6 @@ def make_nibble_bits(digit, order="lsb"):
         nibble_bits.append((nib >> i) & 1)
 
     return nibble_bits
-
-
 
 def caliper_sim():
     data = sim_measure()

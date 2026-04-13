@@ -1,10 +1,7 @@
 
 import struct
 
-
 BIN_FRAME_LENGTH = 52
-
-
 
 # 受け取ったバイナリフレーム 52bitをデジマチックフレームにデコードする
 # nibble は lsbで受け取っているので反転したうえで処理
@@ -31,7 +28,6 @@ LSB_CHECK_RULES = {
     11: lambda v: v in (0, 8, 4, 12, 2, 10), # Pos (0-5反転)
     12: lambda v: v in (0, 8)       # Unit (mm:0, inch:8)
 }
-
 
 def nibble_maker(bits, mode="MSB"):
     """

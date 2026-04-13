@@ -6,13 +6,10 @@ import model_caliper
 import led_switch as led
 from led_switch import LED_ON, LED_OFF
 
-
 # pin設定
 # 初期化を実行（内部で PINS 辞書がセットアップされる）
 pdef.init_hardware()
-
 led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
-
 
 def main():
     """
@@ -35,8 +32,6 @@ def main():
      
     led(LED_OFF, LED_OFF, LED_OFF)    # (r, g, b)
 
-
-
 def test_send_and_receive(send_list):
     captured_bits = []
     
@@ -58,7 +53,6 @@ def test_send_and_receive(send_list):
 
     print("\n--- 受信完了 ---")
     return captured_bits
-
 
 if __name__ == '__main__':
     main()
