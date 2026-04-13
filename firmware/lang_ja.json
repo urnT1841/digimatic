@@ -2,7 +2,7 @@
         "welcome": "フレーム待機中...\n ' DIAG ', ' SIM ' でそれぞれのモードに入れます。",
         "diag_enter": "-- 診断モード開始 --",
         "lang_switched": "言語を切り替えました: {lang}",
-        "Available": "使用可能な言語",
+        "available": "使用可能な言語",
 
         "menu": "--- MENU ---",
         "pin_status_title": "=== XIAO RP2040 ピン状態 ===",

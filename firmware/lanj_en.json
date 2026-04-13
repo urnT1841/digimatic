@@ -1,8 +1,8 @@
  {
-        "welcome": "Waiting for frames...\n Enter 'DIAG' or 'SIM' to switch to the corresponding mode.",
+        "welcome": "Waiting for frames...\n Enter 'DIAG' or 'SIM' to switch to the corresponding mode",
         "diag_enter": "-- Enter Diagnostic Mode --",
         "lang_switched": "Language switched to: {lang}",
-        "Available": "Available languages",
+        "available": "Available languages",
 
         "menu": "--- MENU ---",
         "pin_status_title": "=== XIAO RP2040 Pin Status ===",
@@ -14,7 +14,7 @@
         "menu_path": "--- MENU [{path_key} / {path_label}] ---",
         "select": "Select > ",
         "invalid_selection": "Invalid selection",
-        "already_top": "Already at top level.",
+        "already_top": "Already at top level",
 
         "pin_status": "Pin Status",
         "pin_config": "Pin Configuration",
@@ -29,14 +29,14 @@
 
         "target_pin": "Target Pin (e.g., D10) > ",
         "invalid_pin": "Invalid pin label.",
-        "guard_error": "⚠️ GUARD: {label} (GPIO{gpio}) is restricted.",
+        "guard_error": "⚠️ GUARD: {label} (GPIO{gpio}) is restricted",
 
         "done": "DONE: {label} configured as {mode}",
         "error": "Error: {err}",
-        "call_func": "calling:",
+        "call_func": "Calling:",
         "select_lang":"Select Language",
 
-        "not_implemented": "Not implemented yet.",
+        "not_implemented": "Not implemented yet",
 
 
         "enter_diag":"-- Enter Diagnostic Mode --",
