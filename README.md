@@ -1,118 +1,102 @@
-# About This Project
-*[日本語はこちら](README.ja.md)*
-
 # Mitutoyo Digital Caliper to PC Interface (SPC)
 
-This tool enables PCs to receive data output from Mitutoyo digital calipers.
-The signal from the caliper is captured by a Raspberry Pi Pico (specifically, a Seeed Studio XIAO RP2040) and transmitted to the PC.
+*[日本語はこちら](README.ja.md)*
 
-**Tech Stack:**
-- **PC Side:** Rust
-- **Hardware Interface:** MicroPython (XIAO RP2040)
+Capture, decode, and log measurement data from Mitutoyo digital calipers using a Raspberry Pi Pico.
 
-### Data Flow
+---
+
+## ✨ Overview
+
+This project provides a complete pipeline for receiving Digimatic data from Mitutoyo calipers and processing it on a PC.
+
+- 📡 Capture raw signals via Raspberry Pi Pico (XIAO RP2040)  
+- 🔄 Decode Digimatic frames into measurement values  
+- 💾 Log both raw and processed data  
+- 🧪 Test everything without hardware using a built-in simulator  
+
+---
+
+## 🎯 Who is this for?
+
+This project is primarily designed for personal and hobby use, but also serves as a practical tool for:
+
+- Logging measurements from digital calipers  
+- Experimenting with Digimatic communication protocols  
+- Learning embedded ↔ PC data communication  
+- Debugging low-level signal handling  
+
+It is especially useful if you want access to both **raw communication data** and **decoded measurement values**.
+
+---
+
+## 🔧 Tech Stack
+
+- **PC Side:** Rust  
+- **Hardware Interface:** MicroPython (Raspberry Pi Pico / XIAO RP2040)
+
+---
+
+## 🔁 Data Flow
+
 `Caliper` → `Level Shifter (SN74LXC8T245PWR)` → `XIAO RP2040` → `PC (Linux / Windows)`
 
 ---
 
-## Current Status
+## 🚀 Features
 
-### 1. CLI Simulator (Rust on PC and Pico)
+- Real-time measurement data capture  
+- Digimatic frame decoding  
+- CSV logging and terminal display  
+- CLI-based simulator (no hardware required)  
+- Virtual serial communication for realistic testing  
+- Built-in diagnostic mode on Pico  
 
-*PC: Available on Linux/macOS (uses `socat`; not supported on Windows).*
+---
 
-This CLI-based simulator allows testing of data flow between the Pico and the PC without real hardware.
+## 🧪 CLI Simulator (No Hardware Required)
 
-* **Pico simulation mode**:
-  Generates simulated caliper measurement data and sends Digimatic frames as strings to the PC via CDC-USB (virtual serial port).
+*Available on Linux/macOS (uses `socat`; not supported on Windows).*
 
-* **PC simulation mode**:
-  Provides a socket-based environment for testing communication on the PC side.
+Test the full data pipeline without connecting a physical caliper.
 
-**Features:**
+### Pico Simulation Mode
+- Generates simulated caliper measurement data  
+- Sends Digimatic frames as strings via CDC-USB (virtual serial port)  
 
-* Generates simulated caliper measurement data
-* Creates frame strings based on Mitutoyo Digimatic specifications
-* Uses virtual serial ports for realistic communication
-* Sends and receives data through virtual ports (closer to real hardware behavior than in-memory simulation)
-* Decodes received frames to extract measurement values
+### PC Simulation Mode
+- Provides a socket-based environment for communication testing  
 
+### Highlights
+- Realistic virtual serial communication (not in-memory)  
+- Frame generation based on Mitutoyo specifications  
+- Frame decoding and validation  
 
-### 2. Pin Diagnostic Mode in Pico Firmware
-*Diagnostic mode includes:
+---
 
- - Simple text menu: Use a classic text-based menu
- - Pin status monitoring: View GPIO pin status in real time
- - Device settings: View and change settings (changes are not saved; settings are reset when you exit this mode)
- - Toggle mode: Automatically toggles pin output on and off
+## 🧰 Pico Diagnostic Mode
 
-  Type "Diag" in the terminal to enter this mode.
+A built-in interactive diagnostic tool for GPIO and device behavior.
 
-### 2. GUI Display
+- Text-based menu interface  
+- Real-time GPIO monitoring  
+- Temporary device configuration  
+- Pin toggle testing  
+
+Type `Diag` in the terminal to enter this mode.
+
+> The diagnostic mode is feature-rich enough to function as a standalone debugging tool.
+
+---
+
+## 🖥 GUI Display (Windows)
+
 <a href="./pc_tool/assets/DisplayWindow(windows).png">
   <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUI Mode Display" width="220">
 </a>
 
-- The GUI mode is currently available for **Windows**. (Linux support is TBD).
-- **To Launch:** Run with `-gui -sim` flags.
-  ```bash
-  cargo run --bin digimatic -- -gui -sim
+- Currently available on **Windows** (Linux support TBD)
 
-### 3. Translation (Add Your Language)
-
-We welcome translations!
-
-1. Copy `lang_en.json` to `lang_xx.json` (e.g. `lang_fr.json`)
-2. Translate the values
-3. Keep all keys unchanged
-
-Notes:
-- English (`lang_en.json`) is used as the base language
-- Missing keys fall back to English automatically
-- Please do not modify the keys
-
-Feel free to contribute your language!
-
-### 4. Hardware Implementation
-Communication: Successfully verified on a breadboard.
-
-Assembly: Currently migrating the circuit to a universal board (perfboard).
-
-### 5. Software Progress
-  - Pico (MicroPython): Receives bitstreams from the caliper and forwards them to the PC.
-  - PC (Rust): Receives string frames and logs them to CSV or displays them in the terminal.
-
-Implementation of the dedicated display window is in progress.
-
-## Software Setup
-RP Pico Firmware
-Transfer the following files to the Pico. main.py will execute automatically upon reboot:
-  - main.py
-  - pin_definitions.py
-  - led_switch.py
-  - state_process.py
-  - decoder.py
-  - communicator.py
-  - diag.py
-  - model_caliper.py  (for sim)
-  - sim_driven.py  (for sim)
-  - i18n.py
-  - lang_en.json
-  - lang_ja.json (if you wants)
-  - config.py
-
-### Required Components
-Details for the hardware interface (Electronic construction):
-
-  - Connection Cable: Mitutoyo Genuine Flat Straight Cable (905338)
-  - Connector: 10-pin Box Header, PCB Mount (e.g., Marutsu 217010SE)
-  - Microcontroller: Seeed Studio XIAO RP2040
-  - Level Shifter (1.5V -> 3.3V): SN74LXC8T245PWR
-  - Adapter Board: TSSOP24 to DIP conversion board (DA-TSSOP24-P65)
-  - LDO Regulator: AP2112 (for Level Shifter power supply)
-
-## TODO
-
-[ ] Settings UI: Implement UI in egui to allow users to change font sizes and colors.
-
-[ ] Unit Display: Add units (e.g., "mm") next to the numerical values.
+**Launch:**
+```bash
+cargo run --bin digimatic -- -gui -sim
