@@ -94,7 +94,7 @@ impl TryFrom<&str> for DigimaticFrame {
         }
         let bytes = frame.as_bytes();
 
-        if bytes.len() != FRAME_LENGTH * FRAME_NIBBLES {
+        if bytes.len() != FRAME_LENGTH {
             // frame Bit列の長さは 13x4(nibble) = 52Bit
             return Err(Error::new(
                 ErrorKind::InvalidData,
