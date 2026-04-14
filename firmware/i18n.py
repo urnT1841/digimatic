@@ -1,5 +1,3 @@
-# i18nのとっかかり
-# こうやるという方針残しておく
 
 import ujson as json
 import os
@@ -20,6 +18,7 @@ def list_languages():
 def load_lang(code):
     global _data, _fallback
 
+    # フォールバック(en)ロード
     if not _fallback:
         try:
             with open("lang_en.json") as f:
@@ -27,15 +26,16 @@ def load_lang(code):
         except OSError:
             _fallback = {}
 
-        try:
-            filename = "lang_{}.json".format(code)
-            with open(filename) as f:
-                _data = json.load(f)
-                return True
-        except OSError:
-            _data = dict(_fallback) # 読み込めなかったらフォールバックを正とする
-            return False
-
+    #指定言語ロード
+    try:
+        filename = "lang_{}.json".format(code)
+        with open(filename) as f:
+            _data = json.load(f)
+            return True
+    except OSError:
+        # 言語ファイルがなければ _dataは殻にして fallbackを見に行かせる
+        _data = {}
+        return False
 
 def t(key):
     return _data.get(key, _fallback.get(key, key))

@@ -50,11 +50,9 @@ def generic_pin_config(title, options_dict, apply_callback):
 
     # 異常系を先にはじく
     # 空行と想定外はNG 
-    if sel == "":
-        continue
-
-    if sel not in options_dict:
+    if not sel or sel not in options_dict:
         print(t("invalid_selection"))
+        return
     
     # 安全系に入る
     # 追加のモード別ガード

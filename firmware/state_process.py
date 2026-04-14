@@ -164,7 +164,7 @@ def process_diag_handler():
     #階層メニューで再起を使っているので。念のためGC実施
     gc.collect()
 
-    from main import splash_welcome
+    from ui import splash_welcome
     splash_welcome()
 
     return STATE_IDLE, ERR_NONE

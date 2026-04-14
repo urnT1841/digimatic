@@ -6,7 +6,7 @@ from state_process import state_map, STATE_IDLE, ERR_NONE, session
 import config
 import i18n
 from  i18n import t
-
+import ui
 
 # 初期化
 cfg = config.load_config()
@@ -48,19 +48,8 @@ def main():
         # print("pico stoped")
 
 
-def splash_welcome():
-    splash_text = """
-    === digimatic data receiver with XIAO RP2040 ===
-    """ 
-
-    print(splash_text)
-    print(f"\n{t('welcome')}")
-    print(f"Language: {cfg.get('lang')}")
-
-
-
 
 if __name__ == '__main__':
-    splash_welcome()
+    ui.splash_welcome()
     main()
     
