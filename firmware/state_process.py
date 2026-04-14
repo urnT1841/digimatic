@@ -28,12 +28,13 @@ ERR_TIMEOUT = const(1)  # 信号が来ない
 ERR_READ    = const(2)  # クロックが途中で途切れた、物理的ノイズ  # TODO: 返す部分は未実装
 ERR_DECODE  = const(3)  # バリデーション（FFFFヘッダ等）失敗
 
+FRAME_PADDING = const(12)  # Digimatic 52Bit + 12Bit = 64Bit確保
+
 class DigimaticSession:
     # 以下の2つの組み合わせのみを想定
     MODE_STR = ("MSB", "STR")
     MODE_BIN = ("LSB", "BIN")
 
-    FRAME_PADDING = 12  # Digimatic 52Bit + 12Bit = 64Bit確保
     def __init__(self):
         # 設定 (Config)
         self.config = self.MODE_STR      # nibble_maker / validator 用
@@ -158,7 +159,6 @@ def process_diag_handler():
     # dig mode へはいる
     print(f"\n{t('enter_diag')}")
     diag.main_loop(diag.MENU_OPTIONS)
-    # dig mode から出てくる
     print(f"\n{t('finish_diag')}")
     
     #階層メニューで再起を使っているので。念のためGC実施
