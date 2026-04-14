@@ -6,6 +6,7 @@
 //!
 
 use std::f64::NAN;
+use std::io::{Error, ErrorKind};
 
 // デジマッチック データフレームの位置
 // インデックスだとずれるので
@@ -24,6 +25,7 @@ pub const D12: usize = 11; // point position
 pub const D13: usize = 12; // unit  ( mm or inch )
 
 pub const FRAME_LENGTH: usize = 13; // デジマチックフレームの長さは13固定
+pub const FRAME_NIBBLES: usize = 4; // デジマチックフレームの1つは4Bit (nibble)
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,11 +34,35 @@ pub enum Sign {
     Minus = 0x08,
 }
 
+impl TryFrom<u8> for Sign {
+    type Error = ();
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0x00 => Ok(Sign::Plus),
+            0x08 => Ok(Sign::Minus),
+            _ => Err(()),
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Unit {
     Mm = 0x00,
     _Inch = 0x01,
+}
+
+impl TryFrom<u8> for Unit {
+    type Error = ();
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0x00 => Ok(Unit::Mm),
+            0x01 => Ok(Unit::_Inch),
+            _ => Err(()),
+        }
+    }
 }
 
 #[repr(u8)]
@@ -50,7 +76,23 @@ pub enum PointPosition {
     Five = 0x05,  // 0.00000
 }
 
-// rx frame を受ける入れ物 measurement構造体前に使う
+impl TryFrom<u8> for PointPosition {
+    type Error = ();
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0x00 => Ok(Self::Zero),
+            0x01 => Ok(Self::One),
+            0x02 => Ok(Self::Two),
+            0x03 => Ok(Self::Three),
+            0x04 => Ok(Self::Four),
+            0x05 => Ok(Self::Five),
+            _ => Err(()),
+        }
+    }
+}
+
+// rx frame を受ける入p...れ物 measurement構造体前に使う
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DigimaticFrame {
     pub header: [u8; 4],
@@ -66,13 +108,6 @@ pub struct Measurement {
     pub sign: Sign,           // 符号
     pub point: PointPosition, // 小数点位置
     pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
-}
-
-/// ビット並び順モード
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BitMode {
-    Lsb,
-    Msb,
 }
 
 /// Measurement構造体の値をf64に変換
@@ -93,4 +128,11 @@ impl Measurement {
     pub fn to_f64(&self) -> f64 {
         self.to_f64_checked().unwrap_or(NAN)
     }
+}
+
+/// ビット並び順モード
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BitMode {
+    Lsb,
+    Msb,
 }

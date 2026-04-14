@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::{execute_communicate,sim};
+use crate::{execute_communicate, sim};
 
 struct DisplayApp {
     measurement_data: f64,

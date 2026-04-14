@@ -10,14 +10,13 @@ use std::convert::TryFrom;
 use std::fs::{File, OpenOptions};
 use std::{thread, time::Duration};
 
-use crate::communicator::{CdcReceiver,SimReceiver};
+use crate::communicator::{CdcReceiver, SimReceiver};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::sim::frame_array_builder::build_frame_array;
 use crate::sim::generator::generator;
 use crate::sim::port_prepare::port_prepare;
 use crate::sim::sender::{SendMode, send};
-
 
 pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
     // ポート準備
@@ -106,7 +105,9 @@ fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Err
 
 //
 // GUI+Sim用  ほとんど同じというか tx.send(vas_f64)だけなので動いたら共通化する
-pub fn run_simulation_loop_with_tx(tx: std::sync::mpsc::Sender<f64>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_simulation_loop_with_tx(
+    tx: std::sync::mpsc::Sender<f64>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut receiver = SimReceiver::new();
     const WAIT_TIME_MS: u64 = 700; // ミリ秒で指定 700msに意味はないよ
 
@@ -121,7 +122,9 @@ pub fn run_simulation_loop_with_tx(tx: std::sync::mpsc::Sender<f64>) -> Result<(
         // あとはActualと同じパス
         match receiver.read_str_measurement() {
             Ok(data) => {
-                if data.is_empty() { continue; }
+                if data.is_empty() {
+                    continue;
+                }
                 match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
                     Ok(measurement) => {
                         let val_f64 = measurement.to_f64();
@@ -131,7 +134,8 @@ pub fn run_simulation_loop_with_tx(tx: std::sync::mpsc::Sender<f64>) -> Result<(
                     }
                     Err(e) => eprintln!("パース失敗: {}", e),
                 }
-            }            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => eprintln!("受信エラー {}", e),
         }
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));

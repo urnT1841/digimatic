@@ -82,7 +82,9 @@ pub struct SimReceiver {
 
 impl SimReceiver {
     pub fn new() -> Self {
-        Self { buffer: std::collections::VecDeque::new() }
+        Self {
+            buffer: std::collections::VecDeque::new(),
+        }
     }
 
     pub fn push(&mut self, data: String) {

@@ -5,38 +5,62 @@ use crate::frame::*;
 use std::convert::TryFrom;
 use std::io::{Error, ErrorKind};
 
-fn nibble_maker(bits: &[u8; 4], mode: BitMode) -> u8 {
-    match mode {
-        BitMode::Lsb => (bits[0] << 3) | (bits[1] << 2) | (bits[2] << 1) | bits[3],
-        BitMode::Msb => bits[0] | (bits[1] << 1) | (bits[2] << 2) | (bits[3] << 3),
+/// 受け取ったBit列をnibleに変換
+/// ここで生成するNibleは msb にして以降はLSB/MSBは意識しないようにする
+fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<Vec<u8>, Error> {
+    if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
+        return Err(Error::new(ErrorKind::InvalidData, "Insufficient bits"));
     }
+
+    Ok(bits
+        .chunks_exact(4)
+        .map(|chunk| {
+            let chunk: &[u8; 4] = chunk.try_into().unwrap();
+            const LSB_MASK: u8 = 0b0001;
+
+            // 物理的なビット順を MSB(0,1,2,3) の重みに正規化
+            let shifts = match mode {
+                BitMode::Lsb => [3, 2, 1, 0], // LSB-first を 8,4,2,1 の重み
+                BitMode::Msb => [0, 1, 2, 3], // Msb-first を 1,2,4,8 の重み
+            };
+
+            chunk
+                .iter()
+                .zip(shifts)
+                .fold(0, |acc, (&b, s)| acc | ((b & LSB_MASK) << s))
+        })
+        .collect())
 }
 
 /// bits_buffer: 52要素(13ニブル×4bit)のスライス
-pub fn validator_bits(bits_buffer: &[u8], mode: BitMode) -> Option<Vec<u8>> {
-    let bits: &[u8; 52] = bits_buffer.try_into().ok()?;
+pub fn validator_bits(bits_buffer: &[u8], mode: BitMode) -> Result<DigimaticFrame, Error> {
+    // 受信日っと列をnibble maker に渡して全ニブルを生成
+    let n = nibble_maker(bits_buffer, mode)?;
 
-    (0..13)
-        .map(|i| {
-            let nibble_bits: &[u8; 4] = bits[i * 4..(i + 1) * 4].try_into().ok()?;
-            let val = nibble_maker(nibble_bits, mode);
+    // スライス範囲で「意味」を切り出す
+    let header_raw = &n[D1..=D3 + 1]; // D1-D4 (4つ)
+    let sign_raw = n[D5]; // D5 (1つ)
+    let data_raw = &n[D6..=D11]; // D6-D11 (6つ)
+    let point_raw = n[D12]; // D12 (1つ)
+    let unit_raw = n[D13]; // D13 (1つ)
 
-            let valid = match (i, mode) {
-                (0..=3, _) => val == 0xF,
-                (4, BitMode::Msb) => matches!(val, 0 | 8),
-                (4, BitMode::Lsb) => matches!(val, 0 | 1),
-                (5..=10, BitMode::Msb) => val <= 9,
-                (5..=10, BitMode::Lsb) => [0u8, 8, 4, 12, 2, 10, 6, 14, 1, 9].contains(&val),
-                (11, BitMode::Msb) => val <= 5,
-                (11, BitMode::Lsb) => [0u8, 8, 4, 12, 2, 10].contains(&val),
-                (12, BitMode::Msb) => matches!(val, 0 | 1),
-                (12, BitMode::Lsb) => matches!(val, 0 | 8),
-                _ => false,
-            };
+    // 各パーツを検証
+    // まずはHeader
+    if header_raw != [0x0F, 0x0F, 0x0F, 0x0F] {
+        return Err(Error::new(ErrorKind::InvalidData, "Header mismatch"));
+    }
 
-            valid.then_some(val)
-        })
-        .collect()
+    // のこり組み立て（各型への変換はそれぞれの TryFrom で実施）
+    Ok(DigimaticFrame {
+        header: header_raw.try_into().unwrap(),
+        sign: Sign::try_from(sign_raw)
+            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Sign"))?,
+        data: data_raw.try_into().unwrap(),
+        point_pos: PointPosition::try_from(point_raw)
+            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Point"))?,
+        unit: Unit::try_from(unit_raw)
+            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Unit"))?,
+    })
 }
 
 /// decode_frame の Rust版 (MSBモードのみ → 文字列に変換)
@@ -70,7 +94,8 @@ impl TryFrom<&str> for DigimaticFrame {
         }
         let bytes = frame.as_bytes();
 
-        if bytes.len() != FRAME_LENGTH {
+        if bytes.len() != FRAME_LENGTH * FRAME_NIBBLES {
+            // frame Bit列の長さは 13x4(nibble) = 52Bit
             return Err(Error::new(
                 ErrorKind::InvalidData,
                 format!("Invalid length: {}", bytes.len()),
@@ -125,28 +150,19 @@ impl TryFrom<(&[u8], BitMode)> for DigimaticFrame {
     fn try_from(input: (&[u8], BitMode)) -> Result<Self, Self::Error> {
         let (bits, mode) = input;
 
-        // 52bit必要
-        if bits.len() != 52 {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                format!("Invalid binary frame length: {}", bits.len()),
-            ));
-        }
-
-        let validated = validator_bits(bits, mode)
-            .ok_or_else(|| Error::new(ErrorKind::InvalidData, "Validation failed"))?;
-
-        // MSB文字列に変換してパース
-        let decoded_str = decode_frame(&validated)
-            .map_err(|_| Error::new(ErrorKind::InvalidData, "Decode failed"))?;
-        let ascii_bytes = decoded_str.as_bytes();
+        // nibble_makerに渡して MSB nibble として入手
+        let n = nibble_maker(bits, mode)
+            .map_err(|e| Error::new(ErrorKind::InvalidData, e.to_string()))?;
 
         Ok(DigimaticFrame {
-            header: ascii_bytes[D1..D5].try_into().unwrap(),
-            sign: convert_sign(&ascii_bytes[D5..D6])?,
-            data: ascii_bytes[D6..D12].try_into().unwrap(),
-            point_pos: convert_point(&ascii_bytes[D12..D13])?,
-            unit: convert_unit(&ascii_bytes[D13..FRAME_LENGTH])?,
+            header: n[D1..D5].try_into().unwrap(),
+            sign: Sign::try_from(n[D5])
+                .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Sign"))?,
+            data: n[D6..D12].try_into().unwrap(),
+            point_pos: PointPosition::try_from(n[D12])
+                .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid point pos"))?,
+            unit: Unit::try_from(n[D13])
+                .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Unit"))?,
         })
     }
 }
