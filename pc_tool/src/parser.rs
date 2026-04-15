@@ -79,6 +79,8 @@ pub fn decode_frame(nibbles: &[u8]) -> Result<String, ()> {
     Ok(s)
 }
 
+// バイナリ版との型合わせ
+type ParseResult<T> = Result<T, std::io::Error>;
 /// 文字列フレーム → DigimaticFrame
 impl TryFrom<&str> for DigimaticFrame {
     type Error = std::io::Error;
@@ -102,12 +104,15 @@ impl TryFrom<&str> for DigimaticFrame {
             ));
         }
 
+        // helper スライス→1文字とって列挙型へ変換
+        let to_err = |_| std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid enum value");
+
         Ok(DigimaticFrame {
             header: bytes[D1..D5].try_into().unwrap(),
-            sign: convert_sign(&bytes[D5..D6])?,
+            sign: bytes[D5].try_into().map_err(to_err)?,
             data: bytes[D6..D12].try_into().unwrap(),
-            point_pos: convert_point(&bytes[D12..D13])?,
-            unit: convert_unit(&bytes[D13..D13 + 1])?,
+            point_pos: bytes[D12].try_into().map_err(to_err)?,
+            unit: bytes[D13].try_into().map_err(to_err)?,
         })
     }
 }
