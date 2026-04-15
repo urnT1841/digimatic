@@ -176,9 +176,11 @@ impl TryFrom<DigimaticFrame> for Measurement {
     type Error = std::io::Error;
 
     fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
-        let raw_val = std::str::from_utf8(&frame.data)
-            .map_err(|e| Error::new(ErrorKind::InvalidData, e))?
-            .to_string();
+        // ニブル値を数字文字に変換して文字列にする
+        let raw_val = frame.data
+            .iter()
+            .map(|&v| nibble_to_char(v))
+            .collect::<Result<String, _>>()?;
 
         Ok(Measurement {
             raw_val,
