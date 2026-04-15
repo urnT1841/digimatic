@@ -63,24 +63,44 @@ pub fn validator_bits(bits_buffer: &[u8], mode: BitMode) -> Result<DigimaticFram
     })
 }
 
-/// decode_frame の Rust版 (MSBモードのみ → 文字列に変換)
-pub fn decode_frame(nibbles: &[u8]) -> Result<String, ()> {
-    if nibbles.len() != 13 {
-        return Err(());
+/// ニブル列 → 文字列フレーム
+pub fn decode_frame(nibbles: &[u8]) -> Result<String, Error> {
+    if nibbles.len() != FRAME_LENGTH {
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("Invalid length: {}", nibbles.len()),
+        ));
     }
-    let s: String = nibbles
-        .iter()
-        .map(|&v| match v {
-            15 => 'F',
-            10..=14 => (b'A' + v - 10) as char,
-            _ => (b'0' + v) as char,
-        })
-        .collect();
-    Ok(s)
+    nibbles.iter().map(|&v| nibble_to_char(v)).collect()
 }
 
-// バイナリ版との型合わせ
-type ParseResult<T> = Result<T, std::io::Error>;
+
+/// ニブル値(u8) → ASCII16進文字
+fn nibble_to_char(v: u8) -> Result<char, Error> {
+    match v {
+        0x00..=0x09 => Ok((b'0' + v) as char),
+        0x0A..=0x0F => Ok((b'A' + v - 10) as char),
+        _ => Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("nibble out of range: {:#04x}", v),
+        )),
+    }
+}
+
+/// ASCII16進文字 → ニブル値(u8)
+fn char_to_nibble(c: char) -> Result<u8, Error> {
+    match c {
+        '0'..='9' => Ok(c as u8 - b'0'),
+        'A'..='F' => Ok(c as u8 - b'A' + 10),
+        'a'..='f' => Ok(c as u8 - b'a' + 10),
+        _ => Err(Error::new(
+            ErrorKind::InvalidData,
+            format!("Invalid hex char: '{}'", c),
+        )),
+    }
+}
+
+
 /// 文字列フレーム → DigimaticFrame
 impl TryFrom<&str> for DigimaticFrame {
     type Error = std::io::Error;
@@ -94,25 +114,33 @@ impl TryFrom<&str> for DigimaticFrame {
                 "Frame contains non-ASCII",
             ));
         }
-        let bytes = frame.as_bytes();
 
-        if bytes.len() != FRAME_LENGTH {
-            // frame Bit列の長さは 13x4(nibble) = 52Bit
+        if frame.len() != FRAME_LENGTH {
             return Err(Error::new(
                 ErrorKind::InvalidData,
-                format!("Invalid length: {}", bytes.len()),
+                format!("Invalid length: {}", frame.len()),
             ));
         }
 
-        // helper スライス→1文字とって列挙型へ変換
-        let to_err = |_| std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid enum value");
+        // 全文字をニブル値に変換
+        let nibbles: Vec<u8> = frame
+            .chars()
+            .map(char_to_nibble)
+            .collect::<Result<Vec<u8>, _>>()?;
+
+        // header チェック
+        if nibbles[D1..=D4] != [0x0F, 0x0F, 0x0F, 0x0F] {
+            return Err(Error::new(ErrorKind::InvalidData, "Header mismatch"));
+        }
+
+        let to_err = |_| Error::new(ErrorKind::InvalidData, "Invalid enum value");
 
         Ok(DigimaticFrame {
-            header: bytes[D1..D5].try_into().unwrap(),
-            sign: bytes[D5].try_into().map_err(to_err)?,
-            data: bytes[D6..D12].try_into().unwrap(),
-            point_pos: bytes[D12].try_into().map_err(to_err)?,
-            unit: bytes[D13].try_into().map_err(to_err)?,
+            header: nibbles[D1..=D4].try_into().unwrap(),
+            sign: Sign::try_from(nibbles[D5]).map_err(to_err)?,
+            data: nibbles[D6..=D11].try_into().unwrap(),
+            point_pos: PointPosition::try_from(nibbles[D12]).map_err(to_err)?,
+            unit: Unit::try_from(nibbles[D13]).map_err(to_err)?,
         })
     }
 }
