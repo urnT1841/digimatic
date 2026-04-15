@@ -5,7 +5,6 @@ use crate::frame::*;
 use std::convert::TryFrom;
 use std::io::{Error, ErrorKind};
 
-
 // 物理層から北信号フレームをnibble_makerに渡すための仲介関数
 fn parse_bits(bits: &[u8], mode: BitMode) -> Result<DigimaticFrame, Error> {
     let nibbles = nibble_maker(bits, mode)?;
@@ -22,7 +21,8 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Error>
     let mut out = [0u8; FRAME_LENGTH];
 
     for (i, chunk) in bits.chunks_exact(4).enumerate() {
-        let chunk: &[u8; 4] = chunk.try_into()
+        let chunk: &[u8; 4] = chunk
+            .try_into()
             .map_err(|_| Error::new(ErrorKind::InvalidData, "chunk error"))?;
         const LSB_MASK: u8 = 0b0001;
 
@@ -42,13 +42,12 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Error>
 /// bits_buffer: 52要素(13ニブル×4bit)のスライス
 /// ここを通ったフレームはデジマチック仕様に沿った正規フレームになる
 pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, Error> {
-
     // スライス範囲で「意味」を切り出す
-    let header_raw = &nibbles[D1..D5];    // D1-D4 (4つ)
-    let sign_raw = nibbles[D5];              // D5 (1つ)
-    let data_raw = &nibbles[D6..D12];    // D6-D11 (6つ)
-    let point_raw = nibbles[D12];            // D12 (1つ)
-    let unit_raw = nibbles[D13];             // D13 (1つ)
+    let header_raw = &nibbles[D1..D5]; // D1-D4 (4つ)
+    let sign_raw = nibbles[D5]; // D5 (1つ)
+    let data_raw = &nibbles[D6..D12]; // D6-D11 (6つ)
+    let point_raw = nibbles[D12]; // D12 (1つ)
+    let unit_raw = nibbles[D13]; // D13 (1つ)
 
     // 各パーツを検証
     // まずはHeader
@@ -77,7 +76,8 @@ pub fn decode_frame(nibbles: &[u8]) -> Result<String, Error> {
             format!("Invalid length: {}", nibbles.len()),
         ));
     }
-    nibbles.iter()
+    nibbles
+        .iter()
         .map(|&v| nibble_to_char(v))
         .collect::<Result<String, _>>()
 }
@@ -143,14 +143,14 @@ impl TryFrom<&str> for DigimaticFrame {
     }
 }
 
-
 //  Digimatic -> measurement
 impl TryFrom<DigimaticFrame> for Measurement {
     type Error = std::io::Error;
 
     fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
         // ニブル値を数字文字に変換して文字列にする
-        let raw_val = frame.data
+        let raw_val = frame
+            .data
             .iter()
             .map(|&v| nibble_to_char(v))
             .collect::<Result<String, _>>()?;
