@@ -112,35 +112,6 @@ impl TryFrom<&str> for DigimaticFrame {
     }
 }
 
-/// helper functions
-fn convert_sign(s: &[u8]) -> Result<Sign, Error> {
-    match s {
-        b"0" => Ok(Sign::Plus),
-        b"8" => Ok(Sign::Minus),
-        _ => Err(Error::new(ErrorKind::InvalidData, "Unknown sign")),
-    }
-}
-
-fn convert_point(p: &[u8]) -> Result<PointPosition, Error> {
-    match p {
-        b"0" => Ok(PointPosition::Zero),
-        b"1" => Ok(PointPosition::One),
-        b"2" => Ok(PointPosition::Two),
-        b"3" => Ok(PointPosition::Three),
-        b"4" => Ok(PointPosition::Four),
-        b"5" => Ok(PointPosition::Five),
-        _ => Err(Error::new(ErrorKind::InvalidData, "Illegal point")),
-    }
-}
-
-fn convert_unit(u: &[u8]) -> Result<Unit, Error> {
-    match u {
-        b"0" => Ok(Unit::Mm),
-        b"1" => Ok(Unit::_Inch),
-        _ => Err(Error::new(ErrorKind::InvalidData, "Unknown unit")),
-    }
-}
-
 // バイナリフレーム → DigimaticFrame
 impl TryFrom<(&[u8], BitMode)> for DigimaticFrame {
     type Error = std::io::Error;
