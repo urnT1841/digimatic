@@ -4,9 +4,8 @@
 
 use chrono::Local;
 use serde::Serialize;
-//use std::io::{BufRead, BufReader, Error, ErrorKind};
 
-use crate::errors::FrameParseError;
+use crate::errors::{DigimaticError, FrameParseError, SystemError};
 
 /// 通信データ保存用
 #[derive(Serialize, Debug)]
@@ -34,9 +33,21 @@ impl RxDataLog {
     pub fn save_flush(
         &self,
         wtr: &mut csv::Writer<std::fs::File>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        wtr.serialize(self)?;
-        wtr.flush()?;
+    ) -> Result<(), DigimaticError> {
+        //csv::Errorを systemErrorでラップする
+        wtr.serialize(self).map_err(|e| {
+            SystemError {
+                code: 101,
+                message: format!("CSV serializatino failed: {}", e),
+            }
+        })?;
+        
+        wtr.flush().map_err(|e| {
+            SystemError {
+                code: 102,
+                message: format!("CSV flash failed: {}",e),
+            }
+        })?;
         Ok(())
     }
 }
@@ -61,14 +72,21 @@ impl MeasurementLog {
     pub fn save_flush(
         &self,
         wtr: &mut csv::Writer<std::fs::File>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        wtr.serialize(self)?;
-        wtr.flush()?;
+    ) -> Result<(), DigimaticError> {
+        //csv::Errorを systemErrorでラップする
+        wtr.serialize(self).map_err(|e| {
+            SystemError {
+                code: 101,
+                message: format!("CSV serializatino failed: {}", e),
+            }
+        })?;
+        
+        wtr.flush().map_err(|e| {
+            SystemError {
+                code: 102,
+                message: format!("CSV flash failed: {}",e),
+            }
+        })?;
         Ok(())
-    }
-
-    // Display GUI へ送る分 (測定データだけ)
-    pub fn display_data(&self) -> f64 {
-        self.val
     }
 }
