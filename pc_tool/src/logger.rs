@@ -6,20 +6,24 @@ use chrono::Local;
 use serde::Serialize;
 //use std::io::{BufRead, BufReader, Error, ErrorKind};
 
+use crate::errors::FrameParseError;
+
 /// 通信データ保存用
 #[derive(Serialize, Debug)]
 pub struct RxDataLog {
     pub timestamp: String,
     pub raw_len: usize,
     pub raw_data: String,
-    pub error_log: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_log: Option<FrameParseError>,
 }
 
 impl RxDataLog {
     // コンストラクタ
     pub fn new(raw: &str) -> Self {
         Self {
-            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
+            timestamp: Local::now().to_rfc3339().to_string(),
             raw_len: raw.len(),
             raw_data: raw.to_string(),
             error_log: None,
@@ -48,7 +52,7 @@ impl MeasurementLog {
     // コンストラクタ
     pub fn new(val: f64) -> Self {
         Self {
-            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
+            timestamp: Local::now().to_rfc3339().to_string(),
             val,
         }
     }

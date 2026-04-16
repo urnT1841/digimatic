@@ -11,3 +11,4 @@ pub mod parser;
 pub mod scanner;
 pub mod sim;
 pub mod switcher;
+pub mod errors;
