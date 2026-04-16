@@ -1,5 +1,6 @@
 //! 引数から起動モードを選択する
 
+use crate::communicator::SimReceiver;
 use crate::sim::execute_sim;
 use crate::{execute_communicate, gui_main};
 
@@ -13,8 +14,18 @@ pub enum AppMode {
 pub fn run(mode: AppMode) -> Result<(), String> {
     match mode {
         AppMode::Sim => {
-            // CLIのみのシミュレーション起動
-            execute_sim::run_simmulation_loop().map_err(|e| e.to_string())
+            // ここでライターを準備する（旧 create_log_writer の中身をここに持ってくるイメージ）
+            let rx_wtr = create_writer("rx_log.csv").map_err(|e| e.to_string())?;
+            let m_wtr = create_writer("measurement.csv").map_err(|e| e.to_string())?;
+
+            // 一本化したコア関数を呼ぶ（ライターは Some で、Sender は None）
+            execute_sim::run_simulation_core(
+                Box::new(SimReceiver::new()), // 受信機
+                Some(rx_wtr),                 // 生ログ保存あり
+                Some(m_wtr),                  // 測定保存あり
+                None,                         // GUI送信なし
+            )
+            .map_err(|e| e.to_string())
         }
         AppMode::Actual => {
             // CLIのみの本番起動
@@ -51,4 +62,15 @@ pub fn parse_args(args: &[String]) -> Result<AppMode, String> {
             arg
         )),
     }
+}
+
+// 共通ヘルパー（OpenOptionsなどの定型処理をまとめるだけ）
+fn create_writer(path: &str) -> std::io::Result<csv::Writer<std::fs::File>> {
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    Ok(csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(file))
 }

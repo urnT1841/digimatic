@@ -84,22 +84,25 @@ fn gui_run(is_sim: bool) -> eframe::Result {
         "Digimatic Data Display v0.33",
         options,
         Box::new(move |cc| {
-            // ← move 追加（is_sim をクロージャに渡すため）
             let (tx, rx) = std::sync::mpsc::channel::<f64>();
 
             std::thread::spawn(move || {
+                // 内側ループの再起動用外側ループ
                 loop {
                     let tx_clone = tx.clone();
-                    if is_sim {
+                    let result = if is_sim {
+                        let receiver = Box::new(crate::communicator::SimReceiver::new());
                         // sim実行
-                        if let Err(e) = sim::execute_sim::run_simulation_loop_with_tx(tx_clone) {
-                            eprintln!("シミュレーションエラー: {}", e);
-                        }
+                        sim::execute_sim::run_simulation_core(receiver,None,None,Some(tx_clone))
                     } else {
                         // 実機
-                        if let Err(e) = execute_communicate::run_actual_loop(tx_clone) {
-                            eprintln!("通信エラー: {}", e);
-                        }
+                        execute_communicate::run_actual_loop(tx_clone)
+                    };
+                    //result受け (内側のエラーで戻ってきた場合)
+                    if let Err(e) = result {
+                        eprintln!("Thread loop error, restarting ...: {}", e);
+                        //ちょい待ち
+                        std::thread::sleep(std::time::Duration::from_secs(1))
                     }
                 }
             });
@@ -107,9 +110,3 @@ fn gui_run(is_sim: bool) -> eframe::Result {
         }),
     )
 }
-
-// fn main() {
-//     if let Err(e) = launch_display(false) {
-//         eprintln!("起動エラー: {}", e);
-//     }
-// }

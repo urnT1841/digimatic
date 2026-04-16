@@ -3,6 +3,7 @@
 //!
 
 pub mod communicator;
+pub mod errors;
 pub mod execute_communicate;
 pub mod frame;
 pub mod gui_main;
@@ -11,4 +12,3 @@ pub mod parser;
 pub mod scanner;
 pub mod sim;
 pub mod switcher;
-pub mod errors;

@@ -76,6 +76,17 @@ impl CdcReceiver {
     }
 }
 
+pub trait MeasurementRead {
+    fn read_str_measurement(&mut self) -> std::io::Result<String>;
+}
+
+// CdcReceiver にトレイトを適用
+impl MeasurementRead for CdcReceiver {
+    fn read_str_measurement(&mut self) -> std::io::Result<String> {
+        self.read_str_measurement() // 既存のメソッドを呼び出すだけ
+    }
+}
+
 pub struct SimReceiver {
     buffer: std::collections::VecDeque<String>,
 }
@@ -96,6 +107,13 @@ impl SimReceiver {
             Some(line) => Ok(line),
             None => Err(Error::new(ErrorKind::TimedOut, "no data")),
         }
+    }
+}
+
+// SimReceiver にトレイトを適用
+impl MeasurementRead for SimReceiver {
+    fn read_str_measurement(&mut self) -> std::io::Result<String> {
+        self.read_str_measurement() // 既存のメソッドを呼び出すだけ
     }
 }
 

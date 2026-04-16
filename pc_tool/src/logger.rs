@@ -30,23 +30,16 @@ impl RxDataLog {
     }
 
     // ライターにデータ送ってFlush
-    pub fn save_flush(
-        &self,
-        wtr: &mut csv::Writer<std::fs::File>,
-    ) -> Result<(), DigimaticError> {
+    pub fn save_flush(&self, wtr: &mut csv::Writer<std::fs::File>) -> Result<(), DigimaticError> {
         //csv::Errorを systemErrorでラップする
-        wtr.serialize(self).map_err(|e| {
-            SystemError {
-                code: 101,
-                message: format!("CSV serializatino failed: {}", e),
-            }
+        wtr.serialize(self).map_err(|e| SystemError {
+            code: 101,
+            message: format!("CSV serializatino failed: {}", e),
         })?;
-        
-        wtr.flush().map_err(|e| {
-            SystemError {
-                code: 102,
-                message: format!("CSV flash failed: {}",e),
-            }
+
+        wtr.flush().map_err(|e| SystemError {
+            code: 102,
+            message: format!("CSV flash failed: {}", e),
         })?;
         Ok(())
     }
@@ -69,23 +62,16 @@ impl MeasurementLog {
     }
 
     // ライターにデータ送ってFlush
-    pub fn save_flush(
-        &self,
-        wtr: &mut csv::Writer<std::fs::File>,
-    ) -> Result<(), DigimaticError> {
+    pub fn save_flush(&self, wtr: &mut csv::Writer<std::fs::File>) -> Result<(), DigimaticError> {
         //csv::Errorを systemErrorでラップする
-        wtr.serialize(self).map_err(|e| {
-            SystemError {
-                code: 101,
-                message: format!("CSV serializatino failed: {}", e),
-            }
+        wtr.serialize(self).map_err(|e| SystemError {
+            code: 101,
+            message: format!("CSV serializatino failed: {}", e),
         })?;
-        
-        wtr.flush().map_err(|e| {
-            SystemError {
-                code: 102,
-                message: format!("CSV flash failed: {}",e),
-            }
+
+        wtr.flush().map_err(|e| SystemError {
+            code: 102,
+            message: format!("CSV flash failed: {}", e),
         })?;
         Ok(())
     }

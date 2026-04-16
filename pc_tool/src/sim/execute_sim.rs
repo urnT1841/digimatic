@@ -4,132 +4,94 @@
 //! すべてRustで実装したもの
 //!
 
-use chrono::Local;
-use csv::{Writer, WriterBuilder};
 use std::convert::TryFrom;
-use std::fs::{File, OpenOptions};
+use std::sync::mpsc::Sender;
 use std::{thread, time::Duration};
 
-use crate::communicator::{CdcReceiver, SimReceiver};
+use crate::errors::DigimaticError;
 use crate::frame::{DigimaticFrame, Measurement};
-use crate::logger::*;
-use crate::sim::frame_array_builder::build_frame_array;
-use crate::sim::generator::generator;
-use crate::sim::port_prepare::port_prepare;
-use crate::sim::sender::{SendMode, send};
+use crate::logger::{MeasurementLog, RxDataLog};
 
-pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
-    // ポート準備
-    let mut ports = port_prepare()?;
-
-    // 受信用構造体
-    // port所有権が rx_receiverへ移る
-    let mut rx_receiver = CdcReceiver::new(ports.rx);
-
-    // 保存用にライター準備
-    let mut rx_wtr = create_log_writer("rx_log.csv")?;
-    let mut m_wtr = create_log_writer("measurement.csv")?;
-
-    const WAIT_TIME_MS: u64 = 700; // ミリ秒で指定 700msに意味はないよ
-    loop {
-        let val = generator();
-        let digi_frame = build_frame_array(val);
-
-        // 送信
-        send(SendMode::DigimaticFrame(digi_frame), &mut *ports.tx);
-
-        // 受信
-        match rx_receiver.read_str_measurement() {
-            Ok(data) => {
-                if data.is_empty() {
-                    continue;
-                }
-                // 受信記録記録構造体にデータ渡す
-                let rx_log = RxDataLog::new(&data); // これだけで timestamp, raw_len, raw_data が入る
-                rx_wtr.serialize(rx_log)?;
-                rx_wtr.flush()?;
-
-                // rx文字列(フレーム)のバリデーション
-                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
-                    Ok(measurement) => {
-                        let val_f64 = measurement.to_f64();
-                        // データ保存用構造体へデータ渡す
-                        let m_log = MeasurementLog::new(val_f64);
-                        m_wtr.serialize(m_log)?; // 測定データ記録
-                        m_wtr.flush()?;
-                        println!("{} {:?} : ", measurement.raw_val, measurement.unit);
-                        print_tx_rx_decode_result(val, &data, val_f64);
-                    }
-                    Err(e) => {
-                        eprintln!("データ異常（パース失敗）: {} | 原因: {}", data, e);
-                    }
-                }
-            }
-            // タイムアウト時は何もしない
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
-            // それ以外のエラー
-            Err(e) => {
-                eprintln!("受信エラー {}", e);
-            }
-        }
-        thread::sleep(Duration::from_millis(WAIT_TIME_MS));
-    }
-}
-
-// 生成データ,受信文字列,復号データを出力
-fn print_tx_rx_decode_result(tx_data: f64, rx_data: &str, deco_data: f64) {
-    println!(
-        "[Tx] {:>6.2} mm  => [Rx] {:>6} mm  [dec] {} mm",
-        tx_data,
-        rx_data.trim(),
-        deco_data
-    );
-}
-
-///
-/// ライター生成
-///
-fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Error>> {
-    let file = OpenOptions::new().create(true).append(true).open(path)?;
-
-    Ok(WriterBuilder::new().has_headers(false).from_writer(file))
-}
-
-//
-// GUI+Sim用  ほとんど同じというか tx.send(vas_f64)だけなので動いたら共通化する
-pub fn run_simulation_loop_with_tx(
-    tx: std::sync::mpsc::Sender<f64>,
+// Simのループコア
+pub fn run_simulation_core(
+    mut receiver: Box<dyn crate::communicator::MeasurementRead>,
+    mut rx_wtr: Option<csv::Writer<std::fs::File>>,
+    mut m_wtr: Option<csv::Writer<std::fs::File>>,
+    tx: Option<Sender<f64>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut receiver = SimReceiver::new();
-    const WAIT_TIME_MS: u64 = 700; // ミリ秒で指定 700msに意味はないよ
+    const WAIT_TIME_MS: u64 = 700;
 
     loop {
-        let val = generator();
-        let digi_frame = build_frame_array(val);
-
-        // send()と同じ文字列化
-        let hex: String = digi_frame.iter().map(|b| format!("{:X}", b)).collect();
-        receiver.push(format!("{}\n", hex));
-
-        // あとはActualと同じパス
-        match receiver.read_str_measurement() {
-            Ok(data) => {
-                if data.is_empty() {
-                    continue;
-                }
-                match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
-                    Ok(measurement) => {
-                        let val_f64 = measurement.to_f64();
-                        if tx.send(val_f64).is_err() {
-                            return Ok(());
-                        }
-                    }
-                    Err(e) => eprintln!("パース失敗: {}", e),
-                }
+        // 受信 (Timeoutは無視し、それ以外のエラーは上位へ)
+        let data = match receiver.read_str_measurement() {
+            Ok(d) if d.is_empty() => continue,
+            Ok(d) => d,
+            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
+                thread::sleep(Duration::from_millis(10)); // CPU負荷軽減
+                continue;
             }
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
-            Err(e) => eprintln!("受信エラー {}", e),
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        // データのパイプライン処理
+        if let Err(e) = handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx) {
+            // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
+            if e.to_string().contains("Channel closed") {
+                break;
+            }
+            eprintln!("Processing error: {}", e);
         }
+
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));
     }
+    Ok(())
+}
+
+/// 受信データに対する「保存・パース・送信」の共通ハンドラ
+fn handle_received_data(
+    data: &str,
+    rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    tx: &Option<Sender<f64>>,
+) -> Result<(), DigimaticError> {
+    // 生ログの準備 (時刻はこの瞬間に固定)
+    let mut rx_log = RxDataLog::new(data);
+
+    // 計測データ → フレーム生成 (TryFrom chain)
+    match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {
+        Ok(m) => {
+            let val = m.to_f64();
+
+            //  生データの保存 (Writerがあれば)
+            if let Some(w) = rx_wtr {
+                rx_log.save_flush(w)?;
+            }
+
+            // 測定値の保存 (Writerがあれば)
+            if let Some(w) = m_wtr {
+                MeasurementLog::new(val).save_flush(w)?;
+            }
+
+            // GUIへの送信 (Senderがあれば)
+            if let Some(t) = tx {
+                t.send(val).map_err(|_| {
+                    DigimaticError::System(crate::errors::SystemError {
+                        code: 99,
+                        message: "Channel closed".into(),
+                    })
+                })?;
+            }
+
+            println!("[SIM] Decoded: {:.3} mm", val);
+        }
+        Err(e) => {
+            // パース失敗時：エラーを載せて生ログだけは残す
+            if let Some(w) = rx_wtr {
+                rx_log.error_log = Some(e.clone());
+                rx_log.save_flush(w)?;
+            }
+            eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
+        }
+    }
+    Ok(())
 }

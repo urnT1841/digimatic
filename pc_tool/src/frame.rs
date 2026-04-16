@@ -6,7 +6,8 @@
 //!
 
 use std::f64::NAN;
-use std::io::{Error, ErrorKind};
+
+use crate::errors::FrameParseError;
 
 // デジマッチック データフレームの位置
 // インデックスだとずれるので
@@ -35,13 +36,13 @@ pub enum Sign {
 }
 
 impl TryFrom<u8> for Sign {
-    type Error = ();
+    type Error = FrameParseError;
 
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
             0x00 => Ok(Sign::Plus),
             0x08 => Ok(Sign::Minus),
-            _ => Err(()),
+            _ => Err(FrameParseError::InvalidSign),
         }
     }
 }
@@ -54,13 +55,13 @@ pub enum Unit {
 }
 
 impl TryFrom<u8> for Unit {
-    type Error = ();
+    type Error = FrameParseError;
 
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
             0x00 => Ok(Unit::Mm),
             0x01 => Ok(Unit::_Inch),
-            _ => Err(()),
+            _ => Err(FrameParseError::InvalidUnit),
         }
     }
 }
@@ -77,7 +78,7 @@ pub enum PointPosition {
 }
 
 impl TryFrom<u8> for PointPosition {
-    type Error = ();
+    type Error = FrameParseError;
 
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
@@ -87,12 +88,12 @@ impl TryFrom<u8> for PointPosition {
             0x03 => Ok(Self::Three),
             0x04 => Ok(Self::Four),
             0x05 => Ok(Self::Five),
-            _ => Err(()),
+            _ => Err(FrameParseError::InvalidPoint),
         }
     }
 }
 
-// rx frame を受ける入p...れ物 measurement構造体前に使う
+// rx frame を受ける入れ物 measurement構造体前に使う
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DigimaticFrame {
     pub header: [u8; 4],

@@ -1,21 +1,22 @@
 //! parser.rs
 //! DigimaticFrame に変換するパーサー
 
+use crate::errors::FrameParseError;
 use crate::frame::*;
 use std::convert::TryFrom;
-use std::io::{Error, ErrorKind};
+
 
 // 物理層から北信号フレームをnibble_makerに渡すための仲介関数
-fn parse_bits(bits: &[u8], mode: BitMode) -> Result<DigimaticFrame, Error> {
+fn parse_bits(bits: &[u8], mode: BitMode) -> Result<DigimaticFrame, FrameParseError> {
     let nibbles = nibble_maker(bits, mode)?;
     validator_bits(&nibbles)
 }
 
 /// 受け取ったBit列をnibleに変換
 /// ここで生成するNibleは msb にして以降はLSB/MSBは意識しないようにする
-fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Error> {
+fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
-        return Err(Error::new(ErrorKind::InvalidData, "Invalid bit length"));
+        return Err(FrameParseError::InvalidBitLength(bits.len()));
     }
 
     let mut out = [0u8; FRAME_LENGTH];
@@ -23,7 +24,7 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Error>
     for (i, chunk) in bits.chunks_exact(4).enumerate() {
         let chunk: &[u8; 4] = chunk
             .try_into()
-            .map_err(|_| Error::new(ErrorKind::InvalidData, "chunk error"))?;
+            .map_err(|_| FrameParseError::IncompleteNibble(chunk.len()))?;
         const LSB_MASK: u8 = 0b0001;
 
         let shifts = match mode {
@@ -41,7 +42,7 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Error>
 
 /// bits_buffer: 52要素(13ニブル×4bit)のスライス
 /// ここを通ったフレームはデジマチック仕様に沿った正規フレームになる
-pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, Error> {
+pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
     // スライス範囲で「意味」を切り出す
     let header_raw = &nibbles[D1..D5]; // D1-D4 (4つ)
     let sign_raw = nibbles[D5]; // D5 (1つ)
@@ -52,29 +53,23 @@ pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, Error> {
     // 各パーツを検証
     // まずはHeader
     if header_raw != [0x0F; 4] {
-        return Err(Error::new(ErrorKind::InvalidData, "Header mismatch"));
+        return Err(FrameParseError::HeaderMismatch);
     }
 
     // のこり組み立て（各型への変換はそれぞれの TryFrom で実施）
     Ok(DigimaticFrame {
-        header: header_raw.try_into().unwrap(),
-        sign: Sign::try_from(sign_raw)
-            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Sign"))?,
-        data: data_raw.try_into().unwrap(),
-        point_pos: PointPosition::try_from(point_raw)
-            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Point"))?,
-        unit: Unit::try_from(unit_raw)
-            .map_err(|_| Error::new(ErrorKind::InvalidData, "Invalid Unit"))?,
+        header: header_raw.try_into().unwrap(), // 固定長チェック済みならOk
+        sign: Sign::try_from(sign_raw)?,
+        data: data_raw.try_into().unwrap(),   // 固定長チェック済みならOk
+        point_pos: PointPosition::try_from(point_raw)?,
+        unit: Unit::try_from(unit_raw)?,
     })
 }
 
 /// ニブル列 → 文字列フレーム
-pub fn decode_frame(nibbles: &[u8]) -> Result<String, Error> {
+pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {
-        return Err(Error::new(
-            ErrorKind::InvalidData,
-            format!("Invalid length: {}", nibbles.len()),
-        ));
+        return Err(FrameParseError::IncompleteNibble(nibbles.len()));
     }
     nibbles
         .iter()
@@ -83,34 +78,28 @@ pub fn decode_frame(nibbles: &[u8]) -> Result<String, Error> {
 }
 
 /// ニブル値(u8) → ASCII16進文字
-fn nibble_to_char(v: u8) -> Result<char, Error> {
+fn nibble_to_char(v: u8) -> Result<char, FrameParseError> {
     match v {
         0x00..=0x09 => Ok((b'0' + v) as char),
         0x0A..=0x0F => Ok((b'A' + v - 10) as char),
-        _ => Err(Error::new(
-            ErrorKind::InvalidData,
-            format!("nibble out of range: {:#04x}", v),
-        )),
+        _ => Err(FrameParseError::InvalidChar((b'0' + v) as char)),
     }
 }
 
 /// ASCII16進文字 → ニブル値(u8)
-fn char_to_nibble(c: char) -> Result<u8, Error> {
+fn char_to_nibble(c: char) -> Result<u8, FrameParseError> {
     match c {
         '0'..='9' => Ok(c as u8 - b'0'),
         'A'..='F' => Ok(c as u8 - b'A' + 10),
         'a'..='f' => Ok(c as u8 - b'a' + 10),
-        _ => Err(Error::new(
-            ErrorKind::InvalidData,
-            format!("Invalid hex char: '{}'", c),
-        )),
+        _ => Err(FrameParseError::InvalidChar(c)),
     }
 }
 
 // バイナリフレーム → DigimaticFrame
 // 変換と検証は nibble_maker と validator_bitsに任せて結果だけ受け取る
 impl TryFrom<&[u8]> for DigimaticFrame {
-    type Error = std::io::Error;
+    type Error = FrameParseError;
 
     fn try_from(nibble: &[u8]) -> Result<Self, Self::Error> {
         validator_bits(nibble)
@@ -119,24 +108,24 @@ impl TryFrom<&[u8]> for DigimaticFrame {
 
 /// 文字列フレーム → DigimaticFrame
 impl TryFrom<&str> for DigimaticFrame {
-    type Error = std::io::Error;
+    type Error = FrameParseError;
 
     fn try_from(rx_frame: &str) -> Result<Self, Self::Error> {
         let frame = rx_frame.trim();
 
         // 長さとASCII チェック入れてあからさまにおかしいのははじく
         if !frame.is_ascii() {
-            return Err(Error::new(ErrorKind::InvalidData, "non-ascii"));
+            return Err(FrameParseError::NonAscii);
         }
 
         if frame.len() != FRAME_LENGTH {
-            return Err(Error::new(ErrorKind::InvalidData, "length mismatch"));
+            return Err(FrameParseError::InvalidBitLength(frame.len()));
         }
 
         let nibbles: Vec<u8> = frame
             .chars()
             .map(char_to_nibble)
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<Vec<_>, FrameParseError>>()?;
 
         // ★ここが本質
         validator_bits(&nibbles)
@@ -145,7 +134,7 @@ impl TryFrom<&str> for DigimaticFrame {
 
 //  Digimatic -> measurement
 impl TryFrom<DigimaticFrame> for Measurement {
-    type Error = std::io::Error;
+    type Error = FrameParseError;
 
     fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
         // ニブル値を数字文字に変換して文字列にする
@@ -153,7 +142,7 @@ impl TryFrom<DigimaticFrame> for Measurement {
             .data
             .iter()
             .map(|&v| nibble_to_char(v))
-            .collect::<Result<String, _>>()?;
+            .collect::<Result<String, FrameParseError>>()?;
 
         Ok(Measurement {
             raw_val,
