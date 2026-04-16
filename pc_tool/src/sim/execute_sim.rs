@@ -44,13 +44,8 @@ pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
                 if data.is_empty() {
                     continue;
                 }
-                // 受信記録記録用準備
-                let rx_log = RxDataLog {
-                    timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
-                    raw_len: data.len(),
-                    raw_data: format!("{:?}", data),
-                    error_log: None,
-                };
+                // 受信記録記録構造体にデータ渡す
+                let rx_log = RxDataLog::new(&data); // これだけで timestamp, raw_len, raw_data が入る
                 rx_wtr.serialize(rx_log)?;
                 rx_wtr.flush()?;
 
@@ -58,11 +53,8 @@ pub fn run_simmulation_loop() -> Result<(), Box<dyn std::error::Error>> {
                 match DigimaticFrame::try_from(data.as_str()).and_then(Measurement::try_from) {
                     Ok(measurement) => {
                         let val_f64 = measurement.to_f64();
-                        // データ保存用構造体準備
-                        let m_log = MeasurementLog {
-                            timestamp: Local::now().format("%H:%M:%S%.3f").to_string(),
-                            val: val_f64,
-                        };
+                        // データ保存用構造体へデータ渡す
+                        let m_log = MeasurementLog::new(val_f64);
                         m_wtr.serialize(m_log)?; // 測定データ記録
                         m_wtr.flush()?;
                         println!("{} {:?} : ", measurement.raw_val, measurement.unit);
