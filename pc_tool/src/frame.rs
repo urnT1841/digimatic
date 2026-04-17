@@ -51,7 +51,7 @@ impl TryFrom<u8> for Sign {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Unit {
     Mm = 0x00,
-    _Inch = 0x01,
+    Inch = 0x01,
 }
 
 impl TryFrom<u8> for Unit {
@@ -60,7 +60,7 @@ impl TryFrom<u8> for Unit {
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
             0x00 => Ok(Unit::Mm),
-            0x01 => Ok(Unit::_Inch),
+            0x01 => Ok(Unit::Inch),
             _ => Err(FrameParseError::InvalidUnit),
         }
     }
