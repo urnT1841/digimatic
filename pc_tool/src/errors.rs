@@ -44,7 +44,6 @@ pub enum FrameParseError {
     #[error("invalid char: {0}")]
     InvalidChar(char),
 
-
     #[error("nibble out of range: {0:#04x}")]
     NibbleOutOfRange(u8),
 

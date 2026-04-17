@@ -5,15 +5,13 @@ use crate::errors::FrameParseError;
 use crate::frame::*;
 use std::convert::TryFrom;
 
-
-// 物理層から北信号フレームをnibble_makerに渡すための仲介関数
-fn parse_bits(bits: &[u8], mode: BitMode) -> Result<DigimaticFrame, FrameParseError> {
-    let nibbles = nibble_maker(bits, mode)?;
-    validator_bits(&nibbles)
+// 物理層から来た信号フレームをnibble_makerに渡すための仲介関数
+pub fn parse_bits(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
+    nibble_maker(bits, mode)
 }
 
-/// 受け取ったBit列をnibleに変換
-/// ここで生成するNibleは msb にして以降はLSB/MSBは意識しないようにする
+/// 受け取ったBit列をnibbleに変換
+/// ここで生成するNibbleは msb にして以降はLSB/MSBは意識しないようにする
 fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
         return Err(FrameParseError::InvalidBitLength(bits.len()));
@@ -60,7 +58,7 @@ pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError>
     Ok(DigimaticFrame {
         header: header_raw.try_into().unwrap(), // 固定長チェック済みならOk
         sign: Sign::try_from(sign_raw)?,
-        data: data_raw.try_into().unwrap(),   // 固定長チェック済みならOk
+        data: data_raw.try_into().unwrap(), // 固定長チェック済みならOk
         point_pos: PointPosition::try_from(point_raw)?,
         unit: Unit::try_from(unit_raw)?,
     })

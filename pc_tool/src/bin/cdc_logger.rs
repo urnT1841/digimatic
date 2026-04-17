@@ -49,7 +49,7 @@ fn run_logging(
     rx_receiver: &mut CdcReceiver, // ポートを内包したレシーバーを渡す
     rx_wtr: &mut csv::Writer<std::fs::File>,
 ) -> StopCode {
-    // Result ではなく直接 StopCode を返すと main がスッキリします
+    // Result ではなく直接 StopCode を返すと main がすっきり
     loop {
         match rx_receiver.read_str_measurement() {
             Ok(raw) => {
@@ -58,7 +58,7 @@ fn run_logging(
                     return StopCode::Normal; // 物理ボタンによる停止
                 }
 
-                if let Err(e) = RxDataLog::new(&raw).save_flush(rx_wtr) {
+                if let Err(e) = RxDataLog::new_str(&raw).save_flush(rx_wtr) {
                     eprintln!("Failed to save data: {} ", e);
                 }
                 println!("Logged: {}", raw);

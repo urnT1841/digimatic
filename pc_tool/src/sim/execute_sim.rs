@@ -55,7 +55,7 @@ fn handle_received_data(
     tx: &Option<Sender<f64>>,
 ) -> Result<(), DigimaticError> {
     // 生ログの準備 (時刻はこの瞬間に固定)
-    let mut rx_log = RxDataLog::new(data);
+    let mut rx_log = RxDataLog::new_str(data);
 
     // 計測データ → フレーム生成 (TryFrom chain)
     match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {

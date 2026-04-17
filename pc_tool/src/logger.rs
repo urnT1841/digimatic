@@ -20,11 +20,20 @@ pub struct RxDataLog {
 
 impl RxDataLog {
     // コンストラクタ
-    pub fn new(raw: &str) -> Self {
+    pub fn new_str(raw: &str) -> Self {
         Self {
             timestamp: Local::now().to_rfc3339().to_string(),
             raw_len: raw.len(),
             raw_data: raw.to_string(),
+            error_log: None,
+        }
+    }
+
+    pub fn new_bin(raw: &[u8]) -> Self {
+        Self {
+            timestamp: Local::now().to_rfc3339().to_string(),
+            raw_len: raw.len(),
+            raw_data: hex::encode(raw),
             error_log: None,
         }
     }

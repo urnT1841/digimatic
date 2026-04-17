@@ -93,7 +93,7 @@ fn gui_run(is_sim: bool) -> eframe::Result {
                     let result = if is_sim {
                         let receiver = Box::new(crate::communicator::SimReceiver::new());
                         // sim実行
-                        sim::execute_sim::run_simulation_core(receiver,None,None,Some(tx_clone))
+                        sim::execute_sim::run_simulation_core(receiver, None, None, Some(tx_clone))
                     } else {
                         // 実機
                         execute_communicate::run_actual_loop(tx_clone)

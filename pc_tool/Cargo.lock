@@ -754,6 +754,7 @@ dependencies = [
  "chrono",
  "csv",
  "eframe",
+ "hex",
  "rand",
  "serde",
  "serialport",

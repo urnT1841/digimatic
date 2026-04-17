@@ -12,6 +12,13 @@ use crate::communicator::CdcReceiver;
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::scanner::find_pico_port;
+use crate::parser;
+
+#[derive (Clone,Copy)]
+enum FrameFormat {
+    Str,
+    Bin,
+}
 
 ///
 /// pico 実機を探して接続，USB-CDCで待ち受けデータ受信
@@ -19,6 +26,7 @@ use crate::scanner::find_pico_port;
 pub fn run_actual_loop(
     tx: std::sync::mpsc::Sender<f64>, // guiへデータ送るため
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let frame_mode:FrameFormat = FrameFormat::Bin;
     let mut pico_waiting = 0;
     //pico待ち受けループ
     loop {
@@ -63,11 +71,11 @@ pub fn run_actual_loop(
         let mut m_wtr = create_log_writer("measurement.csv")?;
 
         // 受信と処理
-        if let Err(e) = receiver(&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = receiver(frame_mode,&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if CdcReceiver::is_fatal_error(&e) {
                 break Ok(()); // エラーで致命なら終了
             }
-            // 地名出なければ続ける (pico捜索から)
+            // 致命エラーが出なければ続ける (pico捜索から)
             continue;
         }
     }
@@ -93,10 +101,25 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
     Ok(port)
 }
 
-///
-/// data recievr & pcocesser
-///
+/// data receiver & dispath
 fn receiver(
+    frame_mode: FrameFormat,
+    rx_receiver: &mut CdcReceiver,
+    tx: &std::sync::mpsc::Sender<f64>,
+    rx_wtr: &mut csv::Writer<std::fs::File>,
+    m_wtr: &mut csv::Writer<std::fs::File>,
+) -> Result<(), std::io::Error> {
+        match frame_mode {
+            FrameFormat::Str =>
+                process_string_frame(rx_receiver, tx, rx_wtr, m_wtr),
+            FrameFormat::Bin =>
+                process_binary_frame(rx_receiver, tx, rx_wtr, m_wtr),
+        }
+}
+//
+/// data pcocesser
+///
+fn process_string_frame(
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
@@ -106,7 +129,7 @@ fn receiver(
         match rx_receiver.read_str_measurement() {
             Ok(data) => {
                 // 受信記録を生成してCSVに保存
-                if let Err(e) = RxDataLog::new(&data).save_flush(rx_wtr) {
+                if let Err(e) = RxDataLog::new_str(&data).save_flush(rx_wtr) {
                     eprintln!("Failed to save raw data: {}", e);
                 }
 
@@ -125,7 +148,7 @@ fn receiver(
                         }
                     }
                     Err(e) => eprintln!("Frame パースエラー: {} | 原因: {}", data, e),
-                }
+                }            
             }
 
             // タイムアウトは無視
@@ -137,6 +160,53 @@ fn receiver(
                     return Err(e);
                 }
                 continue; // 致命的でなければループを続行
+            }
+        }
+    }
+}
+
+fn process_binary_frame(
+    rx_receiver: &mut CdcReceiver,
+    tx: &std::sync::mpsc::Sender<f64>,
+    rx_wtr: &mut csv::Writer<std::fs::File>,
+    _m_wtr: &mut csv::Writer<std::fs::File>,
+) -> Result<(), std::io::Error> {
+    // とりあえずコンパイル通すために入れる。
+    // あとで取り除く
+    let bit_mode = crate::frame::BitMode::Lsb;
+
+    loop {
+        match rx_receiver.read_bin_measurement() {
+            Ok(data) => {
+                // 保存用ログ（実装済みの new_bin を使用）
+                if let Err(e) = RxDataLog::new_bin(&data).save_flush(rx_wtr) {
+                    eprintln!("Failed to save raw data: {}", e);
+                }
+
+                // 52bit -> 13ニブル
+                // parse_bits は Result を返すので ? で抜けるか match で受ける
+                match parser::parse_bits(&data,bit_mode) {
+                    Ok(nibbles) => {
+                        //  検証 & 構造体化: &nibbles[..] でスライスとして渡す
+                        match DigimaticFrame::try_from(&nibbles[..]) {
+                            Ok(frame) => {
+                                if let Ok(measurement) = Measurement::try_from(frame) {
+                                    let val_f64 = measurement.to_f64();
+                                    let _ = tx.send(val_f64);
+                                    // バイナリなので data.trim() ではなく 変換後の nibbles を表示
+                                    println!("[Bin Rx] {:?} -> {:.2} mm", nibbles, val_f64);
+                                }
+                            }
+                            Err(e) => eprintln!("Frame パースエラー(Bin): {}", e),
+                        }
+                    }
+                    Err(e) => eprintln!("ニブル変換エラー: {}", e),
+                }
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            Err(e) => {
+                if CdcReceiver::is_fatal_error(&e) { return Err(e); }
+                continue;
             }
         }
     }

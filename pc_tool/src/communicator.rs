@@ -56,7 +56,7 @@ impl CdcReceiver {
                 "Pico disconnected",
             )),
             Ok(n) => {
-                if n > 32 {
+                if n > 64 {
                     return Err(Error::new(ErrorKind::InvalidData, "Frame too long"));
                 }
                 // trim_ascii_end を使って末尾を綺麗にする

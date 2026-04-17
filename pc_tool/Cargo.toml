@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 chrono = "0.4.43"
 csv = "1.4.0"
 eframe = "0.33.3"
+hex = "0.4.3"
 rand = "0.9.2"
 serde = { version = "1.0.228", features = ["derive"] }
 serialport = "4.8.1"
