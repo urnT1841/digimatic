@@ -1,12 +1,11 @@
-//!
-//! ;
-
+//! main.rs
+//! 
 use digimatic::switcher;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    // 引数解析
-    let mode = digimatic::switcher::parse_args(&args).unwrap_or_else(|e| {
+    let mut args= std::env::args();
+    // 引数解析はswitcher側に委譲する
+    let mode = switcher::parse_args(args).unwrap_or_else(|e| {
         eprintln!("引数エラー: {}", e);
         std::process::exit(1);
     });

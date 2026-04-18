@@ -12,10 +12,13 @@ pub enum CommError {
 
     #[error("device protocol error: {0}")]
     Protocol(String),
+
+    #[error("Communication channel closed")]
+    ChannelClosed,
 }
 
 /// parser / validation layer
-#[derive(thiserror::Error, Debug, Serialize, Clone)]
+#[derive(Error, Debug, Serialize, Clone)]
 pub enum FrameParseError {
     #[error("invalid bit length: expected {expected}, found {found}")]
     BitLength { expected: usize, found: usize },
@@ -51,6 +54,27 @@ pub enum FrameParseError {
     NonAscii,
 }
 
+#[derive(Error, Debug, Clone)]
+pub enum ArgumentError {
+    // 無効な引数の場合 簡易ヘルプも表示
+    #[error("'{0}' は無効な引数です。\n\
+                    使用法:\n\
+                    (無引数) : GUI起動\n\
+                    s(im)    : CLIシミュレーション\n\
+                    a(ctual) : CLI実機\n\
+                    g(ui) -s : GUIシミュレーション")]
+    InvalidArgs(String),
+
+    // 引数が多すぎる場合
+    #[error("Too many arguments provided: {0}")]
+    TooManyArgs(String),
+
+    // 引数が足りない場合
+    #[error("Missing argument: {0}")]
+    MissingArgs(String),
+}
+
+
 /// system layer
 #[derive(Error, Debug)]
 #[error("system error {code}: {message}")]
@@ -70,4 +94,9 @@ pub enum DigimaticError {
 
     #[error(transparent)]
     System(#[from] SystemError),
+
+    // 引数や設定に関するエラー
+    #[error(transparent)]
+    Argument(#[from] ArgumentError),
+
 }
