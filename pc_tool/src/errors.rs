@@ -99,4 +99,7 @@ pub enum DigimaticError {
     #[error(transparent)]
     Argument(#[from] ArgumentError),
 
+    #[error("GUI error")]
+    Gui(#[from] eframe::Error),
+
 }

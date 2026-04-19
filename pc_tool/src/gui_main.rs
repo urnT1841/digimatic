@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::{execute_communicate, sim};
+use crate::{errors::DigimaticError, execute_communicate, sim};
 
 struct DisplayApp {
     measurement_data: f64,
@@ -73,8 +73,9 @@ impl eframe::App for DisplayApp {
 }
 
 // switcher から呼ばれる公開エントリポイント
-pub fn launch_display(is_sim: bool) -> Result<(), String> {
-    gui_run(is_sim).map_err(|e| e.to_string())
+pub fn launch_display(is_sim: bool) -> Result<(), DigimaticError> {
+    gui_run(is_sim)?;
+    Ok(())
 }
 
 fn gui_run(is_sim: bool) -> eframe::Result {
