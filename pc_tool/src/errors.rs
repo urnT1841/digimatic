@@ -16,8 +16,11 @@ pub enum CommError {
     #[error("device protocol error: {0}")]
     Protocol(String),
 
-    #[error("Communication channel closed")]
-    ChannelClosed,
+    #[error("connection closed")]
+    ConnectionClosed,
+
+    #[error("connection Timeout")]
+    Timeout,
 }
 
 /// parser / validation layer
