@@ -40,7 +40,8 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
     }
 }
 
-pub fn parse_args(mut args: impl Iterator<Item = String>) -> Result<AppMode, DigimaticError> {
+pub fn parse_args() -> Result<AppMode, DigimaticError> {
+    let mut args = std::env::args();
     // 一つ目(実行プログラムパス)は読み飛ばす
     args.next();
     // 第1引数を取り出す
