@@ -7,10 +7,10 @@
 //!
 
 use serialport::SerialPort;
-use std::io::Error;
 use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
+use crate::errors::CommError;
 
 #[derive(Debug)]
 pub struct PortPair {
@@ -21,7 +21,7 @@ pub struct PortPair {
     pub _socat: Child,
 }
 
-pub fn port_prepare() -> Result<PortPair, Error> {
+pub fn port_prepare() -> Result<PortPair, CommError> {
     let pid = std::process::id();
     let tx_path = format!("/tmp/ptty_s_{}", pid);
     let rx_path = format!("/tmp/ptty_d_{}", pid);
@@ -44,13 +44,11 @@ pub fn port_prepare() -> Result<PortPair, Error> {
     // tx,rx のそれぞれのポートを開く
     let tx = serialport::new(&tx_path, 9600)
         .timeout(Duration::from_millis(100))
-        .open()
-        .map_err(|e| Error::new(std::io::ErrorKind::Other, e))?;
+        .open()?;
 
     let rx = serialport::new(&rx_path, 9600)
         .timeout(Duration::from_millis(100))
-        .open()
-        .map_err(|e| Error::new(std::io::ErrorKind::Other, e))?;
+        .open()?;
 
     Ok(PortPair {
         tx_path,

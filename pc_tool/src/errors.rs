@@ -10,6 +10,9 @@ pub enum CommError {
     #[error("IO error")]
     Io(#[from] io::Error),
 
+    #[error("serial port error")]
+    Serial(#[from] serialport::Error),
+
     #[error("device protocol error: {0}")]
     Protocol(String),
 
