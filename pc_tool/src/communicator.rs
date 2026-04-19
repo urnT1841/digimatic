@@ -9,6 +9,7 @@ use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::time::Duration;
 
 use crate::errors::{self, CommError, DigimaticError, FrameParseError};
+use crate::frame::FRAME_LENGTH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
@@ -53,7 +54,7 @@ impl CdcReceiver {
             Ok(0) => Err(CommError::ConnectionClosed)?,
             Ok(n) => {
                 if n > 64 {
-                    return Err(FrameParseError::InvalidBitLength(n))?;
+                    return Err(FrameParseError::InvalidBitLength { expected: (FRAME_LENGTH), found: (n) })?;
                 }
                 // trim_ascii_end を使って末尾を綺麗にする
                 Ok(rx_stream.trim_ascii_end().to_vec())

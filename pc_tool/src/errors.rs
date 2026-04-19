@@ -27,10 +27,7 @@ pub enum CommError {
 #[derive(Error, Debug, Serialize, Clone)]
 pub enum FrameParseError {
     #[error("invalid bit length: expected {expected}, found {found}")]
-    BitLength { expected: usize, found: usize },
-
-    #[error("invalid nibble length: {0}")]
-    InvalidBitLength(usize),
+    InvalidBitLength { expected: usize, found: usize },
 
     #[error("Incomplete nibble slice: {0}")]
     IncompleteNibble(usize),
