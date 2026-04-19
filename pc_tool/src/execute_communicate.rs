@@ -9,7 +9,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
-use crate::errors::{DigimaticError, CommError};
+use crate::errors::{DigimaticError, CommError,SystemError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::scanner::find_pico_port;

@@ -8,6 +8,8 @@ use serialport::SerialPort;
 use std::io::{BufRead, BufReader, Error, ErrorKind};
 use std::time::Duration;
 
+use crate::errors::{self, CommError, DigimaticError, FrameParseError};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
     Normal,      // 正常
@@ -33,36 +35,30 @@ impl CdcReceiver {
     }
 
     /// 文字列で送信されたデータを1行読み込む
-    pub fn read_str_measurement(&mut self) -> Result<String, Error> {
+    pub fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
         let mut line = String::new();
         // read_lineは改行が来るまで待機
         match self.rx_reader.read_line(&mut line) {
-            Ok(0) => Err(Error::new(
-                ErrorKind::ConnectionAborted,
-                "Pico disconnected",
-            )),
+            Ok(0) => Err(CommError::ConnectionClosed)?,
             Ok(_) => Ok(line.trim().to_string()),
-            Err(e) => Err(e),
+            Err(e) => Err(CommError::Io(e).into()),
         }
     }
 
     // バイナリで送信されたデータ受信 \n終端前提
-    pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, Error> {
+    pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
         let mut rx_stream = Vec::new();
 
         match self.rx_reader.read_until(b'\n', &mut rx_stream) {
-            Ok(0) => Err(Error::new(
-                ErrorKind::ConnectionAborted,
-                "Pico disconnected",
-            )),
+            Ok(0) => Err(CommError::ConnectionClosed)?,
             Ok(n) => {
                 if n > 64 {
-                    return Err(Error::new(ErrorKind::InvalidData, "Frame too long"));
+                    return Err(FrameParseError::InvalidBitLength(n))?;
                 }
                 // trim_ascii_end を使って末尾を綺麗にする
                 Ok(rx_stream.trim_ascii_end().to_vec())
             }
-            Err(e) => Err(e),
+            Err(e) => Err(CommError::Io(e).into()),
         }
     }
 
@@ -83,7 +79,8 @@ pub trait MeasurementRead {
 // CdcReceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
     fn read_str_measurement(&mut self) -> std::io::Result<String> {
-        self.read_str_measurement() // 既存のメソッドを呼び出すだけ
+        self.read_str_measurement()
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "digimatic error"))
     }
 }
 
@@ -102,10 +99,13 @@ impl SimReceiver {
         self.buffer.push_back(data);
     }
 
-    pub fn read_str_measurement(&mut self) -> Result<String, Error> {
+    pub fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
         match self.buffer.pop_front() {
             Some(line) => Ok(line),
-            None => Err(Error::new(ErrorKind::TimedOut, "no data")),
+            None => {
+                eprintln!("timeout: no data");
+                Err(CommError::Timeout.into())
+            }
         }
     }
 }
@@ -113,7 +113,8 @@ impl SimReceiver {
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
     fn read_str_measurement(&mut self) -> std::io::Result<String> {
-        self.read_str_measurement() // 既存のメソッドを呼び出すだけ
+        self.read_str_measurement()
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "sim error"))
     }
 }
 
