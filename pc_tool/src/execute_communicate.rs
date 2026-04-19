@@ -9,6 +9,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
+use crate::errors::{DigimaticError, CommError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::scanner::find_pico_port;
@@ -25,7 +26,7 @@ enum FrameFormat {
 ///
 pub fn run_actual_loop(
     tx: std::sync::mpsc::Sender<f64>, // guiへデータ送るため
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(),DigimaticError> {
     let frame_mode:FrameFormat = FrameFormat::Bin;
     let mut pico_waiting = 0;
     //pico待ち受けループ
@@ -84,10 +85,14 @@ pub fn run_actual_loop(
 ///
 /// ライター生成
 ///
-fn create_log_writer(path: &str) -> Result<Writer<File>, Box<dyn std::error::Error>> {
-    let file = OpenOptions::new().create(true).append(true).open(path)?;
-
-    Ok(WriterBuilder::new().has_headers(false).from_writer(file))
+pub fn create_log_writer(path: &str) -> Result<Writer<File>, CommError> {
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    Ok(WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(file))
 }
 
 ///

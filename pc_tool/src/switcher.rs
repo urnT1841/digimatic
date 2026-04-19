@@ -3,7 +3,7 @@
 use crate::communicator::SimReceiver;
 use crate::sim::execute_sim;
 use crate::{execute_communicate, gui_main};
-use crate::errors::{DigimaticError, ArgumentError};
+use crate::errors::{DigimaticError, ArgumentError, CommError};
 
 #[derive(Debug)]
 pub enum AppMode {
@@ -15,16 +15,16 @@ pub enum AppMode {
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
     match mode {
         AppMode::Sim => {
-            // ここでライターを準備する（旧 create_log_writer の中身をここに持ってくるイメージ）
-            let rx_wtr = create_writer("rx_log.csv").map_err(|e| e.to_string())?;
-            let m_wtr = create_writer("measurement.csv").map_err(|e| e.to_string())?;
+            // ここでライターを準備
+            let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
+            let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
 
             // 一本化したコア関数を呼ぶ（ライターは Some で、Sender は None）
             execute_sim::run_simulation_core(
                 Box::new(SimReceiver::new()), // 受信機
-                Some(rx_wtr),                 // 生ログ保存あり
-                Some(m_wtr),                  // 測定保存あり
-                None,                         // GUI送信なし
+                Some(rx_wtr),                   // 生ログ保存あり
+                Some(m_wtr),                    // 測定保存あり
+                None,                              // GUI送信なし
             )?;
             Ok(())
         }
@@ -62,15 +62,4 @@ pub fn parse_args(mut args: impl Iterator<Item = String>) -> Result<AppMode, Dig
         }
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(first_arg))),
     }
-}
-
-// 共通ヘルパー（OpenOptionsなどの定型処理をまとめるだけ）
-fn create_writer(path: &str) -> std::io::Result<csv::Writer<std::fs::File>> {
-    let file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
-    Ok(csv::WriterBuilder::new()
-        .has_headers(false)
-        .from_writer(file))
 }
