@@ -3,7 +3,7 @@
 use crate::communicator::SimReceiver;
 use crate::sim::execute_sim;
 use crate::{execute_communicate, gui_main};
-use crate::errors::{DigimaticError, ArgumentError, CommError};
+use crate::errors::{DigimaticError, ArgumentError};
 
 #[derive(Debug)]
 pub enum AppMode {
