@@ -37,7 +37,7 @@ pub fn run_simulation_core(
         if let Err(e) = handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx) {
             // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
             match e {
-                DigimaticError::Comm(CommError::ChannelClosed) => break,
+                DigimaticError::Comm(CommError::ConnectionClosed) => break,
                 _ => {
                     eprintln!("Processing error: {}", e)
                 }

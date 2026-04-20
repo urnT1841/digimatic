@@ -9,7 +9,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
-use crate::errors::{CommError, DigimaticError, SystemError};
+use crate::errors::{CommError, DigimaticError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::parser;
@@ -74,9 +74,14 @@ pub fn run_actual_loop(
         // 受信と処理
         if let Err(e) = receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if CdcReceiver::is_fatal_error(&e) {
-                break Ok(()); // エラーで致命なら終了
+                return Err(e); // エラーで致命なら終了
             }
             // 致命エラーが出なければ続ける (pico捜索から)
+            if let DigimaticError::Comm(crate::errors::CommError::Timeout) = e {
+                // ここは何もしない
+            } else {
+                eprintln!("エラーが出ましたが，そのまま続行します: {}", e);
+            }
             continue;
         }
     }
@@ -108,7 +113,7 @@ fn receiver(
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     m_wtr: &mut csv::Writer<std::fs::File>,
-) -> Result<(), std::io::Error> {
+) -> Result<(), DigimaticError> {
     match frame_mode {
         FrameFormat::Str => process_string_frame(rx_receiver, tx, rx_wtr, m_wtr),
         FrameFormat::Bin => process_binary_frame(rx_receiver, tx, rx_wtr, m_wtr),
@@ -122,7 +127,7 @@ fn process_string_frame(
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     _m_wtr: &mut csv::Writer<std::fs::File>,
-) -> Result<(), std::io::Error> {
+) -> Result<(), DigimaticError> {
     loop {
         match rx_receiver.read_str_measurement() {
             Ok(data) => {
@@ -150,14 +155,18 @@ fn process_string_frame(
             }
 
             // タイムアウトは無視
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
-
-            // 致命的エラーなら外側に伝える
+            Err(DigimaticError::Comm(CommError::Timeout)) => {
+                //何もしない
+            }
             Err(e) => {
                 if CdcReceiver::is_fatal_error(&e) {
+                    // 致命的エラーなら上に持ち上げる
+                    eprintln!(
+                        "[Waring] エラーが発生しましたが，続行します。 エラー：{}",
+                        e
+                    );
                     return Err(e);
                 }
-                continue; // 致命的でなければループを続行
             }
         }
     }
@@ -168,7 +177,7 @@ fn process_binary_frame(
     tx: &std::sync::mpsc::Sender<f64>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     _m_wtr: &mut csv::Writer<std::fs::File>,
-) -> Result<(), std::io::Error> {
+) -> Result<(), DigimaticError> {
     // とりあえずコンパイル通すために入れる。
     // あとで取り除く
     let bit_mode = crate::frame::BitMode::Lsb;
@@ -201,9 +210,15 @@ fn process_binary_frame(
                     Err(e) => eprintln!("ニブル変換エラー: {}", e),
                 }
             }
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
+            Err(DigimaticError::Comm(CommError::Timeout)) => {
+                // 何もしない
+            }
             Err(e) => {
                 if CdcReceiver::is_fatal_error(&e) {
+                    eprintln!(
+                        "[Waring] エラーが発生しましたが，続行します。 エラー：{}",
+                        e
+                    );
                     return Err(e);
                 }
                 continue;

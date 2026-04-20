@@ -5,10 +5,10 @@
 
 //use serde::Serialize;
 use serialport::SerialPort;
-use std::io::{BufRead, BufReader, Error, ErrorKind};
+use std::io::{BufRead, BufReader};
 use std::time::Duration;
 
-use crate::errors::{self, CommError, DigimaticError, FrameParseError};
+use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::FRAME_LENGTH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -66,11 +66,22 @@ impl CdcReceiver {
         }
     }
 
-    pub fn is_fatal_error(err: &std::io::Error) -> bool {
-        match err.kind() {
-            // 継続可能なエラーだけ明示
-            ErrorKind::TimedOut | ErrorKind::WouldBlock => false,
-            // 未知のエラーも含めて全部致命的
+    pub fn is_fatal_error(err: &DigimaticError) -> bool {
+        match err {
+            // エラーのうち，通信エラー判定は致命判定
+            DigimaticError::Comm(e) => match e {
+                CommError::Io(_) => true,            // OSレベルのIOエラーは致命的
+                CommError::Serial(_) => true,        // シリアルポート自体のエラーも致命的
+                CommError::ConnectionClosed => true, // 切断は継続不可
+                CommError::Timeout => false,         // タイムアウトは単なる待ち状態なので非致命的
+                _ => true,
+            },
+            // パースエラー FrameParseError
+            // データが変なだけなのでそのまま回す
+            DigimaticError::Parse(_) => false,
+
+            // システムエラーとか引数エラー
+            // こういうエラーは致命として扱う
             _ => true,
         }
     }
@@ -80,7 +91,7 @@ pub trait MeasurementRead {
     fn read_str_measurement(&mut self) -> std::io::Result<String>;
 }
 
-// CdcReceiver にトレイトを適用
+// CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
     fn read_str_measurement(&mut self) -> std::io::Result<String> {
         self.read_str_measurement()
