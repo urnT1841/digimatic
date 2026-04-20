@@ -26,11 +26,19 @@ pub fn run_simulation_core(
         let data = match receiver.read_str_measurement() {
             Ok(d) if d.is_empty() => continue,
             Ok(d) => d,
-            Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
-                thread::sleep(Duration::from_millis(10)); // CPU負荷軽減
+            // タイムアウト（非致命的）は無視して次へ
+            Err(DigimaticError::Comm(CommError::Timeout)) => {
+                thread::sleep(Duration::from_millis(10));
                 continue;
             }
-            Err(e) => return Err(DigimaticError::from(CommError::from(e))),
+            // timeout以外
+            Err(e) => {
+                if crate::communicator::CdcReceiver::is_fatal_error(&e) {
+                    return Err(e); // 致命的なら上位へ報告
+                }
+                eprintln!("Non-fatal sim error: {}", e);
+                continue;
+            }
         };
 
         // データのパイプライン処理

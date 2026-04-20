@@ -115,18 +115,15 @@ impl TryFrom<&str> for DigimaticFrame {
     fn try_from(rx_frame: &str) -> Result<Self, Self::Error> {
         let frame = rx_frame.trim();
 
-        // 長さとASCII チェック入れてあからさまにおかしいのははじく
-        if !frame.is_ascii() {
-            return Err(FrameParseError::NonAscii);
-        }
-
+        // 長さはフレームに関することなのでチェックする
         if frame.len() != FRAME_LENGTH {
             return Err(FrameParseError::InvalidBitLength {
                 expected: (FRAME_LENGTH),
                 found: (frame.len()),
             });
         }
-
+        // 元はAsciiチェックをべつにじっししていたが，ここで判断することではない
+        // nibble変換の char_to_nibbleで実施
         let nibbles: Vec<u8> = frame
             .chars()
             .map(char_to_nibble)
