@@ -11,12 +11,14 @@
 
 use serialport::{SerialPortType, UsbPortInfo, available_ports};
 
+use crate::errors::{CommError, DigimaticError};
+
 // 下記は lsusb で確認したうえで修正
 const PICO_VID: u16 = 0x2E8A; // Raspberry PI
 const PICO_PID: u16 = 0x0005; // MicroPython
 
-pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
-    let ports_list = available_ports()?;
+pub fn find_pico_port() -> Result<String, DigimaticError> {
+    let ports_list = available_ports().map_err(CommError::from)?;
 
     for p in ports_list {
         match &p.port_type {
@@ -28,7 +30,8 @@ pub fn find_pico_port() -> Result<String, Box<dyn std::error::Error>> {
             _ => continue,
         }
     }
-    Err("Pico port not found".into())
+    eprint!("Pico port not found");
+    Err(DigimaticError::Comm(CommError::ConnectionClosed))
 }
 
 #[cfg(test)]
