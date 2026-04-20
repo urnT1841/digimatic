@@ -54,7 +54,10 @@ impl CdcReceiver {
             Ok(0) => Err(CommError::ConnectionClosed)?,
             Ok(n) => {
                 if n > 64 {
-                    return Err(FrameParseError::InvalidBitLength { expected: (FRAME_LENGTH), found: (n) })?;
+                    return Err(FrameParseError::InvalidBitLength {
+                        expected: (FRAME_LENGTH),
+                        found: (n),
+                    })?;
                 }
                 // trim_ascii_end を使って末尾を綺麗にする
                 Ok(rx_stream.trim_ascii_end().to_vec())

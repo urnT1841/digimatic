@@ -9,13 +9,13 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
-use crate::errors::{DigimaticError, CommError,SystemError};
+use crate::errors::{CommError, DigimaticError, SystemError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
-use crate::scanner::find_pico_port;
 use crate::parser;
+use crate::scanner::find_pico_port;
 
-#[derive (Clone,Copy)]
+#[derive(Clone, Copy)]
 enum FrameFormat {
     Str,
     Bin,
@@ -26,8 +26,8 @@ enum FrameFormat {
 ///
 pub fn run_actual_loop(
     tx: std::sync::mpsc::Sender<f64>, // guiへデータ送るため
-) -> Result<(),DigimaticError> {
-    let frame_mode:FrameFormat = FrameFormat::Bin;
+) -> Result<(), DigimaticError> {
+    let frame_mode: FrameFormat = FrameFormat::Bin;
     let mut pico_waiting = 0;
     //pico待ち受けループ
     loop {
@@ -72,7 +72,7 @@ pub fn run_actual_loop(
         let mut m_wtr = create_log_writer("measurement.csv")?;
 
         // 受信と処理
-        if let Err(e) = receiver(frame_mode,&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if CdcReceiver::is_fatal_error(&e) {
                 break Ok(()); // エラーで致命なら終了
             }
@@ -86,13 +86,8 @@ pub fn run_actual_loop(
 /// ライター生成
 ///
 pub fn create_log_writer(path: &str) -> Result<Writer<File>, CommError> {
-    let file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
-    Ok(WriterBuilder::new()
-        .has_headers(false)
-        .from_writer(file))
+    let file = OpenOptions::new().create(true).append(true).open(path)?;
+    Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }
 
 ///
@@ -114,12 +109,10 @@ fn receiver(
     rx_wtr: &mut csv::Writer<std::fs::File>,
     m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), std::io::Error> {
-        match frame_mode {
-            FrameFormat::Str =>
-                process_string_frame(rx_receiver, tx, rx_wtr, m_wtr),
-            FrameFormat::Bin =>
-                process_binary_frame(rx_receiver, tx, rx_wtr, m_wtr),
-        }
+    match frame_mode {
+        FrameFormat::Str => process_string_frame(rx_receiver, tx, rx_wtr, m_wtr),
+        FrameFormat::Bin => process_binary_frame(rx_receiver, tx, rx_wtr, m_wtr),
+    }
 }
 //
 /// data pcocesser
@@ -153,7 +146,7 @@ fn process_string_frame(
                         }
                     }
                     Err(e) => eprintln!("Frame パースエラー: {} | 原因: {}", data, e),
-                }            
+                }
             }
 
             // タイムアウトは無視
@@ -190,7 +183,7 @@ fn process_binary_frame(
 
                 // 52bit -> 13ニブル
                 // parse_bits は Result を返すので ? で抜けるか match で受ける
-                match parser::parse_bits(&data,bit_mode) {
+                match parser::parse_bits(&data, bit_mode) {
                     Ok(nibbles) => {
                         //  検証 & 構造体化: &nibbles[..] でスライスとして渡す
                         match DigimaticFrame::try_from(&nibbles[..]) {
@@ -210,7 +203,9 @@ fn process_binary_frame(
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => (),
             Err(e) => {
-                if CdcReceiver::is_fatal_error(&e) { return Err(e); }
+                if CdcReceiver::is_fatal_error(&e) {
+                    return Err(e);
+                }
                 continue;
             }
         }

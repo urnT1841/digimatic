@@ -1,9 +1,9 @@
 //! 引数から起動モードを選択する
 
 use crate::communicator::SimReceiver;
+use crate::errors::{ArgumentError, DigimaticError};
 use crate::sim::execute_sim;
 use crate::{execute_communicate, gui_main};
-use crate::errors::{DigimaticError, ArgumentError};
 
 #[derive(Debug)]
 pub enum AppMode {
@@ -22,9 +22,9 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
             // 一本化したコア関数を呼ぶ（ライターは Some で、Sender は None）
             execute_sim::run_simulation_core(
                 Box::new(SimReceiver::new()), // 受信機
-                Some(rx_wtr),                   // 生ログ保存あり
-                Some(m_wtr),                    // 測定保存あり
-                None,                              // GUI送信なし
+                Some(rx_wtr),                 // 生ログ保存あり
+                Some(m_wtr),                  // 測定保存あり
+                None,                         // GUI送信なし
             )?;
             Ok(())
         }
@@ -46,7 +46,7 @@ pub fn parse_args() -> Result<AppMode, DigimaticError> {
     args.next();
     // 第1引数を取り出す
     let first_arg = match args.next() {
-        None => return Ok(AppMode::Gui(false)),  // 引数ないときはGUIモード
+        None => return Ok(AppMode::Gui(false)), // 引数ないときはGUIモード
         Some(s) => s.trim_start_matches('-').to_lowercase(),
     };
 
@@ -61,6 +61,8 @@ pub fn parse_args() -> Result<AppMode, DigimaticError> {
             let is_sim = args.next().map(|s| s.contains('s')).unwrap_or(false);
             Ok(AppMode::Gui(is_sim))
         }
-        _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(first_arg))),
+        _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
+            first_arg,
+        ))),
     }
 }

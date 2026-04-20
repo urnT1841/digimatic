@@ -8,10 +8,9 @@ use std::convert::TryFrom;
 use std::sync::mpsc::Sender;
 use std::{thread, time::Duration};
 
+use crate::errors::{CommError, DigimaticError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::{MeasurementLog, RxDataLog};
-use crate::errors::{DigimaticError, CommError};
-
 
 // Simのループコア
 pub fn run_simulation_core(
@@ -38,17 +37,16 @@ pub fn run_simulation_core(
         if let Err(e) = handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx) {
             // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
             match e {
-                DigimaticError::Comm(CommError::ChannelClosed) => {
-                    break
-                },
+                DigimaticError::Comm(CommError::ChannelClosed) => break,
                 _ => {
-                    eprintln!("Processing error: {}", e)}
+                    eprintln!("Processing error: {}", e)
                 }
             }
-        thread::sleep(Duration::from_millis(WAIT_TIME_MS));
         }
-        Ok(())
+        thread::sleep(Duration::from_millis(WAIT_TIME_MS));
     }
+    Ok(())
+}
 
 /// 受信データに対する「保存・パース・送信」の共通ハンドラ
 fn handle_received_data(

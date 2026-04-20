@@ -6,11 +6,11 @@
 //!  返値：PortPair構造体
 //!
 
+use crate::errors::CommError;
 use serialport::SerialPort;
 use std::process::{Child, Command};
 use std::thread;
 use std::time::Duration;
-use crate::errors::CommError;
 
 #[derive(Debug)]
 pub struct PortPair {

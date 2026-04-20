@@ -16,7 +16,10 @@ pub fn parse_bits(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Fram
 /// そのあとのエラーチェックは行わない (上層のNibble解釈で実施)
 fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
-        return Err(FrameParseError::InvalidBitLength { expected: (FRAME_LENGTH * FRAME_NIBBLES), found: (bits.len()) });
+        return Err(FrameParseError::InvalidBitLength {
+            expected: (FRAME_LENGTH * FRAME_NIBBLES),
+            found: (bits.len()),
+        });
     }
 
     // msb/lsb 変換準備
@@ -118,7 +121,10 @@ impl TryFrom<&str> for DigimaticFrame {
         }
 
         if frame.len() != FRAME_LENGTH {
-            return Err(FrameParseError::InvalidBitLength { expected: (FRAME_LENGTH), found: (frame.len()) });
+            return Err(FrameParseError::InvalidBitLength {
+                expected: (FRAME_LENGTH),
+                found: (frame.len()),
+            });
         }
 
         let nibbles: Vec<u8> = frame

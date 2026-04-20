@@ -1,5 +1,5 @@
 //! main.rs
-//! 
+//!
 //! entry point -> switcher
 
 use digimatic::switcher;

@@ -60,12 +60,14 @@ pub enum FrameParseError {
 #[derive(Error, Debug, Clone)]
 pub enum ArgumentError {
     // 無効な引数の場合 簡易ヘルプも表示
-    #[error("'{0}' は無効な引数です。\n\
+    #[error(
+        "'{0}' は無効な引数です。\n\
                     使用法:\n\
                     (無引数) : GUI起動\n\
                     s(im)    : CLIシミュレーション\n\
                     a(ctual) : CLI実機\n\
-                    g(ui) -s : GUIシミュレーション")]
+                    g(ui) -s : GUIシミュレーション"
+    )]
     InvalidArgs(String),
 
     // 引数が多すぎる場合
@@ -76,7 +78,6 @@ pub enum ArgumentError {
     #[error("Missing argument: {0}")]
     MissingArgs(String),
 }
-
 
 /// system layer
 #[derive(Error, Debug)]
@@ -104,5 +105,4 @@ pub enum DigimaticError {
 
     #[error("GUI error")]
     Gui(#[from] eframe::Error),
-
 }
