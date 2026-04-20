@@ -12,23 +12,24 @@ pub fn parse_bits(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], Fram
 
 /// 受け取ったBit列をnibbleに変換
 /// ここで生成するNibbleは msb にして以降はLSB/MSBは意識しないようにする
+/// この関数は bit列 -> nibble で中身の解釈はしない。なので長さチェックは実施するが
+/// そのあとのエラーチェックは行わない (上層のNibble解釈で実施)
 fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
         return Err(FrameParseError::InvalidBitLength { expected: (FRAME_LENGTH * FRAME_NIBBLES), found: (bits.len()) });
     }
 
+    // msb/lsb 変換準備
+    const LSB_MASK: u8 = 0b0001;
+    let shifts = match mode {
+        BitMode::Lsb => [3, 2, 1, 0],
+        BitMode::Msb => [0, 1, 2, 3],
+    };
+
     let mut out = [0u8; FRAME_LENGTH];
 
     for (i, chunk) in bits.chunks_exact(4).enumerate() {
-        let chunk: &[u8; 4] = chunk
-            .try_into()
-            .map_err(|_| FrameParseError::IncompleteNibble(chunk.len()))?;
-        const LSB_MASK: u8 = 0b0001;
-
-        let shifts = match mode {
-            BitMode::Lsb => [3, 2, 1, 0],
-            BitMode::Msb => [0, 1, 2, 3],
-        };
+        let chunk: &[u8; 4] = chunk.try_into().unwrap();
 
         out[i] = chunk
             .iter()
