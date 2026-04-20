@@ -9,6 +9,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
+use crate::communicator::MeasurementRead;
 use crate::errors::{CommError, DigimaticError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
@@ -73,7 +74,7 @@ pub fn run_actual_loop(
 
         // 受信と処理
         if let Err(e) = receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
-            if CdcReceiver::is_fatal_error(&e) {
+            if e.is_fatal() {
                 return Err(e); // エラーで致命なら終了
             }
             // 致命エラーが出なければ続ける (pico捜索から)
@@ -159,7 +160,7 @@ fn process_string_frame(
                 //何もしない
             }
             Err(e) => {
-                if CdcReceiver::is_fatal_error(&e) {
+                if e.is_fatal() {
                     // 致命的エラーなら上に持ち上げる
                     eprintln!(
                         "[Waring] エラーが発生しましたが，続行します。 エラー：{}",
@@ -214,7 +215,7 @@ fn process_binary_frame(
                 // 何もしない
             }
             Err(e) => {
-                if CdcReceiver::is_fatal_error(&e) {
+                if e.is_fatal() {
                     eprintln!(
                         "[Waring] エラーが発生しましたが，続行します。 エラー：{}",
                         e

@@ -106,3 +106,17 @@ pub enum DigimaticError {
     #[error("GUI error")]
     Gui(#[from] eframe::Error),
 }
+
+impl DigimaticError {
+    pub fn is_fatal(&self) -> bool {
+        match self {
+            DigimaticError::Comm(e) => match e {
+                CommError::Timeout => false,
+                CommError::Io(_) | CommError::Serial(_) | CommError::ConnectionClosed => true,
+                _ => true,
+            },
+            DigimaticError::Parse(_) => false,
+            _ => true,
+        }
+    }
+}

@@ -33,7 +33,7 @@ pub fn run_simulation_core(
             }
             // timeout以外
             Err(e) => {
-                if crate::communicator::CdcReceiver::is_fatal_error(&e) {
+                if e.is_fatal() {
                     return Err(e); // 致命的なら上位へ報告
                 }
                 eprintln!("Non-fatal sim error: {}", e);

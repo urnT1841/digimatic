@@ -35,17 +35,6 @@ impl CdcReceiver {
         }
     }
 
-    /// 文字列で送信されたデータを1行読み込む
-    pub fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
-        let mut line = String::new();
-        // read_lineは改行が来るまで待機
-        match self.rx_reader.read_line(&mut line) {
-            Ok(0) => Err(CommError::ConnectionClosed)?,
-            Ok(_) => Ok(line.trim().to_string()),
-            Err(e) => Err(CommError::Io(e).into()),
-        }
-    }
-
     // バイナリで送信されたデータ受信 \n終端前提
     pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
         let mut rx_stream = Vec::new();
@@ -65,37 +54,22 @@ impl CdcReceiver {
             Err(e) => Err(CommError::Io(e).into()),
         }
     }
-
-    pub fn is_fatal_error(err: &DigimaticError) -> bool {
-        match err {
-            // エラーのうち，通信エラー判定は致命判定
-            DigimaticError::Comm(e) => match e {
-                CommError::Io(_) => true,            // OSレベルのIOエラーは致命的
-                CommError::Serial(_) => true,        // シリアルポート自体のエラーも致命的
-                CommError::ConnectionClosed => true, // 切断は継続不可
-                CommError::Timeout => false,         // タイムアウトは単なる待ち状態なので非致命的
-                _ => true,
-            },
-            // パースエラー FrameParseError
-            // データが変なだけなのでそのまま回す
-            DigimaticError::Parse(_) => false,
-
-            // システムエラーとか引数エラー
-            // こういうエラーは致命として扱う
-            _ => true,
-        }
-    }
 }
 
 pub trait MeasurementRead {
-    fn read_str_measurement(&mut self) -> std::io::Result<String>;
+    fn read_str_measurement(&mut self) -> Result<String, DigimaticError>;
 }
 
 // CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
-    fn read_str_measurement(&mut self) -> std::io::Result<String> {
-        self.read_str_measurement()
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "digimatic error"))
+    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
+        let mut line = String::new();
+
+        match self.rx_reader.read_line(&mut line) {
+            Ok(0) => Err(CommError::ConnectionClosed)?,
+            Ok(_) => Ok(line.trim().to_string()),
+            Err(e) => Err(CommError::Io(e).into()),
+        }
     }
 }
 
@@ -113,8 +87,11 @@ impl SimReceiver {
     pub fn push(&mut self, data: String) {
         self.buffer.push_back(data);
     }
+}
 
-    pub fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
+// SimReceiver にトレイトを適用
+impl MeasurementRead for SimReceiver {
+    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
         match self.buffer.pop_front() {
             Some(line) => Ok(line),
             None => {
@@ -122,14 +99,6 @@ impl SimReceiver {
                 Err(CommError::Timeout.into())
             }
         }
-    }
-}
-
-// SimReceiver にトレイトを適用
-impl MeasurementRead for SimReceiver {
-    fn read_str_measurement(&mut self) -> std::io::Result<String> {
-        self.read_str_measurement()
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "sim error"))
     }
 }
 

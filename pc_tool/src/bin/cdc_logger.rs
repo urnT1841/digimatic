@@ -6,7 +6,7 @@ use csv::{Writer, WriterBuilder};
 use std::fs::{File, OpenOptions};
 
 use digimatic::communicator::{
-    BAUD_RATE, CdcReceiver, StopCode, open_cdc_port, wait_until_connection,
+    BAUD_RATE, CdcReceiver, MeasurementRead, StopCode, open_cdc_port, wait_until_connection,
 };
 use digimatic::logger::RxDataLog;
 
@@ -64,7 +64,7 @@ fn run_logging(
                 println!("Logged: {}", raw);
             }
             // 切断などの致命的なエラー
-            Err(e) if CdcReceiver::is_fatal_error(&e) => {
+            Err(e) if e.is_fatal() => {
                 return StopCode::HWIssue; // 再接続が必要なエラー
             }
             // タイムアウトなどの一時的なエラーは無視して継続
