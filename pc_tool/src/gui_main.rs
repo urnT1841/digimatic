@@ -1,22 +1,32 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::{errors::DigimaticError, execute_communicate, sim};
+use crate::{errors::DigimaticError, frame::Measurement};
 
 struct DisplayApp {
-    measurement_data: f64,
-    receiver: Receiver<f64>, // 受信機を格納
+    measurement_data: Measurement,
+    receiver: Receiver<Measurement>, // 受信機を格納
+}
+
+// mm表示用変換
+impl Measurement {
+    fn display_mm(&self) -> String {
+        format!("{:.2} mm", self.to_f64())
+    }
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
 
 impl DisplayApp {
     // 初期化実施関数
-    pub fn new(cc: &eframe::CreationContext<'_>, rx: std::sync::mpsc::Receiver<f64>) -> Self {
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        rx: std::sync::mpsc::Receiver<Measurement>,
+    ) -> Self {
         Self::setup_custom_fonts(&cc.egui_ctx);
 
         Self {
-            measurement_data: 0.0,
+            measurement_data: Measurement::dummy(), // 将来にraw_dataの扱いが変わる見込みなので dummy() で
             receiver: rx,
         }
     }
@@ -58,11 +68,8 @@ impl eframe::App for DisplayApp {
             ui.vertical_centered(|ui| {
                 ui.label(egui::RichText::new("計測中").size(20.0));
 
-                // 本番ノギスデータは最終状態で送られてくるのでそのまま
-                let val_mm = self.measurement_data;
-
                 ui.label(
-                    egui::RichText::new(format!("{:.2} mm", val_mm))
+                    egui::RichText::new(self.measurement_data.display_mm())
                         .size(120.0)
                         .strong(),
                 );
@@ -73,41 +80,17 @@ impl eframe::App for DisplayApp {
 }
 
 // switcher から呼ばれる公開エントリポイント
-pub fn launch_display(is_sim: bool) -> Result<(), DigimaticError> {
-    gui_run(is_sim)?;
+pub fn launch_display(rx: Receiver<Measurement>) -> Result<(), DigimaticError> {
+    gui_run(rx)?;
     Ok(())
 }
 
-fn gui_run(is_sim: bool) -> eframe::Result {
+fn gui_run(rx: std::sync::mpsc::Receiver<Measurement>) -> eframe::Result {
     let options = eframe::NativeOptions::default();
 
     eframe::run_native(
         "Digimatic Data Display v0.33",
         options,
-        Box::new(move |cc| {
-            let (tx, rx) = std::sync::mpsc::channel::<f64>();
-
-            std::thread::spawn(move || {
-                // 内側ループの再起動用外側ループ
-                loop {
-                    let tx_clone = tx.clone();
-                    let result = if is_sim {
-                        let receiver = Box::new(crate::communicator::SimReceiver::new());
-                        // sim実行
-                        sim::execute_sim::run_simulation_core(receiver, None, None, Some(tx_clone))
-                    } else {
-                        // 実機
-                        execute_communicate::run_actual_loop(tx_clone)
-                    };
-                    //result受け (内側のエラーで戻ってきた場合)
-                    if let Err(e) = result {
-                        eprintln!("Thread loop error, restarting ...: {}", e);
-                        //ちょい待ち
-                        std::thread::sleep(std::time::Duration::from_secs(1))
-                    }
-                }
-            });
-            Ok(Box::new(DisplayApp::new(cc, rx)))
-        }),
+        Box::new(move |cc| Ok(Box::new(DisplayApp::new(cc, rx)))),
     )
 }

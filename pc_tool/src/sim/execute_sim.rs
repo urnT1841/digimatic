@@ -11,6 +11,7 @@ use std::{thread, time::Duration};
 use crate::errors::{CommError, DigimaticError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::{MeasurementLog, RxDataLog};
+use crate::sim::{frame_array_builder, generator};
 
 // Simのループコア
 pub fn run_simulation_core(
@@ -103,4 +104,23 @@ fn handle_received_data(
         }
     }
     Ok(())
+}
+
+/// データ生成スレッド
+/// channel使ってreceiverに流し込む
+pub fn start_geerator_thread(tx: Sender<String>) {
+    std::thread::spawn(move || {
+        loop {
+            let val = generator::generator();
+            let frame = frame_array_builder::build_frame_array(val);
+
+            let hex: String = frame.iter().map(|b| format!("{:X}", b)).collect();
+
+            if tx.send(hex).is_err() {
+                break;
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(700));
+        }
+    });
 }

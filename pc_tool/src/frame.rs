@@ -111,6 +111,18 @@ pub struct Measurement {
     pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
 }
 
+// 初期化 (コンストラクタ)
+impl Measurement {
+    pub fn dummy() -> Self {
+        Self {
+            raw_val: "999999".to_string(),
+            sign: Sign::Plus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        }
+    }
+}
+
 /// Measurement構造体の値をf64に変換
 /// 失敗した場合はNaNを返す
 impl Measurement {

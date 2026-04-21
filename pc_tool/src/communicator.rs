@@ -6,6 +6,7 @@
 //use serde::Serialize;
 use serialport::SerialPort;
 use std::io::{BufRead, BufReader};
+use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
@@ -73,32 +74,21 @@ impl MeasurementRead for CdcReceiver {
     }
 }
 
+/// Simの時は スレッドで投げられたrxを見に行く
 pub struct SimReceiver {
-    buffer: std::collections::VecDeque<String>,
+    rx: Receiver<String>,
 }
 
 impl SimReceiver {
-    pub fn new() -> Self {
-        Self {
-            buffer: std::collections::VecDeque::new(),
-        }
-    }
-
-    pub fn push(&mut self, data: String) {
-        self.buffer.push_back(data);
+    pub fn new(rx: Receiver<String>) -> Self {
+        Self { rx }
     }
 }
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
     fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
-        match self.buffer.pop_front() {
-            Some(line) => Ok(line),
-            None => {
-                eprintln!("timeout: no data");
-                Err(CommError::Timeout.into())
-            }
-        }
+        self.rx.recv().map_err(|_| CommError::Timeout.into())
     }
 }
 
