@@ -116,11 +116,13 @@ pub fn start_geerator_thread(tx: Sender<String>) {
 
             let hex: String = frame.iter().map(|b| format!("{:X}", b)).collect();
 
+            //送信データ
+            println!("raw = {:.3}, Frame = {:?}, Hex = {}", val, frame, hex);
             if tx.send(hex).is_err() {
                 break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(700));
+            std::thread::sleep(std::time::Duration::from_millis(0));
         }
     });
 }
