@@ -57,4 +57,25 @@ mod tests {
 
         println!("Test Frame: {:?}", frame);
     }
+
+    #[test]
+    fn build_frame_digits() {
+        let val = 123.45;
+        let frame = build_frame_array(val);
+
+        // 12345 → [1,2,3,4,5]
+        assert_eq!(frame[D6], 1);
+        assert_eq!(frame[D7], 2);
+        assert_eq!(frame[D8], 3);
+        assert_eq!(frame[D9], 4);
+        assert_eq!(frame[D10], 5);
+    }
+
+    #[test]
+    fn build_frame_negative() {
+        let val = -12.34;
+        let frame = build_frame_array(val);
+
+        assert_eq!(frame[D5], Sign::Minus as u8);
+    }
 }
