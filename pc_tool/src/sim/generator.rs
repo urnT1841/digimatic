@@ -15,3 +15,19 @@ pub fn generator() -> f64 {
     let sim_data = raw as f64 / 100.0;
     sim_data
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generator_test() {
+        for _ in 0..1000 {
+            let v = generator();
+
+            assert!(v > 0.01);
+            assert!(v <= 150.0);
+            assert!(v.is_finite());
+        }
+    }
+}

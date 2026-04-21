@@ -37,9 +37,10 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
             execute_communicate::run_actual_loop(tx).map_err(DigimaticError::from)
         }
         AppMode::Gui => {
-            let rx = 
-            // GUIを起動し、その中で Sim か Actual かを判断する
-            gui_main::launch_display(rx).map_err(DigimaticError::from)
+            unimplemented!("GUIはいじりすぎて壊れたので再調整")
+            // let rx =
+            // // GUIを起動し、その中で Sim か Actual かを判断する
+            // gui_main::launch_display(rx).map_err(DigimaticError::from)
         }
     }
 }
