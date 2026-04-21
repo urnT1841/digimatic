@@ -122,7 +122,7 @@ pub fn start_geerator_thread(tx: Sender<String>) {
                 break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(0));
+            std::thread::sleep(std::time::Duration::from_millis(700));
         }
     });
 }
