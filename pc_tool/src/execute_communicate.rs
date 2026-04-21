@@ -26,7 +26,7 @@ enum FrameFormat {
 /// pico 実機を探して接続，USB-CDCで待ち受けデータ受信
 ///
 pub fn run_actual_loop(
-    tx: std::sync::mpsc::Sender<f64>, // guiへデータ送るため
+    tx: std::sync::mpsc::Sender<Measurement>, // guiへデータ送るため
 ) -> Result<(), DigimaticError> {
     let frame_mode: FrameFormat = FrameFormat::Bin;
     let mut pico_waiting = 0;
@@ -111,7 +111,7 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 fn receiver(
     frame_mode: FrameFormat,
     rx_receiver: &mut CdcReceiver,
-    tx: &std::sync::mpsc::Sender<f64>,
+    tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), DigimaticError> {
@@ -125,7 +125,7 @@ fn receiver(
 ///
 fn process_string_frame(
     rx_receiver: &mut CdcReceiver,
-    tx: &std::sync::mpsc::Sender<f64>,
+    tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     _m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), DigimaticError> {
@@ -175,7 +175,7 @@ fn process_string_frame(
 
 fn process_binary_frame(
     rx_receiver: &mut CdcReceiver,
-    tx: &std::sync::mpsc::Sender<f64>,
+    tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut csv::Writer<std::fs::File>,
     _m_wtr: &mut csv::Writer<std::fs::File>,
 ) -> Result<(), DigimaticError> {
@@ -199,10 +199,9 @@ fn process_binary_frame(
                         match DigimaticFrame::try_from(&nibbles[..]) {
                             Ok(frame) => {
                                 if let Ok(measurement) = Measurement::try_from(frame) {
-                                    let val_f64 = measurement.to_f64();
-                                    let _ = tx.send(val_f64);
+                                    let _ = tx.send(measurement);
                                     // バイナリなので data.trim() ではなく 変換後の nibbles を表示
-                                    println!("[Bin Rx] {:?} -> {:.2} mm", nibbles, val_f64);
+                                    println!("[Bin Rx] {:?} -> {:.2} mm", nibbles, measurement);
                                 }
                             }
                             Err(e) => eprintln!("Frame パースエラー(Bin): {}", e),

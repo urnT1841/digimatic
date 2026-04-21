@@ -1,10 +1,11 @@
 //! 引数から起動モードを選択する
+//! switcher.rs
 
 use crate::communicator::SimReceiver;
 use crate::errors::{ArgumentError, DigimaticError, FrameParseError};
+use crate::execute_communicate;
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::sim::execute_sim::{run_simulation_core, start_geerator_thread};
-use crate::{execute_communicate, gui_main};
 
 #[derive(Debug)]
 pub enum AppMode {
@@ -14,33 +15,35 @@ pub enum AppMode {
 }
 
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    // ライターを準備
+    // CSVロガー（Sim/Actual共通で使う）
     let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
     let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
 
-    let (_, rx) = start_sim_source();
-
     match mode {
         AppMode::Sim => {
-            // 一本化したコア関数を呼ぶ（ライターは Some で、Sender は None）
+            let (tx, rx) = std::sync::mpsc::channel::<String>();
+
+            // generator → HEX String送信
+            start_geerator_thread(tx);
+
             run_simulation_core(
-                Box::new(SimReceiver::new(rx)), // 受信機
-                Some(rx_wtr),                   // 生ログ保存あり
-                Some(m_wtr),                    // 測定保存あり
-                None,                           // GUI送信なし
+                Box::new(SimReceiver::new(rx)), // String受信
+                Some(rx_wtr),
+                Some(m_wtr),
+                None, // GUIなし（CLI）
             )?;
+
             Ok(())
         }
         AppMode::Actual => {
-            // CLIのみの本番起動
-            let (tx, _) = std::sync::mpsc::channel();
-            execute_communicate::run_actual_loop(tx).map_err(DigimaticError::from)
+            let (tx_gui, rx_gui) = std::sync::mpsc::channel::<Measurement>();
+
+            execute_communicate::run_actual_loop(tx_gui).map_err(DigimaticError::from)
         }
+
         AppMode::Gui => {
-            unimplemented!("GUIはいじりすぎて壊れたので再調整")
-            // let rx =
-            // // GUIを起動し、その中で Sim か Actual かを判断する
-            // gui_main::launch_display(rx).map_err(DigimaticError::from)
+            unimplemented!("GUIは後で再統合")
+            // gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
         }
     }
 }

@@ -113,16 +113,38 @@ pub fn start_geerator_thread(tx: Sender<String>) {
         loop {
             let val = generator::generator();
             let frame = frame_array_builder::build_frame_array(val);
-
             let hex: String = frame.iter().map(|b| format!("{:X}", b)).collect();
 
-            //送信データ
-            println!("raw = {:.3}, Frame = {:?}, Hex = {}", val, frame, hex);
+            // デコード前データ
+            println!("[SIM] gen = {:.3} -> frame={:?}, HEX={:?}", val, frame, hex);
+
             if tx.send(hex).is_err() {
                 break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(0));
+            std::thread::sleep(std::time::Duration::from_millis(700));
+        }
+    });
+}
+
+// guiにデータを流し込むパイプ
+pub fn start_sim_pipeline(tx_gui: Sender<Measurement>) {
+    let (tx_raw, rx_raw) = std::sync::mpsc::channel::<String>();
+
+    start_geerator_thread(tx_raw);
+
+    std::thread::spawn(move || {
+        for hex in rx_raw {
+            match crate::frame::DigimaticFrame::try_from(hex.as_str())
+                .and_then(crate::frame::Measurement::try_from)
+            {
+                Ok(m) => {
+                    let _ = tx_gui.send(m);
+                }
+                Err(e) => {
+                    eprintln!("[SIM PIPE] parse error: {e}");
+                }
+            }
         }
     });
 }
