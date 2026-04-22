@@ -48,23 +48,6 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
     }
 }
 
-// sim用ヘルパー
-fn start_sim_source() -> (
-    std::sync::mpsc::Sender<String>,
-    std::sync::mpsc::Receiver<String>,
-) {
-    let (tx, rx) = std::sync::mpsc::channel();
-    start_geerator_thread(tx.clone());
-    (tx, rx)
-}
-
-// ヘルパー2
-pub fn parse_to_measurement(raw: &str) -> Result<Measurement, FrameParseError> {
-    let frame = DigimaticFrame::try_from(raw)?;
-    let measurement = Measurement::try_from(frame)?;
-    Ok(measurement)
-}
-
 pub fn parse_args() -> Result<AppMode, DigimaticError> {
     let mut args = std::env::args();
     // 一つ目(実行プログラムパス)は読み飛ばす
