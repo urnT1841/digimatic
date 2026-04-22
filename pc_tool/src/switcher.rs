@@ -36,9 +36,9 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
             Ok(())
         }
         AppMode::Actual => {
-            let (tx_gui, rx_gui) = std::sync::mpsc::channel::<Measurement>();
+            let (tx, rx) = std::sync::mpsc::channel::<Measurement>();
 
-            execute_communicate::run_actual_loop(tx_gui).map_err(DigimaticError::from)
+            execute_communicate::run_actual_loop(tx).map_err(DigimaticError::from)
         }
 
         AppMode::Gui => {
