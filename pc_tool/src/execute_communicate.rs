@@ -6,6 +6,7 @@ use csv::{Writer, WriterBuilder};
 use serialport::SerialPort;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Write};
+use std::sync::mpsc::Sender;
 use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
@@ -142,11 +143,13 @@ fn process_string_frame(
                     Ok(frame) => {
                         match Measurement::try_from(frame) {
                             Ok(measurement) => {
-                                let val_f64 = measurement.to_f64();
-
-                                // GUIへ送信とターミナルへの表示
-                                let _ = tx.send(val_f64);
-                                println!("[Rx] {} -> [dec] {:.2} mm", data.trim(), val_f64);
+                                // ターミナルへの表示とGUIへ送信
+                                println!(
+                                    "[Rx] {} -> [dec] {:.2} mm",
+                                    data.trim(),
+                                    measurement.to_f64()
+                                );
+                                let _ = tx.send(measurement);
                             }
                             Err(e) => eprintln!("Measurement 変換エラー: {}", e),
                         }
@@ -199,9 +202,13 @@ fn process_binary_frame(
                         match DigimaticFrame::try_from(&nibbles[..]) {
                             Ok(frame) => {
                                 if let Ok(measurement) = Measurement::try_from(frame) {
-                                    let _ = tx.send(measurement);
                                     // バイナリなので data.trim() ではなく 変換後の nibbles を表示
-                                    println!("[Bin Rx] {:?} -> {:.2} mm", nibbles, measurement);
+                                    println!(
+                                        "[Bin Rx] {:?} -> {:.2} mm",
+                                        nibbles,
+                                        measurement.to_f64()
+                                    );
+                                    let _ = tx.send(measurement);
                                 }
                             }
                             Err(e) => eprintln!("Frame パースエラー(Bin): {}", e),
@@ -225,4 +232,53 @@ fn process_binary_frame(
             }
         }
     }
+}
+
+/// 受信データに対する「保存・パース・送信」の共通ハンドラ
+/// execute_sim から移設  → データハンドリングの要として昇格
+pub fn handle_received_data(
+    data: &str,
+    rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    tx: &Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
+    // 生ログの準備 (時刻はこの瞬間に固定)
+    let mut rx_log = RxDataLog::new_str(data);
+
+    // 計測データ → フレーム生成 (TryFrom chain)
+    match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {
+        Ok(m) => {
+            //  生データの保存 (Writerがあれば)
+            if let Some(w) = rx_wtr {
+                rx_log.save_flush(w)?;
+            }
+
+            // 測定値の保存 (Writerがあれば)
+            if let Some(w) = m_wtr {
+                MeasurementLog::new(m.to_f64()).save_flush(w)?;
+            }
+
+            // GUIへの送信 (Senderがあれば)
+            if let Some(t) = tx {
+                t.send(m.clone()).map_err(|_| {
+                    DigimaticError::System(crate::errors::SystemError {
+                        code: 99,
+                        message: "Channel closed".into(),
+                    })
+                })?;
+            }
+            // cli表示(共通化で邪魔になったら調整)
+            println!("[SIM] Decoded: {:.3} mm", m.to_f64());
+        }
+        Err(e) => {
+            // パース失敗時：エラーを載せて生ログだけは残す
+            if let Some(w) = rx_wtr {
+                rx_log.error_log = Some(e.clone());
+                rx_log.save_flush(w)?;
+            }
+            eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
+            return Err(DigimaticError::from(e));
+        }
+    }
+    Ok(())
 }

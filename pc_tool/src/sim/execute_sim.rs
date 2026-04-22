@@ -9,8 +9,8 @@ use std::sync::mpsc::Sender;
 use std::{thread, time::Duration};
 
 use crate::errors::{CommError, DigimaticError};
-use crate::frame::{DigimaticFrame, Measurement};
-use crate::logger::{MeasurementLog, RxDataLog};
+use crate::execute_communicate;
+use crate::frame::Measurement;
 use crate::sim::{frame_array_builder, generator};
 
 // Simのループコア
@@ -18,7 +18,7 @@ pub fn run_simulation_core(
     mut receiver: Box<dyn crate::communicator::MeasurementRead>,
     mut rx_wtr: Option<csv::Writer<std::fs::File>>,
     mut m_wtr: Option<csv::Writer<std::fs::File>>,
-    tx: Option<Sender<f64>>,
+    tx: Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
     const WAIT_TIME_MS: u64 = 700;
 
@@ -43,7 +43,9 @@ pub fn run_simulation_core(
         };
 
         // データのパイプライン処理
-        if let Err(e) = handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx) {
+        if let Err(e) =
+            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx)
+        {
             // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
             match e {
                 DigimaticError::Comm(CommError::ConnectionClosed) => break,
@@ -53,55 +55,6 @@ pub fn run_simulation_core(
             }
         }
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));
-    }
-    Ok(())
-}
-
-/// 受信データに対する「保存・パース・送信」の共通ハンドラ
-fn handle_received_data(
-    data: &str,
-    rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
-    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
-    tx: &Option<Sender<f64>>,
-) -> Result<(), DigimaticError> {
-    // 生ログの準備 (時刻はこの瞬間に固定)
-    let mut rx_log = RxDataLog::new_str(data);
-
-    // 計測データ → フレーム生成 (TryFrom chain)
-    match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {
-        Ok(m) => {
-            let val = m.to_f64();
-
-            //  生データの保存 (Writerがあれば)
-            if let Some(w) = rx_wtr {
-                rx_log.save_flush(w)?;
-            }
-
-            // 測定値の保存 (Writerがあれば)
-            if let Some(w) = m_wtr {
-                MeasurementLog::new(val).save_flush(w)?;
-            }
-
-            // GUIへの送信 (Senderがあれば)
-            if let Some(t) = tx {
-                t.send(val).map_err(|_| {
-                    DigimaticError::System(crate::errors::SystemError {
-                        code: 99,
-                        message: "Channel closed".into(),
-                    })
-                })?;
-            }
-
-            println!("[SIM] Decoded: {:.3} mm", val);
-        }
-        Err(e) => {
-            // パース失敗時：エラーを載せて生ログだけは残す
-            if let Some(w) = rx_wtr {
-                rx_log.error_log = Some(e.clone());
-                rx_log.save_flush(w)?;
-            }
-            eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
-        }
     }
     Ok(())
 }
