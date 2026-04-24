@@ -65,7 +65,7 @@ fn validate_nibbles(nibbles: &[u8]) -> Result<(), FrameParseError> {
 
 /// 検証したニブルを組み立てる)
 /// ニブル列は検証済みなのでResultやOptionではなく組み立て結果のみを返す
-fn build_frame(nibbles: &[u8]) -> DigimaticFrame {
+fn frame_from_nibbles(nibbles: &[u8]) -> DigimaticFrame {
     DigimaticFrame {
         header: slice(&nibbles[D1..D5]),
         sign: Sign::try_from(nibbles[D5]).unwrap(),
