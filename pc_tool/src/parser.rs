@@ -42,31 +42,44 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameP
     Ok(out)
 }
 
-/// bits_buffer: 52要素(13ニブル×4bit)のスライス
-/// ここを通ったフレームはデジマチック仕様に沿った正規フレームになる
-pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
-    // スライス範囲で「意味」を切り出す
-    let header_raw = &nibbles[D1..D5]; // D1-D4 (4つ)
-    let sign_raw = nibbles[D5]; // D5 (1つ)
-    let data_raw = &nibbles[D6..D12]; // D6-D11 (6つ)
-    let point_raw = nibbles[D12]; // D12 (1つ)
-    let unit_raw = nibbles[D13]; // D13 (1つ)
+/// 検証と組み立てのラッパー
+/// この関数が返すのは仕様的に正しいDigimaticFrameであることが保証される
+pub fn parse_nibbles(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
+    validate_nibbles(nibbles)?;
+    Ok(build_frame(nibbles))
+}
 
-    // 各パーツを検証
-    // まずはHeader
-    if header_raw != [0x0F; 4] {
+/// ビット列の検証。ヘッダの長さのみ
+/// そのほかのフィールドは try_fromで保証
+fn validate_nibbles(nibbles: &[u8]) -> Result<(), FrameParseError> {
+    if nibbles.len() != FRAME_LENGTH {
+        return Err(FrameParseError::IncompleteNibble(nibbles.len()));
+    }
+
+    if &nibbles[D1..D5] != [0x0F; 4] {
         return Err(FrameParseError::HeaderMismatch);
     }
 
-    // のこり組み立て（各型への変換はそれぞれの TryFrom で実施）
-    Ok(DigimaticFrame {
-        header: header_raw.try_into().unwrap(), // 固定長チェック済みならOk
-        sign: Sign::try_from(sign_raw)?,
-        data: data_raw.try_into().unwrap(), // 固定長チェック済みならOk
-        point_pos: PointPosition::try_from(point_raw)?,
-        unit: Unit::try_from(unit_raw)?,
-    })
+    Ok(())
 }
+
+/// 検証したニブルを組み立てる)
+/// ニブル列は検証済みなのでResultやOptionではなく組み立て結果のみを返す
+fn build_frame(nibbles: &[u8]) -> DigimaticFrame {
+    DigimaticFrame {
+        header: slice(&nibbles[D1..D5]),
+        sign: Sign::try_from(nibbles[D5]).unwrap(),
+        data: slice(&nibbles[D6..D12]),
+        point_pos: PointPosition::try_from(nibbles[D12]).unwrap(),
+        unit: Unit::try_from(nibbles[D13]).unwrap(),
+    }
+}
+
+/// slice用ヘルパー
+fn slice<const N: usize>(s: &[u8]) -> [u8; N] {
+    s.try_into().expect("validated frame invariant broken")
+}
+
 
 /// ニブル列 → 文字列フレーム
 pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
@@ -104,7 +117,7 @@ impl TryFrom<&[u8]> for DigimaticFrame {
     type Error = FrameParseError;
 
     fn try_from(nibble: &[u8]) -> Result<Self, Self::Error> {
-        validator_bits(nibble)
+        parse_nibbles(nibble)
     }
 }
 
@@ -122,7 +135,7 @@ impl TryFrom<&str> for DigimaticFrame {
             .collect::<Result<Vec<_>, FrameParseError>>()?;
 
         // 検証 → 帰って来るのは仕様的に正しいDigimaticFrame
-        validator_bits(&nibbles)
+        parse_nibbles(&nibbles)
     }
 }
 
