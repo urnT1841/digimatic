@@ -58,7 +58,7 @@ fn run_logging(
                     return StopCode::Normal; // 物理ボタンによる停止
                 }
 
-                if let Err(e) = RxDataLog::new_str(&raw).save_flush(rx_wtr) {
+                if let Err(e) = RxDataLog::new_str(&raw).save(rx_wtr) {
                     eprintln!("Failed to save data: {} ", e);
                 }
                 println!("Logged: {}", raw);
