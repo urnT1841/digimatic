@@ -159,12 +159,12 @@ pub fn handle_received_data(
         Ok(m) => {
             //  生データの保存 (Writerがあれば)
             if let Some(w) = rx_wtr {
-                rx_log.save_flush(w)?;
+                rx_log.save(w)?;
             }
 
             // 測定値の保存 (Writerがあれば)
             if let Some(w) = m_wtr {
-                MeasurementLog::new(m.to_f64()).save_flush(w)?;
+                MeasurementLog::new(m.to_f64()).save(w)?;
             }
 
             // GUIへの送信 (Senderがあれば)
@@ -183,7 +183,7 @@ pub fn handle_received_data(
             // パース失敗時：エラーを載せて生ログだけは残す
             if let Some(w) = rx_wtr {
                 rx_log.error_log = Some(e.clone());
-                rx_log.save_flush(w)?;
+                rx_log.save(w)?;
             }
             eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
             return Err(DigimaticError::from(e));
