@@ -42,44 +42,39 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameP
     Ok(out)
 }
 
-/// 検証と組み立てのラッパー
-/// この関数が返すのは仕様的に正しいDigimaticFrameであることが保証される
-pub fn parse_nibbles(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
-    validate_nibbles(nibbles)?;
-    Ok(build_frame(nibbles))
-}
-
-/// ビット列の検証。ヘッダの長さのみ
-/// そのほかのフィールドは try_fromで保証
-fn validate_nibbles(nibbles: &[u8]) -> Result<(), FrameParseError> {
+/// nibbles: 52要素(13ニブル×4bit)のスライス
+/// ここを通ったフレームはデジマチック仕様に沿った正規フレームになる
+pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
+    // 何はともあれ長さチェック
     if nibbles.len() != FRAME_LENGTH {
-        return Err(FrameParseError::IncompleteNibble(nibbles.len()));
+        return Err(FrameParseError::InvalidBitLength {
+            expected: (FRAME_LENGTH),
+            found: (nibbles.len()),
+        });
     }
 
-    if &nibbles[D1..D5] != [0x0F; 4] {
+    // スライス範囲で「意味」を切り出す
+    let header_raw = &nibbles[D1..D5]; // D1-D4 (4つ)
+    let sign_raw = nibbles[D5]; // D5 (1つ)
+    let data_raw = &nibbles[D6..D12]; // D6-D11 (6つ)
+    let point_raw = nibbles[D12]; // D12 (1つ)
+    let unit_raw = nibbles[D13]; // D13 (1つ)
+
+    // 各パーツを検証
+    // まずはHeader
+    if header_raw != [0x0F; 4] {
         return Err(FrameParseError::HeaderMismatch);
     }
 
-    Ok(())
+    // のこり組み立て（各型への変換はそれぞれの TryFrom で実施）
+    Ok(DigimaticFrame {
+        header: header_raw.try_into().unwrap(), // 固定長チェック済みならOk
+        sign: Sign::try_from(sign_raw)?,
+        data: data_raw.try_into().unwrap(), // 固定長チェック済みならOk
+        point_pos: PointPosition::try_from(point_raw)?,
+        unit: Unit::try_from(unit_raw)?,
+    })
 }
-
-/// 検証したニブルを組み立てる)
-/// ニブル列は検証済みなのでResultやOptionではなく組み立て結果のみを返す
-fn frame_from_nibbles(nibbles: &[u8]) -> DigimaticFrame {
-    DigimaticFrame {
-        header: slice(&nibbles[D1..D5]),
-        sign: Sign::try_from(nibbles[D5]).unwrap(),
-        data: slice(&nibbles[D6..D12]),
-        point_pos: PointPosition::try_from(nibbles[D12]).unwrap(),
-        unit: Unit::try_from(nibbles[D13]).unwrap(),
-    }
-}
-
-/// slice用ヘルパー
-fn slice<const N: usize>(s: &[u8]) -> [u8; N] {
-    s.try_into().expect("validated frame invariant broken")
-}
-
 
 /// ニブル列 → 文字列フレーム
 pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
@@ -117,7 +112,7 @@ impl TryFrom<&[u8]> for DigimaticFrame {
     type Error = FrameParseError;
 
     fn try_from(nibble: &[u8]) -> Result<Self, Self::Error> {
-        parse_nibbles(nibble)
+        validator_bits(nibble)
     }
 }
 
@@ -127,15 +122,14 @@ impl TryFrom<&str> for DigimaticFrame {
 
     fn try_from(rx_frame: &str) -> Result<Self, Self::Error> {
         let frame = rx_frame.trim();
-        // 元は長さチェックとAsciiチェックを実施していたが,ここは組み立てだけに集中
+
         // nibble変換の char_to_nibbleで実施
         let nibbles: Vec<u8> = frame
             .chars()
             .map(char_to_nibble)
             .collect::<Result<Vec<_>, FrameParseError>>()?;
 
-        // 検証 → 帰って来るのは仕様的に正しいDigimaticFrame
-        parse_nibbles(&nibbles)
+        validator_bits(&nibbles)
     }
 }
 
@@ -158,4 +152,201 @@ impl TryFrom<DigimaticFrame> for Measurement {
             unit: frame.unit,
         })
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_nibbles_should_return_frame() {
+        let nibbles = [
+            0x0F, 0x0F, 0x0F, 0x0F, // header
+            0x00, // sign
+            0, 1, 2, 3, 4, 5, // data
+            0x02, // point
+            0x00, // unit
+        ];
+
+        let frame = validator_bits(&nibbles).unwrap();
+
+        assert_eq!(frame.header, [0x0F; 4]);
+        assert_eq!(frame.sign, Sign::Plus);
+        assert_eq!(frame.point_pos, PointPosition::Two);
+        assert_eq!(frame.unit, Unit::Mm);
+    }
+
+    #[test]
+    fn except_illigal_length_nibbles() {
+        let nibbles = [
+            0x0F, 0x0F, 0x0F, 0x0F, // header
+            0x00, // sign
+            0, 1, 2, 3, 4, 5, // data
+            0x02, // point
+            0x00, // unit
+            0x10, // extra nibble
+        ];
+   
+        assert!(validator_bits(&nibbles).is_err());
+    }
+
+    // ニブルの各種テスト 正常系と異常系の両方をループで網羅的に
+    #[test]
+    fn test_invalid_values() {
+        let mut nibbles = [
+            0x0F, 0x0F, 0x0F, 0x0F, // header
+            0x00, // sign (D5)
+            0, 1, 2, 3, 4, 5, // data
+            0x02, // point (D12)
+            0x00, // unit (D13)
+        ];
+
+        // D5: Valid values are 0 and 8
+        let valid_d5 = [0x00, 0x08];
+        let invalid_d5 = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+
+        // Check valid D5 values (should pass)
+        for &valid in &valid_d5 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D5] = valid;
+            assert!(validator_bits(&nibbles_clone).is_ok());
+        }
+
+        // Check invalid D5 values (should fail)
+        for &invalid in &invalid_d5 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D5] = invalid;
+            assert!(validator_bits(&nibbles_clone).is_err());
+        }
+
+        // D12: Valid values are 0, 1, 2, 3, 4, 5
+        let valid_d12 = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05];
+        let invalid_d12 = [0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+
+        // Check valid D12 values (should pass)
+        for &valid in &valid_d12 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D12] = valid;
+            assert!(validator_bits(&nibbles_clone).is_ok());
+        }
+
+        // Check invalid D12 values (should fail)
+        for &invalid in &invalid_d12 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D12] = invalid;
+            assert!(validator_bits(&nibbles_clone).is_err());
+        }
+
+        // D13: Valid values are 0 and 1
+        let valid_d13 = [0x00, 0x01];
+        let invalid_d13 = [0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+
+        // Check valid D13 values (should pass)
+        for &valid in &valid_d13 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D13] = valid;
+            assert!(validator_bits(&nibbles_clone).is_ok());
+        }
+
+        // Check invalid D13 values (should fail)
+        for &invalid in &invalid_d13 {
+            let mut nibbles_clone = nibbles.clone();
+            nibbles_clone[D13] = invalid;
+            assert!(validator_bits(&nibbles_clone).is_err());
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_string_to_nibbles_conversion() {
+            // 変換したい文字列
+            let input_str = "FFFF001257720";
+
+            // 文字列からニブルに変換
+            let nibbles: Vec<u8> = input_str
+                .chars()
+                .map(char_to_nibble)
+                .collect::<Result<Vec<_>, FrameParseError>>()
+                .unwrap();
+
+            // 期待されるニブル値
+            let expected_nibbles: Vec<u8> = vec![
+                0xF, 0xF, 0xF, 0xF, // FFFF
+                0x0, 0x0, // 00
+                0x1, 0x2, // 12
+                0x5, 0x7, // 57
+                0x7, 0x2, // 72
+                0x0, // 0
+            ];
+
+            // 結果の確認
+            assert_eq!(nibbles, expected_nibbles);
+        }
+
+        // 追加：ニブルから文字列フレームへの変換テスト
+        #[test]
+        fn test_nibbles_to_string_conversion() {
+            let nibbles: Vec<u8> = vec![
+                0xF, 0xF, 0xF, 0xF, // FFFF
+                0x0, 0x0, // 00
+                0x1, 0x2, // 12
+                0x5, 0x7, // 57
+                0x7, 0x2, // 72
+                0x0, // 0
+            ];
+
+            // ニブル列から文字列へ変換
+            let result = decode_frame(&nibbles).unwrap();
+
+            // 期待される文字列
+            let expected_str = "FFFF001257720".to_string();
+
+            // 結果の確認
+            assert_eq!(result, expected_str);
+        }
+    }
+
+    // 表示用 .to_f64() チェック
+    #[test]
+    fn test_to_f64_valid() {
+        let measurement = Measurement {
+            raw_val: "123456".to_string(),
+            sign: Sign::Plus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        };
+
+        let expected_value = 1234.56; // 小数点位置に合わせた期待値
+        assert_eq!(measurement.to_f64(), expected_value);
+    }
+
+    #[test]
+    fn test_to_f64_invalid() {
+        let measurement = Measurement {
+            raw_val: "invalid".to_string(),
+            sign: Sign::Plus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        };
+
+        // 無効なデータの場合、NANが返されることを確認
+        assert!(measurement.to_f64().is_nan());
+    }
+
+    #[test]
+    fn test_to_f64_negative() {
+        let measurement = Measurement {
+            raw_val: "123456".to_string(),
+            sign: Sign::Minus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        };
+
+        let expected_value = -1234.56; // 符号がマイナスであることを確認
+        assert_eq!(measurement.to_f64(), expected_value);
+    }
+
 }
