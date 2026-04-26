@@ -3,8 +3,8 @@
 //!
 
 use chrono::Local;
-use serde::Serialize;
-use std::fs::File;
+use serde::{Serialize, Deserialize};
+use std::io::Write;
 
 use crate::errors::{DigimaticError, FrameParseError, SystemError};
 
@@ -41,14 +41,14 @@ impl RxDataLog {
     }
 
     /// CSV保存（即flush保証）
-    pub fn save(&self, wtr: &mut csv::Writer<File>) -> Result<(), DigimaticError> {
+    pub fn save<W: Write>(&self, wtr:&mut csv::Writer<W>) -> Result<(), DigimaticError>  {
         write_csv_and_flush(wtr, self)
     }
 }
 
 
 /// 測定データ保存用
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MeasurementLog {
     pub timestamp: String,
     pub val: f64,
@@ -64,14 +64,14 @@ impl MeasurementLog {
     }
 
     /// CSV保存（即flush保証）
-    pub fn save(&self, wtr: &mut csv::Writer<File>) -> Result<(), DigimaticError> {
+    pub fn save<W: Write>(&self, wtr:&mut csv::Writer<W>) -> Result<(), DigimaticError>  {
         write_csv_and_flush(wtr, self)
     }
 }
 
 // IO(CSV書き込み+Flush)を共通化
-fn write_csv_and_flush<T: Serialize>(
-    wtr: &mut csv::Writer<File>,
+fn write_csv_and_flush<T: Serialize, W: Write> (
+    wtr: &mut csv::Writer<W>,
     value: &T,
 ) -> Result<(), DigimaticError> {
     wtr.serialize(value).map_err(|e| SystemError {
@@ -85,4 +85,33 @@ fn write_csv_and_flush<T: Serialize>(
     })?;
 
     Ok(())
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // loggerはIOが絡むので最低限のものだけ
+    #[test]
+    fn test_measurement_log_csv_roundtrip() {
+        let mut buf = Vec::new();
+        {
+            let mut wtr = csv::Writer::from_writer(&mut buf);
+
+            let log = MeasurementLog::new(1.23);
+            log.save(&mut wtr).unwrap();
+        }
+
+        // ここで不変借用ルールに引っかかった
+        // 上の部分をスコープで囲って wtr &mut buf にいなくなってもらう
+        let mut rdr = csv::Reader::from_reader(buf.as_slice());
+
+        let records: Vec<MeasurementLog> = rdr.deserialize()
+            .map(|r| r.unwrap())
+            .collect();
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].val, 1.23);
+    }
 }
