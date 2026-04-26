@@ -130,3 +130,21 @@ pub fn open_cdc_port(
 
     Ok(port)
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sim_receiver() {
+        let (tx, rx) = std::sync::mpsc::channel();
+
+        tx.send("123.45".to_string()).unwrap();
+
+        let mut sim = SimReceiver::new(rx);
+        let result = sim.read_str_measurement().unwrap();
+
+        assert_eq!(result, "123.45");
+    }
+}
