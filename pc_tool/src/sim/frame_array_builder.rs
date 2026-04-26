@@ -64,11 +64,13 @@ mod tests {
         let frame = build_frame_array(val);
 
         // 12345 → [1,2,3,4,5]
-        assert_eq!(frame[D6], 1);
-        assert_eq!(frame[D7], 2);
-        assert_eq!(frame[D8], 3);
-        assert_eq!(frame[D9], 4);
-        assert_eq!(frame[D10], 5);
+        assert_eq!(frame[D6], 0);
+        assert_eq!(frame[D7], 1);
+        assert_eq!(frame[D8], 2);
+        assert_eq!(frame[D9], 3);
+        assert_eq!(frame[D10], 4);
+        assert_eq!(frame[D11], 5);
+
     }
 
     #[test]
