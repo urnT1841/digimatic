@@ -25,8 +25,8 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameP
     // msb/lsb 変換準備
     const LSB_MASK: u8 = 0b0001;
     let shifts = match mode {
-        BitMode::Lsb => [3, 2, 1, 0],
-        BitMode::Msb => [0, 1, 2, 3],
+        BitMode::Msb => [3, 2, 1, 0],
+        BitMode::Lsb => [0, 1, 2, 3],
     };
 
     let mut out = [0u8; FRAME_LENGTH];
@@ -163,7 +163,7 @@ mod tests {
         let nibbles = [
             0x0F, 0x0F, 0x0F, 0x0F, // header
             0x00, // sign
-            0, 1, 2, 3, 4, 5, // data
+            0, 1, 2, 3, 4, 5,    // data
             0x02, // point
             0x00, // unit
         ];
@@ -181,12 +181,12 @@ mod tests {
         let nibbles = [
             0x0F, 0x0F, 0x0F, 0x0F, // header
             0x00, // sign
-            0, 1, 2, 3, 4, 5, // data
+            0, 1, 2, 3, 4, 5,    // data
             0x02, // point
             0x00, // unit
             0x10, // extra nibble
         ];
-   
+
         assert!(validator_bits(&nibbles).is_err());
     }
 
@@ -196,14 +196,16 @@ mod tests {
         let mut nibbles = [
             0x0F, 0x0F, 0x0F, 0x0F, // header
             0x00, // sign (D5)
-            0, 1, 2, 3, 4, 5, // data
+            0, 1, 2, 3, 4, 5,    // data
             0x02, // point (D12)
             0x00, // unit (D13)
         ];
 
         // D5: Valid values are 0 and 8
         let valid_d5 = [0x00, 0x08];
-        let invalid_d5 = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+        let invalid_d5 = [
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        ];
 
         // Check valid D5 values (should pass)
         for &valid in &valid_d5 {
@@ -239,7 +241,9 @@ mod tests {
 
         // D13: Valid values are 0 and 1
         let valid_d13 = [0x00, 0x01];
-        let invalid_d13 = [0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F];
+        let invalid_d13 = [
+            0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        ];
 
         // Check valid D13 values (should pass)
         for &valid in &valid_d13 {
@@ -349,4 +353,92 @@ mod tests {
         assert_eq!(measurement.to_f64(), expected_value);
     }
 
+    // 文字列フレーム→Measurementへの変換検証
+    #[test]
+    fn test_simulator_string_to_value() {
+        let input = "FFFF000945520";
+        let frame = DigimaticFrame::try_from(input).unwrap();
+        let m = Measurement::try_from(frame).unwrap();
+        assert_eq!(m.to_f64(), 94.55);
+    }
+
+    // バイナリフレーム - >Measurement変換検証
+    #[test]
+    fn test_binary_to_measurement_flow() {
+        // 12.34mm, Plus, Point:2 を模した52ビット(13バイト)の生データ
+        // LSB前提: 0x0F は 0b1111 なので、そのまま [1,1,1,1] になる
+        let mut bits = Vec::new();
+        // Header D1-D4: 0x0F (1111)
+        for _ in 0..4 {
+            bits.extend_from_slice(&[1, 1, 1, 1]);
+        }
+        // Sign D5: Plus (0x00)
+        bits.extend_from_slice(&[0, 0, 0, 0]);
+        // Data D6-D11: 0,0,1,2,3,4 (12.34の一部)
+        bits.extend_from_slice(&[0, 0, 0, 0]); // 0
+        bits.extend_from_slice(&[0, 0, 0, 0]); // 0
+        bits.extend_from_slice(&[1, 0, 0, 0]); // 1 (LSBなら [1,0,0,0])
+        bits.extend_from_slice(&[0, 1, 0, 0]); // 2
+        bits.extend_from_slice(&[1, 1, 0, 0]); // 3
+        bits.extend_from_slice(&[0, 0, 1, 0]); // 4
+        // Point D12: 2 (0x02)
+        bits.extend_from_slice(&[0, 1, 0, 0]);
+        // Unit D13: mm (0x00)
+        bits.extend_from_slice(&[0, 0, 0, 0]);
+
+        // 実行
+        let nibbles = parse_bits(&bits, BitMode::Lsb).unwrap();
+        let frame = DigimaticFrame::try_from(&nibbles[..]).unwrap();
+        let measurement = Measurement::try_from(frame).unwrap();
+
+        assert_eq!(measurement.to_f64(), 12.34);
+    }
+
+    #[test]
+    fn test_full_chain_decoding_debug() {
+        let input = "FFFF000945520";
+
+        // 段階的に実行して、どこが Err なのか突き止める
+        let frame_res = DigimaticFrame::try_from(input);
+        println!("Step 1 (String -> Frame): {:?}", frame_res);
+        let frame = frame_res.expect("Step 1 failed");
+
+        let meas_res = Measurement::try_from(frame);
+        println!("Step 2 (Frame -> Measurement): {:?}", meas_res);
+        let m = meas_res.expect("Step 2 failed");
+
+        assert_eq!(m.to_f64(), 94.55);
+    }
+
+    #[test]
+    fn debug_print_nibble_conversion_table() {
+        println!("\n--- Nibble Maker Conversion Table ---");
+        println!("Input Bits | Lsb Mode Result | Msb Mode Result");
+        println!("-----------+-----------------+-----------------");
+
+        // 0000 から 1111 まで全てのパターンを試す
+        for i in 0..16 {
+            let bits = [
+                (i >> 3) & 1, // 0番目のビット
+                (i >> 2) & 1, // 1番目のビット
+                (i >> 1) & 1, // 2番目のビット
+                i & 1,        // 3番目のビット
+            ];
+
+            // 1ニブル分(4bits)のダミーデータを作成 (13ニブル分必要なので埋める)
+            let mut full_bits = vec![0u8; 13 * 4];
+            for b in 0..4 {
+                full_bits[b] = bits[b];
+            }
+
+            let res_lsb = nibble_maker(&full_bits, BitMode::Lsb).unwrap()[0];
+            let res_msb = nibble_maker(&full_bits, BitMode::Msb).unwrap()[0];
+
+            println!(
+                "  {:?}    |      {:02X} (dec:{:02})   |      {:02X} (dec:{:02})",
+                bits, res_lsb, res_lsb, res_msb, res_msb
+            );
+        }
+        println!("---------------------------------------\n");
+    }
 }
