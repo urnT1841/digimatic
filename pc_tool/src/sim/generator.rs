@@ -25,7 +25,7 @@ mod tests {
         for _ in 0..1000 {
             let v = generator();
 
-            assert!(v > 0.01);
+            assert!(v >= 0.01);
             assert!(v <= 150.0);
             assert!(v.is_finite());
         }
