@@ -42,6 +42,7 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
         }
 
         AppMode::Gui => {
+            // これを何とかします。
             unimplemented!("GUIは後で再統合")
             // gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
         }
