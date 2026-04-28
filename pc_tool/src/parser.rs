@@ -391,8 +391,7 @@ mod tests {
         let frame_lsb = DigimaticFrame::try_from(&nibbles_lsb[..]).unwrap();
         let m_lsb = Measurement::try_from(frame_lsb).unwrap();
         assert_eq!(m_lsb.to_f64(), 12.34, "LSB failed: got {}", m_lsb.to_f64());
-  
-  
+
         // 下記のmsbテストは 上で設定しているビット列がmsbとして成り立たない(0~9を超える)ので
         // 今はコメントアウト
         // let nibbles_msb = parse_bits(&bits, BitMode::Msb).unwrap();
@@ -400,7 +399,6 @@ mod tests {
         // let m_msb = Measurement::try_from(frame_msb).unwrap();
         // println!("m_msb: {:?}", m_msb);
         // assert_eq!(m_msb.to_f64(), 12.34, "MSB failed: got {}", m_msb.to_f64());
-  
     }
 
     #[test]
@@ -419,6 +417,7 @@ mod tests {
         assert_eq!(m.to_f64(), 94.55);
     }
 
+    #[ignore]
     #[test]
     fn debug_print_nibble_conversion_table() {
         println!("\n--- Nibble Maker Conversion Table ---");
@@ -455,14 +454,14 @@ mod tests {
     fn test_to_f64_all_point_positions() {
         // (PointPosition, Sign, expected)
         let cases = [
-            (PointPosition::Zero,  Sign::Plus,  123456.0),
-            (PointPosition::One,   Sign::Plus,  12345.6),
-            (PointPosition::Two,   Sign::Plus,  1234.56),
-            (PointPosition::Three, Sign::Plus,  123.456),
-            (PointPosition::Four,  Sign::Plus,  12.3456),
-            (PointPosition::Five,  Sign::Plus,  1.23456),
-            (PointPosition::Zero,  Sign::Minus, -123456.0),
-            (PointPosition::Five,  Sign::Minus, -1.23456),
+            (PointPosition::Zero, Sign::Plus, 123456.0),
+            (PointPosition::One, Sign::Plus, 12345.6),
+            (PointPosition::Two, Sign::Plus, 1234.56),
+            (PointPosition::Three, Sign::Plus, 123.456),
+            (PointPosition::Four, Sign::Plus, 12.3456),
+            (PointPosition::Five, Sign::Plus, 1.23456),
+            (PointPosition::Zero, Sign::Minus, -123456.0),
+            (PointPosition::Five, Sign::Minus, -1.23456),
         ];
 
         for (point, sign, expected) in cases {
@@ -475,9 +474,11 @@ mod tests {
             assert!(
                 (m.to_f64() - expected).abs() < 1e-9,
                 "point={:?} sign={:?}: got {}, expected {}",
-                m.point, m.sign, m.to_f64(), expected
+                m.point,
+                m.sign,
+                m.to_f64(),
+                expected
             );
         }
     }
-
 }
