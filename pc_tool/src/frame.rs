@@ -5,8 +5,6 @@
 //!
 //!
 
-use std::f64::NAN;
-
 use crate::errors::FrameParseError;
 
 // デジマッチック データフレームの位置
