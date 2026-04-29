@@ -139,7 +139,9 @@ impl Measurement {
     }
 
     pub fn to_f64(&self) -> f64 {
-        self.to_f64_checked().unwrap_or(NAN)
+        // 元は異常値の時はNaNを返していたが,Valideto_bcdを導入したので
+        // そもそも異常値は来なくなった。 → ここは失敗しない
+        self.to_f64_checked().unwrap()
     }
 }
 
