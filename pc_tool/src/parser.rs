@@ -208,7 +208,7 @@ mod tests {
     // ニブルの各種テスト 正常系と異常系の両方をループで網羅的に
     #[test]
     fn test_invalid_values() {
-        let mut nibbles = [
+        let nibbles = [
             0x0F, 0x0F, 0x0F, 0x0F, // header
             0x00, // sign (D5)
             0, 1, 2, 3, 4, 5,    // data
