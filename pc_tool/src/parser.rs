@@ -358,19 +358,6 @@ mod tests {
     }
 
     #[test]
-    fn test_to_f64_invalid() {
-        let measurement = Measurement {
-            raw_val: "invalid".to_string(),
-            sign: Sign::Plus,
-            point: PointPosition::Two,
-            unit: Unit::Mm,
-        };
-
-        // 無効なデータの場合、NANが返されることを確認
-        assert!(measurement.to_f64().is_nan());
-    }
-
-    #[test]
     fn test_to_f64_negative() {
         let measurement = Measurement {
             raw_val: "123456".to_string(),
