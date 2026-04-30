@@ -4,7 +4,6 @@
 //! すべてRustで実装したもの
 //!
 
-use std::convert::TryFrom;
 use std::sync::mpsc::Sender;
 use std::{thread, time::Duration};
 
@@ -13,12 +12,12 @@ use crate::execute_communicate;
 use crate::frame::Measurement;
 use crate::sim::{frame_array_builder, generator};
 
-// Simのループコア
+// ループコア
 pub fn run_simulation_core(
     mut receiver: Box<dyn crate::communicator::MeasurementRead>,
     mut rx_wtr: Option<csv::Writer<std::fs::File>>,
     mut m_wtr: Option<csv::Writer<std::fs::File>>,
-    tx: Option<Sender<Measurement>>,
+    tx_gui: Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
     const WAIT_TIME_MS: u64 = 700;
 
@@ -44,15 +43,19 @@ pub fn run_simulation_core(
 
         // データのパイプライン処理
         if let Err(e) =
-            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx)
+            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx_gui)
         {
-            // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
-            match e {
-                DigimaticError::Comm(CommError::ConnectionClosed) => break,
-                _ => {
-                    eprintln!("Processing error: {}", e)
-                }
+            if e.is_fatal() {
+                return Err(e);
             }
+            eprintln!("pipeline error: {e}");
+            // // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
+            // match e {
+            //     DigimaticError::Comm(CommError::ConnectionClosed) => break,
+            //     _ => {
+            //         eprintln!("Processing error: {}", e)
+            //     }
+            // }
         }
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));
     }
@@ -68,8 +71,8 @@ pub fn start_geerator_thread(tx: Sender<String>) {
             let frame = frame_array_builder::build_frame_array(val);
             let hex: String = frame.iter().map(|b| format!("{:X}", b)).collect();
 
-            // デコード前データ
-            println!("[SIM] gen = {:.3} -> frame={:?}, HEX={:?}", val, frame, hex);
+            // デコード前データ  (debug用)
+            // println!("[SIM] gen = {:.3} -> frame={:?}, HEX={:?}", val, frame, hex);
 
             if tx.send(hex).is_err() {
                 break;

@@ -8,6 +8,7 @@ use std::fs::{File, OpenOptions};
 use digimatic::communicator::{
     BAUD_RATE, CdcReceiver, MeasurementRead, StopCode, open_cdc_port, wait_until_connection,
 };
+use digimatic::execute_communicate::FrameFormat;
 use digimatic::logger::RxDataLog;
 
 ///
@@ -23,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // open port & 書込準備
         let rx_port = open_cdc_port(&pico_port_path, BAUD_RATE)?;
-        let mut rx_receiver = CdcReceiver::new(rx_port);
+        let mut rx_receiver = CdcReceiver::new(rx_port, FrameFormat::Str);
         let mut rx_wtr = create_log_writer("rx_debug.csv")?;
 
         // logging開始
