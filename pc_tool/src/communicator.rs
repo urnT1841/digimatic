@@ -140,13 +140,11 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
 /// portのpathを受け取って Open する
 ///
 pub const BAUD_RATE: u32 = 115200;
-pub fn open_cdc_port(
-    path: &str,
-    _baud_rate: u32,
-) -> Result<Box<dyn SerialPort>, serialport::Error> {
+pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>, DigimaticError> {
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))
-        .open()?;
+        .open()
+        .map_err(|e| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
     Ok(port)
 }

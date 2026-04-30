@@ -2,13 +2,12 @@
 //! switcher.rs
 
 use std::sync::mpsc;
-use std::sync::mpsc::Sender;
 
-use crate::communicator::{SimReceiver, MeasurementRead};
+use crate::communicator::CdcReceiver;
+use crate::communicator::{MeasurementRead, SimReceiver};
 use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::frame::Measurement;
-use crate::sim::execute_sim::{run_simulation_core, start_geerator_thread};
+use crate::sim::execute_sim::start_geerator_thread;
 
 #[derive(Debug)]
 pub enum AppMode {
@@ -18,69 +17,68 @@ pub enum AppMode {
 
 /// エントリポイント
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    match mode {
-        AppMode::Sim => run_sim(),
-        AppMode::Actual => run_actual(),
-    }
-}
+    // 入力ソースを生成（Sim / Actual の差はここだけ）
+    let input: Box<dyn MeasurementRead> = match mode {
+        AppMode::Sim => {
+            let (tx, rx) = mpsc::channel::<String>();
 
-// Sim mode (CLI/GUI兼用)
-fn run_sim() -> Result<(), DigimaticError> {
-    let (tx_raw, rx_raw) = mpsc::channel::<String>();
+            // Sim generator起動
+            start_geerator_thread(tx);
 
-    // データ生成スレッド起動
-    start_geerator_thread(tx_raw);
+            Box::new(SimReceiver::new(rx))
+        }
 
-    // SimReceiverを入力源にする
-    let sim_receiver = SimReceiver::new(rx_raw);
+        AppMode::Actual => {
+            // Pico探索
+            let port_path = crate::communicator::wait_until_connection()
+                .map_err(|_| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
-    // ★ 共通パイプラインへ
-    run_pipeline(Box::new(sim_receiver))
-}
+            let port = crate::communicator::open_cdc_port(&port_path, 115200)
+                .map_err(DigimaticError::from)?;
 
+            // FrameFormatは内部でStr固定（Step3方針）
+            Box::new(CdcReceiver::new(
+                port,
+                crate::execute_communicate::FrameFormat::Str,
+            ))
+        }
+    };
 
-// Actual mode  (Pico接続)
-fn run_actual() -> Result<(), DigimaticError> {
-    let (tx, _rx) = mpsc::channel::<Measurement>();
-
-    execute_communicate::run_actual_loop(tx)
+    // ★ 完全共通パイプライン
+    run_pipeline(input)
 }
 
 // 引数解析
 pub fn parse_args() -> Result<AppMode, DigimaticError> {
     let mut args = std::env::args();
-    args.next(); // 実行パススキップ
+    args.next(); // 実行パス
 
-    let first_arg = match args.next() {
-        None => return Ok(AppMode::Sim), // デフォルトはSim（安全側）
+    let first = match args.next() {
+        None => return Ok(AppMode::Sim),
         Some(s) => s.trim_start_matches('-').to_lowercase(),
     };
 
-    match first_arg.as_str() {
+    match first.as_str() {
         "sim" | "s" => Ok(AppMode::Sim),
         "actual" | "a" => Ok(AppMode::Actual),
         _ => Err(DigimaticError::Argument(
-            crate::errors::ArgumentError::InvalidArgs(first_arg),
+            crate::errors::ArgumentError::InvalidArgs(first),
         )),
     }
 }
 
-
 // STEP3 core pipeline
 // Sim / Actual 共通ループ
 
-pub fn run_pipeline(
-    mut input: Box<dyn MeasurementRead>,
-) -> Result<(), DigimaticError> {
+pub fn run_pipeline(mut input: Box<dyn MeasurementRead>) -> Result<(), DigimaticError> {
     let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
     let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
 
     loop {
-        // データ受信
+        // data受信
         let data = match input.read_str_measurement() {
             Ok(d) if d.is_empty() => continue,
             Ok(d) => d,
-
             Err(e) => {
                 if e.is_fatal() {
                     return Err(e);
@@ -90,13 +88,10 @@ pub fn run_pipeline(
             }
         };
 
-        // パース等の処理実施
-        if let Err(e) = execute_communicate::handle_received_data(
-            &data,
-            &mut rx_wtr,
-            &mut m_wtr,
-            &None,
-        ) {
+        // parse等の処理実施
+        if let Err(e) =
+            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &None)
+        {
             if e.is_fatal() {
                 return Err(e);
             }
