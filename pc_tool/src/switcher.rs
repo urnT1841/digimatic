@@ -26,26 +26,18 @@ pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
 
 // Sim mode (CLI/GUI兼用)
 fn run_sim() -> Result<(), DigimaticError> {
-    let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
-    let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
-
-    // 生データ（String）
     let (tx_raw, rx_raw) = mpsc::channel::<String>();
 
+    // データ生成スレッド起動
     start_geerator_thread(tx_raw);
 
-    // Measurement送信用（GUI側で受け取る想定）
-    let (tx_gui, _rx_gui) = mpsc::channel::<Measurement>();
+    // SimReceiverを入力源にする
+    let sim_receiver = SimReceiver::new(rx_raw);
 
-    run_simulation_core(
-        Box::new(SimReceiver::new(rx_raw)),
-        Some(rx_wtr),
-        Some(m_wtr),
-        Some(tx_gui),
-    )?;
-
-    Ok(())
+    // ★ 共通パイプラインへ
+    run_pipeline(Box::new(sim_receiver))
 }
+
 
 // Actual mode  (Pico接続)
 fn run_actual() -> Result<(), DigimaticError> {
@@ -78,36 +70,37 @@ pub fn parse_args() -> Result<AppMode, DigimaticError> {
 // Sim / Actual 共通ループ
 
 pub fn run_pipeline(
-    mut source: Box<dyn MeasurementRead>,
-    mut rx_wtr: Option<csv::Writer<std::fs::File>>,
-    mut m_wtr: Option<csv::Writer<std::fs::File>>,
-    tx_gui: Option<Sender<Measurement>>,
+    mut input: Box<dyn MeasurementRead>,
 ) -> Result<(), DigimaticError> {
+    let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
+    let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
+
     loop {
-        // Sim / Actual共通のデータ取得
-        let data = match source.read_str_measurement() {
+        // データ受信
+        let data = match input.read_str_measurement() {
             Ok(d) if d.is_empty() => continue,
             Ok(d) => d,
 
-            // Inputレベルのエラー
             Err(e) => {
                 if e.is_fatal() {
                     return Err(e);
                 }
-                eprintln!("[pipeline] input warning: {e}");
+                eprintln!("[Pipeline] input error: {}", e);
                 continue;
             }
         };
 
-        // パース + 保存 + GUI送信
-        if let Err(e) =
-            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx_gui)
-        {
+        // パース等の処理実施
+        if let Err(e) = execute_communicate::handle_received_data(
+            &data,
+            &mut rx_wtr,
+            &mut m_wtr,
+            &None,
+        ) {
             if e.is_fatal() {
                 return Err(e);
             }
-
-            eprintln!("[pipeline] processing warning: {e}");
+            eprintln!("[Pipeline] processing error: {}", e);
         }
     }
 }
