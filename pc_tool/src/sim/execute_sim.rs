@@ -79,25 +79,3 @@ pub fn start_geerator_thread(tx: Sender<String>) {
         }
     });
 }
-
-// guiにデータを流し込むパイプ
-pub fn start_sim_pipeline(tx_gui: Sender<Measurement>) {
-    let (tx_raw, rx_raw) = std::sync::mpsc::channel::<String>();
-
-    start_geerator_thread(tx_raw);
-
-    std::thread::spawn(move || {
-        for hex in rx_raw {
-            match crate::frame::DigimaticFrame::try_from(hex.as_str())
-                .and_then(crate::frame::Measurement::try_from)
-            {
-                Ok(m) => {
-                    let _ = tx_gui.send(m);
-                }
-                Err(e) => {
-                    eprintln!("[SIM PIPE] parse error: {e}");
-                }
-            }
-        }
-    });
-}
