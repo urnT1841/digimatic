@@ -17,8 +17,8 @@ use crate::logger::*;
 use crate::parser;
 use crate::scanner::find_pico_port;
 
-#[derive(Clone, Copy)]
-enum FrameFormat {
+#[derive(Clone, Copy, Debug)]
+pub enum FrameFormat {
     Str,
     Bin,
 }
@@ -30,6 +30,7 @@ pub fn run_actual_loop(
     tx: std::sync::mpsc::Sender<Measurement>, // guiへデータ送るため
 ) -> Result<(), DigimaticError> {
     let frame_mode: FrameFormat = FrameFormat::Bin;
+    let _ = tx; // for gui
     let mut pico_waiting = 0;
     //pico待ち受けループ
     loop {
@@ -68,7 +69,7 @@ pub fn run_actual_loop(
             }
         };
 
-        let mut rx_receiver = CdcReceiver::new(rx_port);
+        let mut rx_receiver = CdcReceiver::new(rx_port, FrameFormat::Str);
         // 保存用にライター準備
         let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
         let mut m_wtr = Some(create_log_writer("measurement.csv")?);

@@ -1,77 +1,113 @@
 //! 引数から起動モードを選択する
 //! switcher.rs
 
-use crate::communicator::SimReceiver;
-use crate::errors::{ArgumentError, DigimaticError, FrameParseError};
+use std::sync::mpsc;
+use std::sync::mpsc::Sender;
+
+use crate::communicator::{SimReceiver, MeasurementRead};
+use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::frame::{DigimaticFrame, Measurement};
+use crate::frame::Measurement;
 use crate::sim::execute_sim::{run_simulation_core, start_geerator_thread};
 
 #[derive(Debug)]
 pub enum AppMode {
     Sim,
     Actual,
-    Gui,
 }
 
+/// エントリポイント
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    // CSVロガー（Sim/Actual共通で使う）
-    let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
-    let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
-
     match mode {
-        AppMode::Sim => {
-            let (tx, rx) = std::sync::mpsc::channel::<String>();
-
-            // generator → HEX String送信
-            start_geerator_thread(tx);
-
-            run_simulation_core(
-                Box::new(SimReceiver::new(rx)), // String受信
-                Some(rx_wtr),
-                Some(m_wtr),
-                None, // GUIなし（CLI）
-            )?;
-
-            Ok(())
-        }
-        AppMode::Actual => {
-            let (tx, rx) = std::sync::mpsc::channel::<Measurement>();
-
-            execute_communicate::run_actual_loop(tx).map_err(DigimaticError::from)
-        }
-
-        AppMode::Gui => {
-            // これを何とかします。
-            unimplemented!("GUIは後で再統合")
-            // gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
-        }
+        AppMode::Sim => run_sim(),
+        AppMode::Actual => run_actual(),
     }
 }
 
+// Sim mode (CLI/GUI兼用)
+fn run_sim() -> Result<(), DigimaticError> {
+    let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
+    let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
+
+    // 生データ（String）
+    let (tx_raw, rx_raw) = mpsc::channel::<String>();
+
+    start_geerator_thread(tx_raw);
+
+    // Measurement送信用（GUI側で受け取る想定）
+    let (tx_gui, _rx_gui) = mpsc::channel::<Measurement>();
+
+    run_simulation_core(
+        Box::new(SimReceiver::new(rx_raw)),
+        Some(rx_wtr),
+        Some(m_wtr),
+        Some(tx_gui),
+    )?;
+
+    Ok(())
+}
+
+// Actual mode  (Pico接続)
+fn run_actual() -> Result<(), DigimaticError> {
+    let (tx, _rx) = mpsc::channel::<Measurement>();
+
+    execute_communicate::run_actual_loop(tx)
+}
+
+// 引数解析
 pub fn parse_args() -> Result<AppMode, DigimaticError> {
     let mut args = std::env::args();
-    // 一つ目(実行プログラムパス)は読み飛ばす
-    args.next();
-    // 第1引数を取り出す
+    args.next(); // 実行パススキップ
+
     let first_arg = match args.next() {
-        None => return Ok(AppMode::Gui), // 引数ないときはGUIモード
+        None => return Ok(AppMode::Sim), // デフォルトはSim（安全側）
         Some(s) => s.trim_start_matches('-').to_lowercase(),
     };
 
-    //引数マッチして飛ばす
     match first_arg.as_str() {
-        // CLIシミュレーション
         "sim" | "s" => Ok(AppMode::Sim),
-        // CLI実機
         "actual" | "a" => Ok(AppMode::Actual),
-        // GUIモード
-        "gui" | "g" => {
-            let is_sim = args.next().map(|s| s.contains('s')).unwrap_or(false);
-            Ok(AppMode::Gui)
+        _ => Err(DigimaticError::Argument(
+            crate::errors::ArgumentError::InvalidArgs(first_arg),
+        )),
+    }
+}
+
+
+// STEP3 core pipeline
+// Sim / Actual 共通ループ
+
+pub fn run_pipeline(
+    mut source: Box<dyn MeasurementRead>,
+    mut rx_wtr: Option<csv::Writer<std::fs::File>>,
+    mut m_wtr: Option<csv::Writer<std::fs::File>>,
+    tx_gui: Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
+    loop {
+        // Sim / Actual共通のデータ取得
+        let data = match source.read_str_measurement() {
+            Ok(d) if d.is_empty() => continue,
+            Ok(d) => d,
+
+            // Inputレベルのエラー
+            Err(e) => {
+                if e.is_fatal() {
+                    return Err(e);
+                }
+                eprintln!("[pipeline] input warning: {e}");
+                continue;
+            }
+        };
+
+        // パース + 保存 + GUI送信
+        if let Err(e) =
+            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx_gui)
+        {
+            if e.is_fatal() {
+                return Err(e);
+            }
+
+            eprintln!("[pipeline] processing warning: {e}");
         }
-        _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
-            first_arg,
-        ))),
     }
 }

@@ -70,7 +70,6 @@ mod tests {
         assert_eq!(frame[D9], 3);
         assert_eq!(frame[D10], 4);
         assert_eq!(frame[D11], 5);
-
     }
 
     #[test]
