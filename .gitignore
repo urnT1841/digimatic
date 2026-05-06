@@ -4,6 +4,7 @@
 *.log
 *Zone.Identifier
 
+
 # --- Rust ---
 /pc_tool/target/
 **/*.rs.bk
@@ -12,3 +13,34 @@
 __pycache__/
 *.py[cod]
 .venv
+
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# macOS metadata / extended attributes (resource forks)
+._*
+
+# Spotlight
+.Spotlight-V100
+.Trashes
+
+# Folders created by macOS Finder
+.fseventsd
+
+# AppleDouble (older network/USB copies)
+.AppleDB
+.AppleDesktop
+
+# Temporary / external drive metadata
+.DocumentRevisions-V100
+.TemporaryItems
+.com.apple.timemachine.donotpresent
