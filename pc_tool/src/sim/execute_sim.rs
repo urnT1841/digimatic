@@ -49,17 +49,9 @@ pub fn run_simulation_core(
                 return Err(e);
             }
             eprintln!("pipeline error: {e}");
-            // // Channel閉鎖など、ループを止めるべき致命的エラーなら抜ける
-            // match e {
-            //     DigimaticError::Comm(CommError::ConnectionClosed) => break,
-            //     _ => {
-            //         eprintln!("Processing error: {}", e)
-            //     }
-            // }
         }
         thread::sleep(Duration::from_millis(WAIT_TIME_MS));
     }
-    Ok(())
 }
 
 /// データ生成スレッド
