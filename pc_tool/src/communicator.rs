@@ -10,7 +10,9 @@ use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
-use crate::frame::FRAME_LENGTH;
+use crate::execute_communicate::FrameFormat;
+use crate::frame::{BitMode, FRAME_LENGTH};
+use crate::parser::decode_frame;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
@@ -25,14 +27,16 @@ pub enum StopCode {
 #[derive(Debug)]
 pub struct CdcReceiver {
     rx_reader: BufReader<Box<dyn SerialPort>>,
+    mode: FrameFormat,
 }
 
 impl CdcReceiver {
-    pub fn new(mut port: Box<dyn SerialPort>) -> Self {
+    pub fn new(mut port: Box<dyn SerialPort>, mode: FrameFormat) -> Self {
         port.set_timeout(Duration::from_millis(2000))
             .expect("Failed to set timeout");
         Self {
             rx_reader: BufReader::new(port),
+            mode,
         }
     }
 
@@ -57,6 +61,7 @@ impl CdcReceiver {
     }
 }
 
+// これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead {
     fn read_str_measurement(&mut self) -> Result<String, DigimaticError>;
 }
@@ -66,10 +71,25 @@ impl MeasurementRead for CdcReceiver {
     fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
         let mut line = String::new();
 
-        match self.rx_reader.read_line(&mut line) {
-            Ok(0) => Err(CommError::ConnectionClosed)?,
-            Ok(_) => Ok(line.trim().to_string()),
-            Err(e) => Err(CommError::Io(e).into()),
+        match self.mode {
+            FrameFormat::Str => {
+                let mut line = String::new();
+
+                match self.rx_reader.read_line(&mut line) {
+                    Ok(0) => Err(CommError::ConnectionClosed)?,
+                    Ok(_) => Ok(line.trim().to_string()),
+                    Err(e) => Err(CommError::Io(e).into()),
+                }
+            }
+
+            FrameFormat::Bin => {
+                let bin = self.read_bin_measurement()?;
+
+                let nibbles = crate::parser::parse_bits(&bin, BitMode::Lsb)?;
+                let hex = decode_frame(&nibbles)?;
+
+                Ok(hex)
+            }
         }
     }
 }
@@ -120,17 +140,14 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
 /// portのpathを受け取って Open する
 ///
 pub const BAUD_RATE: u32 = 115200;
-pub fn open_cdc_port(
-    path: &str,
-    _baud_rate: u32,
-) -> Result<Box<dyn SerialPort>, serialport::Error> {
+pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>, DigimaticError> {
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))
-        .open()?;
+        .open()
+        .map_err(|e| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
     Ok(port)
 }
-
 
 #[cfg(test)]
 mod tests {

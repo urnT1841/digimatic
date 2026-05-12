@@ -1,77 +1,130 @@
 //! 引数から起動モードを選択する
 //! switcher.rs
 
-use crate::communicator::SimReceiver;
-use crate::errors::{ArgumentError, DigimaticError, FrameParseError};
+use std::sync::mpsc;
+
+use crate::communicator::CdcReceiver;
+use crate::communicator::{MeasurementRead, SimReceiver};
+use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::frame::{DigimaticFrame, Measurement};
-use crate::sim::execute_sim::{run_simulation_core, start_geerator_thread};
+use crate::sim::execute_sim::start_geerator_thread;
 
 #[derive(Debug)]
 pub enum AppMode {
     Sim,
     Actual,
-    Gui,
+    GuiSim,    // 追加：GUIでシミュレーション
+    GuiActual, // 追加：GUIで実機
 }
 
+/// エントリポイント
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    // CSVロガー（Sim/Actual共通で使う）
-    let rx_wtr = execute_communicate::create_log_writer("rx_log.csv")?;
-    let m_wtr = execute_communicate::create_log_writer("measurement.csv")?;
-
     match mode {
-        AppMode::Sim => {
-            let (tx, rx) = std::sync::mpsc::channel::<String>();
-
-            // generator → HEX String送信
-            start_geerator_thread(tx);
-
-            run_simulation_core(
-                Box::new(SimReceiver::new(rx)), // String受信
-                Some(rx_wtr),
-                Some(m_wtr),
-                None, // GUIなし（CLI）
-            )?;
-
-            Ok(())
+        // CLIモード：既存のまま
+        AppMode::Sim | AppMode::Actual => {
+            let input: Box<dyn MeasurementRead> = match mode {
+                AppMode::Sim => {
+                    let (tx, rx) = mpsc::channel::<String>();
+                    start_geerator_thread(tx);
+                    Box::new(SimReceiver::new(rx))
+                }
+                AppMode::Actual => {
+                    let port_path = crate::communicator::wait_until_connection().map_err(|_| {
+                        DigimaticError::Comm(crate::errors::CommError::ConnectionClosed)
+                    })?;
+                    let port = crate::communicator::open_cdc_port(&port_path, 115200)?;
+                    Box::new(CdcReceiver::new(
+                        port,
+                        crate::execute_communicate::FrameFormat::Str,
+                    ))
+                }
+                _ => unreachable!(), // 網羅性のため設置
+            };
+            run_pipeline(input)
         }
-        AppMode::Actual => {
-            let (tx, rx) = std::sync::mpsc::channel::<Measurement>();
 
-            execute_communicate::run_actual_loop(tx).map_err(DigimaticError::from)
-        }
+        // GUIモード：ここを追加して「Sim」を動かす
+        _ => {
+            let (tx_gui, rx_gui) = mpsc::channel::<crate::frame::Measurement>();
+            let tx_to_gui = tx_gui.clone();
 
-        AppMode::Gui => {
-            // これを何とかします。
-            unimplemented!("GUIは後で再統合")
-            // gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
+            // 裏側でデータを回すスレッドを起動
+            std::thread::spawn(move || {
+                let (tx_raw, rx_raw) = mpsc::channel::<String>();
+                start_geerator_thread(tx_raw);
+                crate::sim::execute_sim::run_simulation_core(
+                    Box::new(SimReceiver::new(rx_raw)),
+                    None,
+                    None,
+                    Some(tx_to_gui),
+                )
+                .ok();
+            });
+
+            // 表側で画面を出す
+            crate::gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
         }
     }
 }
 
+// 引数解析
 pub fn parse_args() -> Result<AppMode, DigimaticError> {
     let mut args = std::env::args();
-    // 一つ目(実行プログラムパス)は読み飛ばす
-    args.next();
-    // 第1引数を取り出す
-    let first_arg = match args.next() {
-        None => return Ok(AppMode::Gui), // 引数ないときはGUIモード
+    args.next(); // 実行パス
+
+    let first = match args.next() {
+        // 引数なしの場合は、とりあえず一番楽しい GUI Sim をデフォルトにする
+        None => return Ok(AppMode::GuiSim),
         Some(s) => s.trim_start_matches('-').to_lowercase(),
     };
 
-    //引数マッチして飛ばす
-    match first_arg.as_str() {
-        // CLIシミュレーション
+    match first.as_str() {
         "sim" | "s" => Ok(AppMode::Sim),
-        // CLI実機
         "actual" | "a" => Ok(AppMode::Actual),
-        // GUIモード
         "gui" | "g" => {
+            // 次の引数を見て -s があれば Sim、なければ Actual と判定する
             let is_sim = args.next().map(|s| s.contains('s')).unwrap_or(false);
-            Ok(AppMode::Gui)
+
+            if is_sim {
+                Ok(AppMode::GuiSim)
+            } else {
+                Ok(AppMode::GuiActual)
+            }
         }
-        _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
-            first_arg,
-        ))),
+        _ => Err(DigimaticError::Argument(
+            crate::errors::ArgumentError::InvalidArgs(first),
+        )),
+    }
+}
+// STEP3 core pipeline
+// Sim / Actual 共通ループ
+
+pub fn run_pipeline(mut input: Box<dyn MeasurementRead>) -> Result<(), DigimaticError> {
+    let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
+    let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
+
+    loop {
+        // data受信
+        let data = match input.read_str_measurement() {
+            Ok(d) if d.is_empty() => continue,
+            Ok(d) => d,
+            Err(e) => {
+                if e.is_fatal() {
+                    return Err(e);
+                }
+                eprintln!("[Pipeline] input error: {}", e);
+                continue;
+            }
+        };
+
+        // parse等の処理実施
+        if let Err(e) =
+            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &None)
+        {
+            if e.is_fatal() {
+                return Err(e);
+            }
+            eprintln!("[Pipeline] processing error: {}", e);
+        }
     }
 }
