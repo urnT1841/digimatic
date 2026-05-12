@@ -62,15 +62,13 @@ impl CdcReceiver {
 }
 
 // これをActual/Simを問わない入力インターフェイスにする
-pub trait MeasurementRead {
+pub trait MeasurementRead: Send {
     fn read_str_measurement(&mut self) -> Result<String, DigimaticError>;
 }
 
 // CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
     fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
-        let mut line = String::new();
-
         match self.mode {
             FrameFormat::Str => {
                 let mut line = String::new();
@@ -144,7 +142,7 @@ pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>,
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))
         .open()
-        .map_err(|e| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
+        .map_err(|_| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
     Ok(port)
 }
