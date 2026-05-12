@@ -3,7 +3,7 @@
 //!
 
 use chrono::Local;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 
 use crate::errors::{DigimaticError, FrameParseError, SystemError};
@@ -41,11 +41,10 @@ impl RxDataLog {
     }
 
     /// CSV保存（即flush保証）
-    pub fn save<W: Write>(&self, wtr:&mut csv::Writer<W>) -> Result<(), DigimaticError>  {
+    pub fn save<W: Write>(&self, wtr: &mut csv::Writer<W>) -> Result<(), DigimaticError> {
         write_csv_and_flush(wtr, self)
     }
 }
-
 
 /// 測定データ保存用
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,13 +63,13 @@ impl MeasurementLog {
     }
 
     /// CSV保存（即flush保証）
-    pub fn save<W: Write>(&self, wtr:&mut csv::Writer<W>) -> Result<(), DigimaticError>  {
+    pub fn save<W: Write>(&self, wtr: &mut csv::Writer<W>) -> Result<(), DigimaticError> {
         write_csv_and_flush(wtr, self)
     }
 }
 
 // IO(CSV書き込み+Flush)を共通化
-fn write_csv_and_flush<T: Serialize, W: Write> (
+fn write_csv_and_flush<T: Serialize, W: Write>(
     wtr: &mut csv::Writer<W>,
     value: &T,
 ) -> Result<(), DigimaticError> {
@@ -86,7 +85,6 @@ fn write_csv_and_flush<T: Serialize, W: Write> (
 
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -107,9 +105,7 @@ mod tests {
         // 上の部分をスコープで囲って wtr &mut buf にいなくなってもらう
         let mut rdr = csv::Reader::from_reader(buf.as_slice());
 
-        let records: Vec<MeasurementLog> = rdr.deserialize()
-            .map(|r| r.unwrap())
-            .collect();
+        let records: Vec<MeasurementLog> = rdr.deserialize().map(|r| r.unwrap()).collect();
 
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].val, 1.23);
