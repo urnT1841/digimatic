@@ -13,39 +13,58 @@ use crate::sim::execute_sim::start_geerator_thread;
 pub enum AppMode {
     Sim,
     Actual,
+    GuiSim,    // 追加：GUIでシミュレーション
+    GuiActual, // 追加：GUIで実機
 }
 
 /// エントリポイント
 pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    // 入力ソースを生成（Sim / Actual の差はここだけ）
-    let input: Box<dyn MeasurementRead> = match mode {
-        AppMode::Sim => {
-            let (tx, rx) = mpsc::channel::<String>();
-
-            // Sim generator起動
-            start_geerator_thread(tx);
-
-            Box::new(SimReceiver::new(rx))
+    match mode {
+        // CLIモード：既存のまま
+        AppMode::Sim | AppMode::Actual => {
+            let input: Box<dyn MeasurementRead> = match mode {
+                AppMode::Sim => {
+                    let (tx, rx) = mpsc::channel::<String>();
+                    start_geerator_thread(tx);
+                    Box::new(SimReceiver::new(rx))
+                }
+                AppMode::Actual => {
+                    let port_path = crate::communicator::wait_until_connection().map_err(|_| {
+                        DigimaticError::Comm(crate::errors::CommError::ConnectionClosed)
+                    })?;
+                    let port = crate::communicator::open_cdc_port(&port_path, 115200)?;
+                    Box::new(CdcReceiver::new(
+                        port,
+                        crate::execute_communicate::FrameFormat::Str,
+                    ))
+                }
+                _ => unreachable!(), // 網羅性のため設置
+            };
+            run_pipeline(input)
         }
 
-        AppMode::Actual => {
-            // Pico探索
-            let port_path = crate::communicator::wait_until_connection()
-                .map_err(|_| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
+        // GUIモード：ここを追加して「Sim」を動かす
+        _ => {
+            let (tx_gui, rx_gui) = mpsc::channel::<crate::frame::Measurement>();
+            let tx_to_gui = tx_gui.clone();
 
-            let port = crate::communicator::open_cdc_port(&port_path, 115200)
-                .map_err(DigimaticError::from)?;
+            // 裏側でデータを回すスレッドを起動
+            std::thread::spawn(move || {
+                let (tx_raw, rx_raw) = mpsc::channel::<String>();
+                start_geerator_thread(tx_raw);
+                crate::sim::execute_sim::run_simulation_core(
+                    Box::new(SimReceiver::new(rx_raw)),
+                    None,
+                    None,
+                    Some(tx_to_gui),
+                )
+                .ok();
+            });
 
-            // FrameFormatは内部でStr固定（Step3方針）
-            Box::new(CdcReceiver::new(
-                port,
-                crate::execute_communicate::FrameFormat::Str,
-            ))
+            // 表側で画面を出す
+            crate::gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
         }
-    };
-
-    // ★ 完全共通パイプライン
-    run_pipeline(input)
+    }
 }
 
 // 引数解析
@@ -54,19 +73,29 @@ pub fn parse_args() -> Result<AppMode, DigimaticError> {
     args.next(); // 実行パス
 
     let first = match args.next() {
-        None => return Ok(AppMode::Sim),
+        // 引数なしの場合は、とりあえず一番楽しい GUI Sim をデフォルトにする
+        None => return Ok(AppMode::GuiSim),
         Some(s) => s.trim_start_matches('-').to_lowercase(),
     };
 
     match first.as_str() {
         "sim" | "s" => Ok(AppMode::Sim),
         "actual" | "a" => Ok(AppMode::Actual),
+        "gui" | "g" => {
+            // 次の引数を見て -s があれば Sim、なければ Actual と判定する
+            let is_sim = args.next().map(|s| s.contains('s')).unwrap_or(false);
+
+            if is_sim {
+                Ok(AppMode::GuiSim)
+            } else {
+                Ok(AppMode::GuiActual)
+            }
+        }
         _ => Err(DigimaticError::Argument(
             crate::errors::ArgumentError::InvalidArgs(first),
         )),
     }
 }
-
 // STEP3 core pipeline
 // Sim / Actual 共通ループ
 
