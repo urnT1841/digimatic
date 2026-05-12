@@ -71,65 +71,75 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
     }
 }
 
+enum Token {
+    Source(DataSource),
+    Ui(UiMode),
+}
+
 // 引数解析
 pub fn parse_args() -> Result<AppConfig, DigimaticError> {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    // 引数の個数チェック
     if args.len() != 2 {
-        return Err(DigimaticError::Argument(
-            crate::errors::ArgumentError::InvalidArgs(
-                "Usage: digimatic <sim|actual> <gui|cli>".into(),
-            ),
-        ));
+        return Err(invalid_usage());
     }
 
-    args.iter().try_fold(
-        // default設定
-        AppConfig {
-            source: DataSource::Actual,
-            ui: UiMode::Gui,
-        },
-        |mut acc, arg| {
-            let token = normalize_arg(arg)?;
-            match token {
-                's' | 'a' => acc.source = match_source(token),
-                'g' | 'c' => acc.ui = match_ui(token),
-                _ => unreachable!(),
+    let mut source = None;
+    let mut ui = None;
+
+    for arg in args {
+        match normalize_arg(&arg)? {
+            Token::Source(s) => {
+                if source.is_some() {
+                    return Err(duplicate_error("source"));
+                }
+                source = Some(s);
             }
-            Ok(acc)
-        },
-    )
-}
 
-/// 補助関数：トークンを型に変換
-fn match_source(t: char) -> DataSource {
-    match t {
-        's' => DataSource::Sim,
-        _ => DataSource::Actual,
+            Token::Ui(u) => {
+                if ui.is_some() {
+                    return Err(duplicate_error("ui"));
+                }
+                ui = Some(u);
+            }
+        }
     }
-}
 
-fn match_ui(t: char) -> UiMode {
-    match t {
-        'g' => UiMode::Gui,
-        _ => UiMode::Cli,
-    }
+    let source = source.ok_or_else(|| invalid_usage())?;
+    let ui = ui.ok_or_else(|| invalid_usage())?;
+
+    Ok(AppConfig { source, ui })
 }
 
 /// 引数を検証する。呼び出しもとには正しい引数だった場合その頭文字を返す(aとかgとか)
 /// 引数増やす場合はここをいじる
-fn normalize_arg(arg: &str) -> Result<char, DigimaticError> {
+fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
     let normalized = arg.to_lowercase().trim_start_matches('-').to_string();
+
     match normalized.as_str() {
-        "sim" | "s" => Ok('s'),
-        "actual" | "a" => Ok('a'),
-        "gui" | "g" => Ok('g'),
-        "cli" | "c" => Ok('c'),
+        "sim" | "s" => Ok(Token::Source(DataSource::Sim)),
+        "actual" | "a" => Ok(Token::Source(DataSource::Actual)),
+
+        "gui" | "g" => Ok(Token::Ui(UiMode::Gui)),
+        "cli" | "c" => Ok(Token::Ui(UiMode::Cli)),
+
         _ => Err(DigimaticError::Argument(
-            crate::errors::ArgumentError::InvalidArgs(format!("不正な引数です： {}", arg)),
+            crate::errors::ArgumentError::InvalidArgs(format!("不正な引数です: {}", arg)),
         )),
     }
+}
+
+fn duplicate_error(field: &str) -> DigimaticError {
+    DigimaticError::Argument(crate::errors::ArgumentError::InvalidArgs(format!(
+        "{} が重複しています",
+        field
+    )))
+}
+
+fn invalid_usage() -> DigimaticError {
+    DigimaticError::Argument(crate::errors::ArgumentError::InvalidArgs(
+        "Usage: digimatic <sim|actual> <gui|cli>".into(),
+    ))
 }
 
 // 共通ループ
@@ -154,5 +164,40 @@ pub fn run_pipeline(
             // cli modeの時のコンソールへの表示など。下記はダミー
             print!("実行中");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_arg_source() {
+        let r = normalize_arg("sim").unwrap();
+        match r {
+            Token::Source(DataSource::Sim) => {}
+            _ => panic!("unexpected"),
+        }
+    }
+
+    #[test]
+    fn test_normalize_arg_ui() {
+        let r = normalize_arg("gui").unwrap();
+        match r {
+            Token::Ui(UiMode::Gui) => {}
+            _ => panic!("unexpected"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_arg() {
+        assert!(normalize_arg("xxx").is_err());
+    }
+
+    #[test]
+    fn test_duplicate_detection() {
+        let args = vec!["sim".to_string(), "sim".to_string()];
+
+        // parse_args相当のロジックを切り出すのが理想
     }
 }

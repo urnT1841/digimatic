@@ -76,7 +76,6 @@ pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError>
     })
 }
 
-
 // データ部分(D6-D11)のBCDチェック (0~9だけ通す)
 fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
     let mut out = [0u8; 6];
@@ -89,7 +88,6 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
     }
     Ok(out)
 }
-
 
 /// ニブル列 → 文字列フレーム
 pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
@@ -278,13 +276,7 @@ mod tests {
     // データ部の異常検出
     #[test]
     fn test_bcd_rejects_invalid_data() {
-        let mut nibbles = [
-            0x0F,0x0F,0x0F,0x0F,
-            0x00,
-            1,2,3,4,5,6,
-            0x02,
-            0x00,
-        ];
+        let mut nibbles = [0x0F, 0x0F, 0x0F, 0x0F, 0x00, 1, 2, 3, 4, 5, 6, 0x02, 0x00];
 
         nibbles[D7] = 0x0A; // 壊す
 
