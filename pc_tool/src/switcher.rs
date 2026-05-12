@@ -7,124 +7,152 @@ use crate::communicator::CdcReceiver;
 use crate::communicator::{MeasurementRead, SimReceiver};
 use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::sim::execute_sim::start_geerator_thread;
+use crate::execute_communicate::handle_received_data;
+use crate::frame::Measurement;
 
-#[derive(Debug)]
-pub enum AppMode {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DataSource {
     Sim,
     Actual,
-    GuiSim,    // 追加：GUIでシミュレーション
-    GuiActual, // 追加：GUIで実機
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UiMode {
+    Cli,
+    Gui,
+}
+// モードをハンドリングする構造体
+pub struct AppConfig {
+    pub source: DataSource,
+    pub ui: UiMode,
 }
 
 /// エントリポイント
-pub fn run(mode: AppMode) -> Result<(), DigimaticError> {
-    match mode {
-        // CLIモード：既存のまま
-        AppMode::Sim | AppMode::Actual => {
-            let input: Box<dyn MeasurementRead> = match mode {
-                AppMode::Sim => {
-                    let (tx, rx) = mpsc::channel::<String>();
-                    start_geerator_thread(tx);
-                    Box::new(SimReceiver::new(rx))
-                }
-                AppMode::Actual => {
-                    let port_path = crate::communicator::wait_until_connection().map_err(|_| {
-                        DigimaticError::Comm(crate::errors::CommError::ConnectionClosed)
-                    })?;
-                    let port = crate::communicator::open_cdc_port(&port_path, 115200)?;
-                    Box::new(CdcReceiver::new(
-                        port,
-                        crate::execute_communicate::FrameFormat::Str,
-                    ))
-                }
-                _ => unreachable!(), // 網羅性のため設置
-            };
-            run_pipeline(input)
+pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
+    let input: Box<dyn MeasurementRead> = match config.source {
+        DataSource::Sim => {
+            // sim用チャンネル作成 -> sim thred生成 → Box詰め
+            let (tx_raw, rx_raw) = mpsc::channel();
+            crate::sim::execute_sim::start_geerator_thread(tx_raw);
+            Box::new(SimReceiver::new(rx_raw))
         }
+        DataSource::Actual => {
+            let port_path = crate::communicator::wait_until_connection()
+                .map_err(|_| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
-        // GUIモード：ここを追加して「Sim」を動かす
-        _ => {
-            let (tx_gui, rx_gui) = mpsc::channel::<crate::frame::Measurement>();
-            let tx_to_gui = tx_gui.clone();
+            let port = crate::communicator::open_cdc_port(&port_path, 115200)?;
 
-            // 裏側でデータを回すスレッドを起動
+            Box::new(CdcReceiver::new(
+                port,
+                crate::execute_communicate::FrameFormat::Str,
+            ))
+        }
+    };
+
+    //ここにuiモード分け
+    match config.ui {
+        UiMode::Gui => {
+            let (tx_gui, rx_gui) = mpsc::channel();
+            // パイプラインを別スレッドで起動
+            // inputの所有権をスレッド内に移動させる
             std::thread::spawn(move || {
-                let (tx_raw, rx_raw) = mpsc::channel::<String>();
-                start_geerator_thread(tx_raw);
-                crate::sim::execute_sim::run_simulation_core(
-                    Box::new(SimReceiver::new(rx_raw)),
-                    None,
-                    None,
-                    Some(tx_to_gui),
-                )
-                .ok();
+                if let Err(e) = run_pipeline(input, Some(tx_gui)) {
+                    eprintln!("[Error] Pipeline failde: {:?}", e);
+                }
             });
-
-            // 表側で画面を出す
+            // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
             crate::gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
+        }
+        UiMode::Cli => {
+            // cliの時はメインスレッドで直接パイプラン実行
+            // txは不要 → Noneにしておく
+            run_pipeline(input, None)
         }
     }
 }
 
 // 引数解析
-pub fn parse_args() -> Result<AppMode, DigimaticError> {
-    let mut args = std::env::args();
-    args.next(); // 実行パス
+pub fn parse_args() -> Result<AppConfig, DigimaticError> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
 
-    let first = match args.next() {
-        // 引数なしの場合は、とりあえず一番楽しい GUI Sim をデフォルトにする
-        None => return Ok(AppMode::GuiSim),
-        Some(s) => s.trim_start_matches('-').to_lowercase(),
-    };
+    // 引数の個数チェック
+    if args.len() != 2 {
+        return Err(DigimaticError::Argument(
+            crate::errors::ArgumentError::InvalidArgs(
+                "Usage: digimatic <sim|actual> <gui|cli>".into(),
+            ),
+        ));
+    }
 
-    match first.as_str() {
-        "sim" | "s" => Ok(AppMode::Sim),
-        "actual" | "a" => Ok(AppMode::Actual),
-        "gui" | "g" => {
-            // 次の引数を見て -s があれば Sim、なければ Actual と判定する
-            let is_sim = args.next().map(|s| s.contains('s')).unwrap_or(false);
-
-            if is_sim {
-                Ok(AppMode::GuiSim)
-            } else {
-                Ok(AppMode::GuiActual)
+    args.iter().try_fold(
+        // default設定
+        AppConfig {
+            source: DataSource::Actual,
+            ui: UiMode::Gui,
+        },
+        |mut acc, arg| {
+            let token = normalize_arg(arg)?;
+            match token {
+                's' | 'a' => acc.source = match_source(token),
+                'g' | 'c' => acc.ui = match_ui(token),
+                _ => unreachable!(),
             }
-        }
+            Ok(acc)
+        },
+    )
+}
+
+/// 補助関数：トークンを型に変換
+fn match_source(t: char) -> DataSource {
+    match t {
+        's' => DataSource::Sim,
+        _ => DataSource::Actual,
+    }
+}
+
+fn match_ui(t: char) -> UiMode {
+    match t {
+        'g' => UiMode::Gui,
+        _ => UiMode::Cli,
+    }
+}
+
+/// 引数を検証する。呼び出しもとには正しい引数だった場合その頭文字を返す(aとかgとか)
+/// 引数増やす場合はここをいじる
+fn normalize_arg(arg: &str) -> Result<char, DigimaticError> {
+    let normalized = arg.to_lowercase().trim_start_matches('-').to_string();
+    match normalized.as_str() {
+        "sim" | "s" => Ok('s'),
+        "actual" | "a" => Ok('a'),
+        "gui" | "g" => Ok('g'),
+        "cli" | "c" => Ok('c'),
         _ => Err(DigimaticError::Argument(
-            crate::errors::ArgumentError::InvalidArgs(first),
+            crate::errors::ArgumentError::InvalidArgs(format!("不正な引数です： {}", arg)),
         )),
     }
 }
-// STEP3 core pipeline
-// Sim / Actual 共通ループ
 
-pub fn run_pipeline(mut input: Box<dyn MeasurementRead>) -> Result<(), DigimaticError> {
+// 共通ループ
+pub fn run_pipeline(
+    mut input: Box<dyn MeasurementRead>,
+    tx: Option<mpsc::Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
     let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
     let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
 
     loop {
         // data受信
-        let data = match input.read_str_measurement() {
-            Ok(d) if d.is_empty() => continue,
-            Ok(d) => d,
-            Err(e) => {
-                if e.is_fatal() {
-                    return Err(e);
-                }
-                eprintln!("[Pipeline] input error: {}", e);
-                continue;
-            }
-        };
+        let data = input.read_str_measurement()?;
+        if data.is_empty() {
+            continue;
+        }
 
-        // parse等の処理実施
-        if let Err(e) =
-            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &None)
-        {
-            if e.is_fatal() {
-                return Err(e);
-            }
-            eprintln!("[Pipeline] processing error: {}", e);
+        // 共通ハンドラ処理
+        handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx)?;
+
+        if tx.is_none() {
+            // cli modeの時のコンソールへの表示など。下記はダミー
+            print!("実行中");
         }
     }
 }
