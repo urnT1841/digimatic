@@ -41,7 +41,7 @@ impl CdcReceiver {
     }
 
     // バイナリで送信されたデータ受信 \n終端前提
-    pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
+    pub fn read_raw_frame(&mut self) -> Result<Vec<u8>, DigimaticError> {
         let mut rx_stream = Vec::new();
 
         match self.rx_reader.read_until(b'\n', &mut rx_stream) {
@@ -63,12 +63,12 @@ impl CdcReceiver {
 
 // これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead: Send {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError>;
+    fn read_measurement(&mut self) -> Result<String, DigimaticError>;
 }
 
 // CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
+    fn read_measurement(&mut self) -> Result<String, DigimaticError> {
         match self.mode {
             FrameFormat::Str => {
                 let mut line = String::new();
@@ -81,7 +81,7 @@ impl MeasurementRead for CdcReceiver {
             }
 
             FrameFormat::Bin => {
-                let bin = self.read_bin_measurement()?;
+                let bin = self.read_raw_frame()?;
 
                 let nibbles = crate::parser::parse_bits(&bin, BitMode::Lsb)?;
                 let hex = decode_frame(&nibbles)?;
@@ -105,7 +105,7 @@ impl SimReceiver {
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
+    fn read_measurement(&mut self) -> Result<String, DigimaticError> {
         self.rx.recv().map_err(|_| CommError::Timeout.into())
     }
 }
@@ -158,7 +158,7 @@ mod tests {
         tx.send("123.45".to_string()).unwrap();
 
         let mut sim = SimReceiver::new(rx);
-        let result = sim.read_str_measurement().unwrap();
+        let result = sim.read_measurement().unwrap();
 
         assert_eq!(result, "123.45");
     }

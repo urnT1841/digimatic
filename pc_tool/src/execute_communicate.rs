@@ -121,8 +121,8 @@ fn data_receiver(
     loop {
         // モードに応じて「共通言語（Hex String）」を生成する
         let frame_result = match frame_mode {
-            FrameFormat::Str => rx_receiver.read_str_measurement(),
-            FrameFormat::Bin => rx_receiver.read_bin_measurement().and_then(|bin_data| {
+            FrameFormat::Str => rx_receiver.read_measurement(),
+            FrameFormat::Bin => rx_receiver.read_raw_frame().and_then(|bin_data| {
                 let nibbles = parser::parse_bits(&bin_data, bit_mode)?;
                 parser::decode_frame(&nibbles).map_err(DigimaticError::from)
             }),

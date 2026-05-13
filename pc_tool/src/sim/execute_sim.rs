@@ -23,7 +23,7 @@ pub fn run_simulation_core(
 
     loop {
         // 受信 (Timeoutは無視し、それ以外のエラーは上位へ)
-        let data = match receiver.read_str_measurement() {
+        let data = match receiver.read_measurement() {
             Ok(d) if d.is_empty() => continue,
             Ok(d) => d,
             // タイムアウト（非致命的）は無視して次へ

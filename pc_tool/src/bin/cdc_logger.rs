@@ -52,7 +52,7 @@ fn run_logging(
 ) -> StopCode {
     // Result ではなく直接 StopCode を返すと main がすっきり
     loop {
-        match rx_receiver.read_str_measurement() {
+        match rx_receiver.read_measurement() {
             Ok(raw) => {
                 // ここで Pico からの "STOP" 文字列をチェックする
                 if raw.trim() == "STOP" {

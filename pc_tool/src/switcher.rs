@@ -152,7 +152,7 @@ pub fn run_pipeline(
 
     loop {
         // data受信
-        let data = input.read_str_measurement()?;
+        let data = input.read_measurement()?;
         if data.is_empty() {
             continue;
         }
