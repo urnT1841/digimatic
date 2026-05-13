@@ -198,6 +198,6 @@ mod tests {
     fn test_duplicate_detection() {
         let args = vec!["sim".to_string(), "sim".to_string()];
 
-        // parse_args相当のロジックを切り出すのが理想
+        // parse_args相当のロジックを切り出すのが本筋だが，今はいいや
     }
 }

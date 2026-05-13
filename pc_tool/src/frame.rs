@@ -101,9 +101,9 @@ pub struct DigimaticFrame {
     pub unit: Unit,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Measurement {
-    pub raw_val: String,      // デジマチックフレームの D4-D11
+    pub val: u32,             // デジマチックフレームの D4-D11
     pub sign: Sign,           // 符号
     pub point: PointPosition, // 小数点位置
     pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
@@ -111,9 +111,12 @@ pub struct Measurement {
 
 // 初期化 (コンストラクタ)
 impl Measurement {
+    //初期化用のダミー数値
+    pub const DUMMY_VALUE: u32 = 999_999;
+
     pub fn dummy() -> Self {
         Self {
-            raw_val: "999999".to_string(),
+            val: Self::DUMMY_VALUE,
             sign: Sign::Plus,
             point: PointPosition::Two,
             unit: Unit::Mm,
@@ -122,24 +125,15 @@ impl Measurement {
 }
 
 /// Measurement構造体の値をf64に変換
-/// 失敗した場合はNaNを返す
 impl Measurement {
-    pub fn to_f64_checked(&self) -> Result<f64, std::num::ParseFloatError> {
-        let val = self.raw_val.parse::<f64>()?;
-
+    pub fn to_f64(&self) -> f64 {
         let divisor = 10f64.powi(self.point as i32);
         let sign_dir = match self.sign {
             Sign::Plus => 1.0,
             Sign::Minus => -1.0,
         };
 
-        Ok((val / divisor) * sign_dir)
-    }
-
-    pub fn to_f64(&self) -> f64 {
-        // 元は異常値の時はNaNを返していたが,Valideto_bcdを導入したので
-        // そもそも異常値は来なくなった。 → ここは失敗しない
-        self.to_f64_checked().unwrap()
+        self.val as f64 / divisor * sign_dir
     }
 }
 
