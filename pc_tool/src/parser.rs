@@ -151,15 +151,16 @@ impl TryFrom<DigimaticFrame> for Measurement {
     type Error = FrameParseError;
 
     fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
-        // ニブル値を数字文字に変換して文字列にする
-        let raw_val = frame
+        // 計測値データニブルをu32に変換
+        // validate_bcd_slice()で BCD数値であることが検証ずみなので失敗は想定せず
+        // foldで積み重ねる
+        let val = frame
             .data
             .iter()
-            .map(|&v| nibble_to_char(v))
-            .collect::<Result<String, FrameParseError>>()?;
+            .fold(0u32, |acc, &nibble| acc * 10 + (nibble as u32));
 
         Ok(Measurement {
-            raw_val,
+            val,
             sign: frame.sign,
             point: frame.point_pos,
             unit: frame.unit,
@@ -339,7 +340,7 @@ mod tests {
     #[test]
     fn test_to_f64_valid() {
         let measurement = Measurement {
-            raw_val: "123456".to_string(),
+            val: 123456,
             sign: Sign::Plus,
             point: PointPosition::Two,
             unit: Unit::Mm,
@@ -352,7 +353,7 @@ mod tests {
     #[test]
     fn test_to_f64_negative() {
         let measurement = Measurement {
-            raw_val: "123456".to_string(),
+            val: 123456,
             sign: Sign::Minus,
             point: PointPosition::Two,
             unit: Unit::Mm,
@@ -475,7 +476,7 @@ mod tests {
 
         for (point, sign, expected) in cases {
             let m = Measurement {
-                raw_val: "123456".to_string(),
+                val: 123456,
                 sign,
                 point,
                 unit: Unit::Mm,
