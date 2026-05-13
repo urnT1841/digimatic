@@ -1,6 +1,7 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
+use crate::frame::Unit;
 use crate::{errors::DigimaticError, frame::Measurement};
 
 struct DisplayApp {
@@ -10,8 +11,12 @@ struct DisplayApp {
 
 // mm表示用変換
 impl Measurement {
-    fn display_mm(&self) -> String {
-        format!("{:.2} mm", self.to_f64())
+    fn display_value(&self) -> String {
+        let unit_str = match self.unit {
+            Unit::Mm => "mm",
+            Unit::Inch => "Inch",
+        };
+        format!("{:.2} {}", self.to_f64(), unit_str)
     }
 }
 
@@ -69,7 +74,7 @@ impl eframe::App for DisplayApp {
                 ui.label(egui::RichText::new("計測中").size(20.0));
 
                 ui.label(
-                    egui::RichText::new(self.measurement_data.display_mm())
+                    egui::RichText::new(self.measurement_data.display_value())
                         .size(120.0)
                         .strong(),
                 );
