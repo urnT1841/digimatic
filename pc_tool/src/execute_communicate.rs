@@ -11,10 +11,11 @@ use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
 use crate::communicator::MeasurementRead;
-use crate::errors::{CommError, DigimaticError};
+use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::parser;
+use crate::presentation::format_measurement_value_with_unit;
 use crate::scanner::find_pico_port;
 
 #[derive(Clone, Copy, Debug)]
@@ -69,13 +70,13 @@ pub fn run_actual_loop(
             }
         };
 
-        let mut rx_receiver = CdcReceiver::new(rx_port, FrameFormat::Str);
+        let mut rx_receiver = CdcReceiver::new(rx_port);
         // 保存用にライター準備
         let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
         let mut m_wtr = Some(create_log_writer("measurement.csv")?);
 
         // 受信と処理
-        if let Err(e) = data_receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = data_receiver(&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if e.is_fatal() {
                 return Err(e); // エラーで致命なら終了
             }
@@ -110,7 +111,6 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 }
 
 fn data_receiver(
-    frame_mode: FrameFormat,
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
@@ -152,43 +152,66 @@ pub fn handle_received_data(
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
     tx: &Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
-    // 生ログの準備 (時刻はこの瞬間に固定)
-    let mut rx_log = RxDataLog::new_str(data);
+    // 生ログの保存
+    handle_save_raw_log(data, rx_wtr, None)?;
 
     // 計測データ → フレーム生成 (TryFrom chain)
     match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {
         Ok(m) => {
-            //  生データの保存 (Writerがあれば)
-            if let Some(w) = rx_wtr {
-                rx_log.save(w)?;
-            }
-
-            // 測定値の保存 (Writerがあれば)
-            if let Some(w) = m_wtr {
-                MeasurementLog::new(m.to_f64()).save(w)?;
-            }
-
-            // GUIへの送信 (Senderがあれば)
-            if let Some(t) = tx {
-                t.send(m.clone()).map_err(|_| {
-                    DigimaticError::System(crate::errors::SystemError {
-                        code: 99,
-                        message: "Channel closed".into(),
-                    })
-                })?;
-            }
+            // 測定値の保存とGUIへのデータ送信
+            handle_save_measurement_data(m, m_wtr, tx)?;
             // cli表示(共通化で邪魔になったら調整)
-            println!("[SIM] Decoded: {:.3} mm", m.to_f64());
+            println!("Decoded: {}", format_measurement_value_with_unit(&m));
         }
         Err(e) => {
             // パース失敗時：エラーを載せて生ログだけは残す
-            if let Some(w) = rx_wtr {
-                rx_log.error_log = Some(e.clone());
-                rx_log.save(w)?;
-            }
+            handle_save_raw_log(data, rx_wtr, Some(&e))?;
             eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
             return Err(DigimaticError::from(e));
         }
     }
+    Ok(())
+}
+
+/// 生データ保存
+fn handle_save_raw_log(
+    data: &str,
+    rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    err: Option<&FrameParseError>,
+) -> Result<(), DigimaticError> {
+    let mut rx_log = RxDataLog::new_str(data);
+
+    if let Some(e) = err {
+        rx_log.error_log = Some(e.clone());
+    }
+
+    if let Some(w) = rx_wtr {
+        rx_log.save(w)?;
+    }
+
+    Ok(())
+}
+
+/// 計測値保存 + GUIへのデータ送信 (txに流し込み))
+fn handle_save_measurement_data(
+    m: Measurement,
+    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    tx: &Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
+    if let Some(w) = m_wtr {
+        MeasurementLog::new(m.to_f64()).save(w)?;
+    }
+
+    if let Some(t) = tx {
+        t.send(m.clone()).map_err(|_| {
+            DigimaticError::System(crate::errors::SystemError {
+                code: 99,
+                message: "Channel closed".into(),
+            })
+        })?;
+    }
+
+    println!("[DATA] {}", format_measurement_value_with_unit(&m));
+
     Ok(())
 }
