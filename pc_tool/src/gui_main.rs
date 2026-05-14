@@ -1,23 +1,12 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::frame::Unit;
+use crate::presentation::format_measurement_value_with_unit;
 use crate::{errors::DigimaticError, frame::Measurement};
 
 struct DisplayApp {
     measurement_data: Measurement,
     receiver: Receiver<Measurement>, // 受信機を格納
-}
-
-// mm表示用変換
-impl Measurement {
-    fn display_value(&self) -> String {
-        let unit_str = match self.unit {
-            Unit::Mm => "mm",
-            Unit::Inch => "Inch",
-        };
-        format!("{:.2} {}", self.to_f64(), unit_str)
-    }
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
@@ -74,7 +63,7 @@ impl eframe::App for DisplayApp {
                 ui.label(egui::RichText::new("計測中").size(20.0));
 
                 ui.label(
-                    egui::RichText::new(self.measurement_data.display_value())
+                    egui::RichText::new(format_measurement_value_with_unit(&self.measurement_data))
                         .size(120.0)
                         .strong(),
                 );
