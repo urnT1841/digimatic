@@ -152,10 +152,8 @@ pub fn run_pipeline(
 
     loop {
         // data受信
+        // read_measurement は measurement構造体を返すので異常値は来ない
         let data = input.read_measurement()?;
-        if data.is_empty() {
-            continue;
-        }
 
         // 共通ハンドラ処理
         handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx)?;

@@ -89,7 +89,10 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
     Ok(out)
 }
 
-/// ニブル列 → 文字列フレーム
+/// ニブル列 → 文字列フレーム生成
+/// DigimaticFrame化により本体用途では不要
+/// デバッグ時のbin→文字列確認用
+#[cfg(debug_assertions)]
 pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {
         return Err(FrameParseError::IncompleteNibble(nibbles.len()));

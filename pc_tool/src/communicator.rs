@@ -11,8 +11,7 @@ use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::execute_communicate::FrameFormat;
-use crate::frame::{BitMode, FRAME_LENGTH};
-use crate::parser::decode_frame;
+use crate::frame::{BitMode, DigimaticFrame, FRAME_LENGTH, Measurement};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
@@ -63,7 +62,7 @@ impl CdcReceiver {
 
 // これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead: Send {
-    fn read_measurement(&mut self) -> Result<String, DigimaticError>;
+    fn read_measurement(&mut self) -> Result<Measurement, DigimaticError>;
 }
 
 // CdcRPeceiver にトレイトを適用
@@ -105,8 +104,15 @@ impl SimReceiver {
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
-    fn read_measurement(&mut self) -> Result<String, DigimaticError> {
-        self.rx.recv().map_err(|_| CommError::Timeout.into())
+    fn read_measurement(&mut self) -> Result<Measurement, DigimaticError> {
+        let s = self.rx.recv().map_err(|_| CommError::Timeout)?;
+
+        let trimmed = s.trim();
+
+        let frame = DigimaticFrame::try_from(trimmed)?;
+        let mes_frame = Measurement::try_from(frame)?;
+
+        Ok(mes_frame)
     }
 }
 
@@ -160,6 +166,6 @@ mod tests {
         let mut sim = SimReceiver::new(rx);
         let result = sim.read_measurement().unwrap();
 
-        assert_eq!(result, "123.45");
+        assert_eq!(result.to_f64(), 123.45);
     }
 }
