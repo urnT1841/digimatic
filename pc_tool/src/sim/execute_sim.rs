@@ -23,7 +23,7 @@ pub fn run_simulation_core(
 
     loop {
         // 受信 (Timeoutは無視し、それ以外のエラーは上位へ)
-        let data = match receiver.read_str_measurement() {
+        let data = match receiver.read_measurement() {
             Ok(d) if d.is_empty() => continue,
             Ok(d) => d,
             // タイムアウト（非致命的）は無視して次へ
@@ -42,9 +42,13 @@ pub fn run_simulation_core(
         };
 
         // データのパイプライン処理
-        if let Err(e) =
-            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx_gui)
-        {
+        if let Err(e) = execute_communicate::handle_received_data(
+            &data,
+            &mut rx_wtr,
+            &mut m_wtr,
+            &tx_gui,
+            crate::execute_communicate::FrameFormat::Str,
+        ) {
             if e.is_fatal() {
                 return Err(e);
             }
