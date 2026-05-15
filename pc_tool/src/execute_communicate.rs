@@ -14,7 +14,7 @@ use crate::communicator::MeasurementRead;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
-use crate::presentation::format_measurement_value_with_unit;
+use crate::presentation::format_with_display_unit;
 use crate::scanner::find_pico_port;
 
 #[derive(Clone, Copy, Debug)]
@@ -175,7 +175,7 @@ pub fn handle_received_data(
     match measurement_result {
         Ok(m) => {
             handle_save_measurement_data(m, m_wtr, tx)?;
-            println!("Decoded: {}", format_measurement_value_with_unit(&m));
+            println!("Decoded: {}", format_with_display_unit(&m, m.unit));
             Ok(())
         }
         Err(e) => {
@@ -226,7 +226,7 @@ fn handle_save_measurement_data(
         })?;
     }
 
-    println!("[DATA] {}", format_measurement_value_with_unit(&m));
+    println!("[DATA] {}", format_with_display_unit(&m, m.unit));
 
     Ok(())
 }
