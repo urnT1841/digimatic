@@ -3,7 +3,7 @@ use std::sync::mpsc::Receiver;
 
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
-use crate::presentation::format_measurement_value_with_unit;
+use crate::presentation::format_with_display_unit;
 //設定用構造体
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GuiConfig {
@@ -103,17 +103,11 @@ impl eframe::App for DisplayApp {
 
                 // --- 3. 変換した値の表示 ---
                 // 実装した get_display_value を呼び出す
-                let display_val = self.get_display_value(self.config.display_unit);
-
-                // インチの場合は小数点4桁、mmの場合は2桁など、単位で書式を変えるとプロっぽい
-                let format_str = if self.config.display_unit == Unit::Inch {
-                    format!("{:.4}", display_val)
-                } else {
-                    format!("{:.2}", display_val)
-                };
+                let display_val =
+                    format_with_display_unit(&self.measurement_data, self.config.display_unit);
 
                 // 特大フォントで数値を表示
-                ui.label(egui::RichText::new(format_str).size(80.0).strong());
+                ui.label(egui::RichText::new(display_val).size(80.0).strong());
 
                 // 単位を添える
                 ui.label(format!("{:?}", self.config.display_unit));
