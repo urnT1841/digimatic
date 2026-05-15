@@ -150,15 +150,14 @@ pub fn run_pipeline(
     let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
     let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
 
+    let frame_mode = input.get_format();
     loop {
         // data受信
-        let data = input.read_str_measurement()?;
-        if data.is_empty() {
-            continue;
-        }
+        // read_measurement は measurement構造体を返すので異常値は来ない
+        let data = input.read_measurement()?;
 
         // 共通ハンドラ処理
-        handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx)?;
+        handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx, frame_mode)?;
 
         if tx.is_none() {
             // cli modeの時のコンソールへの表示など。下記はダミー

@@ -5,14 +5,13 @@
 
 //use serde::Serialize;
 use serialport::SerialPort;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::execute_communicate::FrameFormat;
-use crate::frame::{BitMode, FRAME_LENGTH};
-use crate::parser::decode_frame;
+use crate::frame::FRAME_LENGTH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
@@ -40,55 +39,53 @@ impl CdcReceiver {
         }
     }
 
-    // バイナリで送信されたデータ受信 \n終端前提
-    pub fn read_bin_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
-        let mut rx_stream = Vec::new();
+    // データ受信
+    pub fn read_raw_frame(&mut self) -> Result<Vec<u8>, DigimaticError> {
+        match self.mode {
+            FrameFormat::Str => {
+                let mut rx_stream = Vec::new();
 
-        match self.rx_reader.read_until(b'\n', &mut rx_stream) {
-            Ok(0) => Err(CommError::ConnectionClosed)?,
-            Ok(n) => {
-                if n > 64 {
-                    return Err(FrameParseError::InvalidBitLength {
-                        expected: (FRAME_LENGTH),
-                        found: (n),
-                    })?;
+                match self.rx_reader.read_until(b'\n', &mut rx_stream) {
+                    Ok(0) => Err(CommError::ConnectionClosed)?,
+                    Ok(n) => {
+                        if n > 64 {
+                            return Err(FrameParseError::InvalidBitLength {
+                                expected: (FRAME_LENGTH),
+                                found: (n),
+                            })?;
+                        }
+                        // trim_ascii_end を使って末尾を綺麗にする
+                        Ok(rx_stream.trim_ascii_end().to_vec())
+                    }
+                    Err(e) => Err(CommError::Io(e).into()),
                 }
-                // trim_ascii_end を使って末尾を綺麗にする
-                Ok(rx_stream.trim_ascii_end().to_vec())
             }
-            Err(e) => Err(CommError::Io(e).into()),
+            FrameFormat::Bin => {
+                let mut buf = vec![0u8; 13];
+                match self.rx_reader.read_exact(&mut buf) {
+                    Ok(_) => Ok(buf),
+                    // read_exact も Ok(0) 的な事象は Error(UnexpectedEof) 等で返す
+                    Err(e) => Err(CommError::Io(e).into()),
+                }
+            }
         }
     }
 }
 
 // これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead: Send {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError>;
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError>;
+    fn get_format(&self) -> FrameFormat;
 }
 
 // CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
-        match self.mode {
-            FrameFormat::Str => {
-                let mut line = String::new();
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
+        self.read_raw_frame()
+    }
 
-                match self.rx_reader.read_line(&mut line) {
-                    Ok(0) => Err(CommError::ConnectionClosed)?,
-                    Ok(_) => Ok(line.trim().to_string()),
-                    Err(e) => Err(CommError::Io(e).into()),
-                }
-            }
-
-            FrameFormat::Bin => {
-                let bin = self.read_bin_measurement()?;
-
-                let nibbles = crate::parser::parse_bits(&bin, BitMode::Lsb)?;
-                let hex = decode_frame(&nibbles)?;
-
-                Ok(hex)
-            }
-        }
+    fn get_format(&self) -> FrameFormat {
+        self.mode
     }
 }
 
@@ -105,8 +102,14 @@ impl SimReceiver {
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
-    fn read_str_measurement(&mut self) -> Result<String, DigimaticError> {
-        self.rx.recv().map_err(|_| CommError::Timeout.into())
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
+        let s = self.rx.recv().map_err(|_| CommError::Timeout)?;
+        let trimmed = s.trim();
+        Ok(trimmed.as_bytes().to_vec())
+    }
+
+    fn get_format(&self) -> FrameFormat {
+        FrameFormat::Str
     }
 }
 
@@ -152,14 +155,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_sim_receiver() {
+    fn test_sim_receiver_raw_passthrough() {
         let (tx, rx) = std::sync::mpsc::channel();
 
-        tx.send("123.45".to_string()).unwrap();
+        // Simから文字列を送る
+        let input_str = "FFFF000945520";
+        tx.send(input_str.to_string()).unwrap();
 
         let mut sim = SimReceiver::new(rx);
-        let result = sim.read_str_measurement().unwrap();
 
-        assert_eq!(result, "123.45");
+        //  Vec<u8> にして返す
+        let result_bytes = sim.read_measurement().unwrap();
+
+        // 検証：送った文字列がそのままバイト列として届いているか
+        assert_eq!(result_bytes, input_str.as_bytes());
     }
 }
