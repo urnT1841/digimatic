@@ -61,7 +61,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
                 }
             });
             // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
-            crate::gui_main::launch_display(rx_gui).map_err(DigimaticError::from)
+            crate::gui_app::launch_display(rx_gui).map_err(DigimaticError::from)
         }
         UiMode::Cli => {
             // cliの時はメインスレッドで直接パイプラン実行
