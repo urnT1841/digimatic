@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::execute_communicate::FrameFormat;
-use crate::frame::{BitMode, DigimaticFrame, FRAME_LENGTH, Measurement};
+use crate::frame::FRAME_LENGTH;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
@@ -62,30 +62,27 @@ impl CdcReceiver {
 
 // これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead: Send {
-    fn read_measurement(&mut self) -> Result<Measurement, DigimaticError>;
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError>;
 }
 
 // CdcRPeceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
-    fn read_measurement(&mut self) -> Result<String, DigimaticError> {
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
         match self.mode {
             FrameFormat::Str => {
                 let mut line = String::new();
 
                 match self.rx_reader.read_line(&mut line) {
                     Ok(0) => Err(CommError::ConnectionClosed)?,
-                    Ok(_) => Ok(line.trim().to_string()),
+                    Ok(_) => Ok(line.trim().as_bytes().to_vec()),
                     Err(e) => Err(CommError::Io(e).into()),
                 }
             }
 
             FrameFormat::Bin => {
+                // 生のバイト列を取得して，次に渡す。
                 let bin = self.read_raw_frame()?;
-
-                let nibbles = crate::parser::parse_bits(&bin, BitMode::Lsb)?;
-                let hex = decode_frame(&nibbles)?;
-
-                Ok(hex)
+                Ok(bin)
             }
         }
     }
@@ -104,15 +101,11 @@ impl SimReceiver {
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
-    fn read_measurement(&mut self) -> Result<Measurement, DigimaticError> {
+    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
         let s = self.rx.recv().map_err(|_| CommError::Timeout)?;
 
         let trimmed = s.trim();
-
-        let frame = DigimaticFrame::try_from(trimmed)?;
-        let mes_frame = Measurement::try_from(frame)?;
-
-        Ok(mes_frame)
+        Ok(trimmed.as_bytes().to_vec())
     }
 }
 
@@ -158,14 +151,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_sim_receiver() {
+    fn test_sim_receiver_raw_passthrough() {
         let (tx, rx) = std::sync::mpsc::channel();
 
-        tx.send("123.45".to_string()).unwrap();
+        // Simから文字列を送る
+        let input_str = "FFFF000945520";
+        tx.send(input_str.to_string()).unwrap();
 
         let mut sim = SimReceiver::new(rx);
-        let result = sim.read_measurement().unwrap();
 
-        assert_eq!(result.to_f64(), 123.45);
+        //  Vec<u8> にして返す
+        let result_bytes = sim.read_measurement().unwrap();
+
+        // 検証：送った文字列がそのままバイト列として届いているか
+        assert_eq!(result_bytes, input_str.as_bytes());
     }
 }
