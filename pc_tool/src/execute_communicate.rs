@@ -14,7 +14,6 @@ use crate::communicator::MeasurementRead;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
-use crate::parser;
 use crate::presentation::format_measurement_value_with_unit;
 use crate::scanner::find_pico_port;
 
@@ -70,13 +69,13 @@ pub fn run_actual_loop(
             }
         };
 
-        let mut rx_receiver = CdcReceiver::new(rx_port);
+        let mut rx_receiver = CdcReceiver::new(rx_port, frame_mode);
         // 保存用にライター準備
         let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
         let mut m_wtr = Some(create_log_writer("measurement.csv")?);
 
         // 受信と処理
-        if let Err(e) = data_receiver(&mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = data_receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
             if e.is_fatal() {
                 return Err(e); // エラーで致命なら終了
             }
@@ -111,66 +110,82 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 }
 
 fn data_receiver(
+    frame_mode: FrameFormat,
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
 ) -> Result<(), DigimaticError> {
-    let bit_mode = crate::frame::BitMode::Lsb;
-
     loop {
-        // モードに応じて「共通言語（Hex String）」を生成する
-        let frame_result = match frame_mode {
-            FrameFormat::Str => rx_receiver.read_measurement(),
-            FrameFormat::Bin => rx_receiver.read_raw_frame().and_then(|bin_data| {
-                let nibbles = parser::parse_bits(&bin_data, bit_mode)?;
-                parser::decode_frame(&nibbles).map_err(DigimaticError::from)
-            }),
+        // raw data 取得に専念
+        // 受信データがstr/binを問わず cdc receiverはVec<u8>を返してくる
+        let raw_data = match rx_receiver.read_measurement() {
+            Ok(data) => data,
+            // timeoutは無視
+            Err(DigimaticError::Comm(crate::errors::CommError::Timeout)) => continue,
+            // 上記以外は致命扱いで上位へエラー上げる
+            Err(e) => return Err(e),
         };
 
-        // 共通のエラーハンドリングとデータ処理(ハンドラーへの委譲)
-        match frame_result {
-            Ok(frame_str) => {
-                handle_received_data(&frame_str, rx_wtr, m_wtr, &Some(tx.clone()))?;
+        // データをハンドラに投げる ここでは投げるだけで処理・解釈等は行わない
+        // 生ログ保存
+        if let Err(e) =
+            handle_received_data(&raw_data, rx_wtr, m_wtr, &Some(tx.clone()), frame_mode)
+        {
+            if e.is_fatal() {
+                return Err(e);
             }
-            Err(DigimaticError::Comm(crate::errors::CommError::Timeout)) => continue,
-            Err(e) => {
-                if e.is_fatal() {
-                    return Err(e);
-                }
-                eprintln!("[Warning] 続行可能なエラー: {}", e);
-            }
+            eprintln!("[Warning] data process error (Log saved) : {}", e);
         }
     }
 }
 
 /// 受信データに対する「保存・パース・送信」の共通ハンドラ
-/// execute_sim から移設  → データハンドリングの要として昇格
 pub fn handle_received_data(
-    data: &str,
+    raw_data: &[u8],
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
     tx: &Option<Sender<Measurement>>,
+    format: FrameFormat,
 ) -> Result<(), DigimaticError> {
-    // 生ログの保存
-    handle_save_raw_log(data, rx_wtr, None)?;
+    // 鑑定・解析
+    let (measurement_result, raw_str_for_log) = match format {
+        FrameFormat::Str => {
+            if !raw_data.is_ascii() {
+                return Err(DigimaticError::from(FrameParseError::NonAscii));
+            }
+            let s = std::str::from_utf8(raw_data).map_err(|_| FrameParseError::NonAscii)?;
+            let trimmed = s.trim();
+            (
+                DigimaticFrame::try_from(trimmed).and_then(Measurement::try_from),
+                trimmed.to_string(), // String にして所有権を持つ
+            )
+        }
+        FrameFormat::Bin => {
+            let res = crate::parser::parse_bits(raw_data, crate::frame::BitMode::Lsb)
+                .and_then(|nibbles| DigimaticFrame::try_from(&nibbles[..]))
+                .and_then(Measurement::try_from);
+            (res, hex::encode(raw_data)) // ログ用は16進数文字列
+        }
+    };
 
-    // 計測データ → フレーム生成 (TryFrom chain)
-    match DigimaticFrame::try_from(data).and_then(Measurement::try_from) {
+    // ログ保存（&str が必要なので &raw_str_for_log を渡す）
+    handle_save_raw_log(&raw_str_for_log, rx_wtr, None)?;
+
+    match measurement_result {
         Ok(m) => {
-            // 測定値の保存とGUIへのデータ送信
             handle_save_measurement_data(m, m_wtr, tx)?;
-            // cli表示(共通化で邪魔になったら調整)
             println!("Decoded: {}", format_measurement_value_with_unit(&m));
+            Ok(())
         }
         Err(e) => {
-            // パース失敗時：エラーを載せて生ログだけは残す
-            handle_save_raw_log(data, rx_wtr, Some(&e))?;
-            eprintln!("[SIM] Parse Error: {} | Raw: {}", e, data);
-            return Err(DigimaticError::from(e));
+            // 画像のエラー解消: &[u8] ではなく &str を渡す
+            handle_save_raw_log(&raw_str_for_log, rx_wtr, Some(&e))?;
+            // data 未定義エラー解消: raw_str_for_log を使う
+            eprintln!("[Error] Parse Failed: {} | Raw: {}", e, raw_str_for_log);
+            Err(e.into())
         }
     }
-    Ok(())
 }
 
 /// 生データ保存
