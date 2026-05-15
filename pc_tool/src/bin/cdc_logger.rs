@@ -46,34 +46,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///
 /// データ保存
 ///
-fn run_logging(
-    rx_receiver: &mut CdcReceiver, // ポートを内包したレシーバーを渡す
-    rx_wtr: &mut csv::Writer<std::fs::File>,
-) -> StopCode {
-    // Result ではなく直接 StopCode を返すと main がすっきり
+fn run_logging(rx_receiver: &mut CdcReceiver, rx_wtr: &mut csv::Writer<std::fs::File>) -> StopCode {
     loop {
         match rx_receiver.read_measurement() {
             Ok(raw) => {
-                // ここで Pico からの "STOP" 文字列をチェックする
-                if raw.trim() == "STOP" {
-                    return StopCode::Normal; // 物理ボタンによる停止
+                // 1. バイト列を文字列（あるいはそれに準ずるもの）に変換
+                let raw_s = String::from_utf8_lossy(&raw);
+                // 2. 改行や空白を除去（trimだと全角空白なども消えるので、意図に合わせて）
+                let trimmed = raw_s.trim();
+
+                // Pico からの "STOP" 文字列をチェック
+                if trimmed == "STOP" {
+                    return StopCode::Normal;
                 }
 
-                if let Err(e) = RxDataLog::new_str(&raw).save(rx_wtr) {
+                // ログ保存 (new_str は &str を期待しているので &trimmed を渡す)
+                if let Err(e) = RxDataLog::new_str(trimmed).save(rx_wtr) {
                     eprintln!("Failed to save data: {} ", e);
                 }
-                println!("Logged: {}", raw);
+
+                println!("Logged: {}", trimmed);
             }
             // 切断などの致命的なエラー
             Err(e) if e.is_fatal() => {
-                return StopCode::HWIssue; // 再接続が必要なエラー
+                return StopCode::HWIssue;
             }
             // タイムアウトなどの一時的なエラーは無視して継続
             _ => continue,
         }
     }
 }
-
 ///
 /// ライター生成
 ///

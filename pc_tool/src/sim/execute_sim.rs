@@ -42,9 +42,13 @@ pub fn run_simulation_core(
         };
 
         // データのパイプライン処理
-        if let Err(e) =
-            execute_communicate::handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx_gui)
-        {
+        if let Err(e) = execute_communicate::handle_received_data(
+            &data,
+            &mut rx_wtr,
+            &mut m_wtr,
+            &tx_gui,
+            crate::execute_communicate::FrameFormat::Str,
+        ) {
             if e.is_fatal() {
                 return Err(e);
             }
