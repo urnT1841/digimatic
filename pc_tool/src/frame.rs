@@ -46,8 +46,9 @@ impl TryFrom<u8> for Sign {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Unit {
+    #[default]
     Mm = 0x00,
     Inch = 0x01,
 }
