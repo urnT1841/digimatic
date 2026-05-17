@@ -65,19 +65,6 @@ impl DisplayApp {
         }
         ctx.set_fonts(fonts);
     }
-
-    // 単位変換
-    fn get_display_value(&self, target_unit: Unit) -> f64 {
-        const INCH2MM: f64 = 25.4;
-        let m = &self.measurement_data;
-        // 変換用に計測値用意
-        let base_value = m.to_f64();
-        match (m.unit, target_unit) {
-            (Unit::Mm, Unit::Inch) => base_value / INCH2MM,
-            (Unit::Inch, Unit::Mm) => base_value * INCH2MM,
-            _ => base_value, // 変わらない場合
-        }
-    }
 }
 
 impl eframe::App for DisplayApp {
