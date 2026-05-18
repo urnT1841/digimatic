@@ -101,7 +101,7 @@ pub fn console_info(
     msg: impl AsRef<str>,
 ) {
     if matches!(mode, ConsoleMode::Verbose) {
-        println!("[WARN] {}", msg.as_ref());
+        println!("[INFO] {}", msg.as_ref());
     }
 }
 
@@ -110,7 +110,7 @@ pub fn console_warn(msg: impl AsRef<str>) {
 }
 
 pub fn console_error(msg: impl AsRef<str>) {
-    eprintln!("[WARN] {}", msg.as_ref());
+    eprintln!("[ERROR] {}", msg.as_ref());
 }
 
 
