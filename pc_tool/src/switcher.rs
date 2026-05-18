@@ -7,8 +7,9 @@ use crate::args::{AppConfig, DataSource, UiMode};
 use crate::communicator::{CdcReceiver, MeasurementRead, SimReceiver};
 use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::execute_communicate::handle_received_data;
+use crate::execute_communicate::{handle_received_data, console_mode_from_tx};
 use crate::frame::Measurement;
+use crate::presentation::format_with_display_unit;
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
@@ -70,10 +71,5 @@ pub fn run_pipeline(
 
         // 共通ハンドラ処理
         handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx, frame_mode)?;
-
-        if tx.is_none() {
-            // cli modeの時のコンソールへの表示など。下記はダミー
-            print!("実行中");
-        }
     }
 }
