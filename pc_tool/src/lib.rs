@@ -2,6 +2,7 @@
 //! lib化
 //!
 
+pub mod args;
 pub mod communicator;
 pub mod errors;
 pub mod execute_communicate;
