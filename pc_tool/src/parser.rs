@@ -54,9 +54,10 @@ pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError>
     }
 
     // スライス範囲で「意味」を切り出す
-    let header_raw = &nibbles[D1..D5]; // D1-D4 (4つ)
+    // frame: D1~D13 (Frame.rsで定義)
+    let header_raw = &nibbles[D1..=D4]; // D1-D4 (4つ)
     let sign_raw = nibbles[D5]; // D5 (1つ)
-    let data_raw = &nibbles[D6..D12]; // D6-D11 (6つ)
+    let data_raw = &nibbles[D6..=D11]; // D6-D11 (6つ)
     let point_raw = nibbles[D12]; // D12 (1つ)
     let unit_raw = nibbles[D13]; // D13 (1つ)
 
