@@ -2,11 +2,11 @@
 //!
 //! entry point -> switcher
 
-use digimatic::switcher;
+use digimatic::{args, switcher};
 
 fn main() {
     // 引数解析はswitcher側に委譲する
-    let mode = switcher::parse_args().unwrap_or_else(|e| {
+    let mode = args::parse_args().unwrap_or_else(|e| {
         eprintln!("引数エラー: {}", e);
         std::process::exit(1);
     });
