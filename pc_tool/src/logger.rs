@@ -86,6 +86,29 @@ fn write_csv_and_flush<T: Serialize, W: Write>(
     Ok(())
 }
 
+/// console output control
+
+#[derive(Debug, Clone, Copy)]
+pub enum ConsoleMode {
+    Silent,
+    Verbose,
+}
+
+//helper x3
+pub fn console_info(mode: ConsoleMode, msg: impl AsRef<str>) {
+    if matches!(mode, ConsoleMode::Verbose) {
+        println!("[INFO] {}", msg.as_ref());
+    }
+}
+
+pub fn console_warn(msg: impl AsRef<str>) {
+    eprintln!("[WARN] {}", msg.as_ref());
+}
+
+pub fn console_error(msg: impl AsRef<str>) {
+    eprintln!("[ERROR] {}", msg.as_ref());
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

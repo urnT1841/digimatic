@@ -175,7 +175,11 @@ pub fn handle_received_data(
     match measurement_result {
         Ok(m) => {
             handle_save_measurement_data(m, m_wtr, tx)?;
-            println!("Decoded: {}", format_with_display_unit(&m, m.unit));
+            let mode = console_mode_from_tx(&tx);
+            crate::logger::console_info(
+                mode,
+                format!("[Decoded]: {}", format_with_display_unit(&m, m.unit)),
+            );
             Ok(())
         }
         Err(e) => {
@@ -226,7 +230,14 @@ fn handle_save_measurement_data(
         })?;
     }
 
-    println!("[DATA] {}", format_with_display_unit(&m, m.unit));
-
     Ok(())
+}
+
+// console出力mode制御
+pub fn console_mode_from_tx<T>(tx: &Option<Sender<T>>) -> ConsoleMode {
+    if tx.is_some() {
+        ConsoleMode::Silent
+    } else {
+        ConsoleMode::Verbose
+    }
 }
