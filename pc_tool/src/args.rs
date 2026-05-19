@@ -45,14 +45,8 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
     let source = source.ok_or(invalid_usage())?;
     let ui = ui.ok_or(invalid_usage())?;
 
-    Ok(AppConfig {
-        source,
-        ui,
-        console_mode: match ui {
-            UiMode::Gui => ConsoleMode::Silent,
-            UiMode::Cli => ConsoleMode::Verbose,
-        },
-    })
+    // config.rs の builder 呼び出し
+    Ok(crate::config::AppConfig::build(source, ui))
 }
 
 fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
