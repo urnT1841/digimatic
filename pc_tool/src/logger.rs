@@ -6,6 +6,7 @@ use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 
+use crate::config::ConsoleMode;
 use crate::errors::{DigimaticError, FrameParseError, SystemError};
 
 /// 通信データ保存用
