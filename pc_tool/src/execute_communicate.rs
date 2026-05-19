@@ -16,87 +16,11 @@ use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
 use crate::presentation::format_with_display_unit;
-use crate::scanner::find_pico_port;
 
 #[derive(Clone, Copy, Debug)]
 pub enum FrameFormat {
     Str,
     Bin,
-}
-
-///
-/// pico 実機を探して接続，USB-CDCで待ち受けデータ受信
-///
-pub fn run_actual_loop(
-    tx: std::sync::mpsc::Sender<Measurement>, // guiへデータ送るため
-    console_mode: ConsoleMode,
-) -> Result<(), DigimaticError> {
-    let frame_mode: FrameFormat = FrameFormat::Bin;
-    let _ = tx; // for gui
-    let mut pico_waiting = 0;
-    //pico待ち受けループ
-    loop {
-        // 待ち受け時間制限 10分 600s で設定
-        if pico_waiting > 600 {
-            println!("タイムアウト： 待ち受けを終了します。");
-            break Ok(());
-        }
-
-        print!("\rpicoを探しています。{}秒 ", pico_waiting);
-        io::stdout().flush().unwrap();
-
-        // picoを探す
-        let pico_port_path = match find_pico_port() {
-            Ok(path) => path,
-            Err(_) => {
-                std::thread::sleep(Duration::from_millis(400));
-                pico_waiting += 1;
-                continue;
-            }
-        };
-        // 見つかったのでリセット
-        pico_waiting = 0;
-        println!("\rPicoを発見しました! 接続します。... ");
-
-        // port open
-        let rx_port = match open_pico_port(&pico_port_path) {
-            Ok(port) => {
-                println!("ポートオープン成功: {}", pico_port_path);
-                port
-            }
-            Err(e) => {
-                println!("port open fail! retry : {}", e);
-                std::thread::sleep(Duration::from_millis(500)); // すぐに戻ると見失うこともあるのでちょい待ちを入れる
-                continue;
-            }
-        };
-
-        let mut rx_receiver = CdcReceiver::new(rx_port, frame_mode);
-        // 保存用にライター準備
-        let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
-        let mut m_wtr = Some(create_log_writer("measurement.csv")?);
-
-        // 受信と処理
-        if let Err(e) = data_receiver(
-            frame_mode,
-            console_mode,
-            &mut rx_receiver,
-            &tx,
-            &mut rx_wtr,
-            &mut m_wtr,
-        ) {
-            if e.is_fatal() {
-                return Err(e); // エラーで致命なら終了
-            }
-            // 致命エラーが出なければ続ける (pico捜索から)
-            if let DigimaticError::Comm(crate::errors::CommError::Timeout) = e {
-                // ここは何もしない
-            } else {
-                eprintln!("エラーが出ましたが，そのまま続行します: {}", e);
-            }
-            continue;
-        }
-    }
 }
 
 ///
@@ -107,42 +31,42 @@ pub fn create_log_writer(path: &str) -> Result<Writer<File>, CommError> {
     Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }
 
-fn data_receiver(
-    frame_mode: FrameFormat,
-    console_mode: ConsoleMode,
-    rx_receiver: &mut CdcReceiver,
-    tx: &std::sync::mpsc::Sender<Measurement>,
-    rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
-    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
-) -> Result<(), DigimaticError> {
-    loop {
-        // raw data 取得に専念
-        // 受信データがstr/binを問わず cdc receiverはVec<u8>を返してくる
-        let raw_data = match rx_receiver.read_measurement() {
-            Ok(data) => data,
-            // timeoutは無視
-            Err(DigimaticError::Comm(crate::errors::CommError::Timeout)) => continue,
-            // 上記以外は致命扱いで上位へエラー上げる
-            Err(e) => return Err(e),
-        };
+// fn data_receiver(
+//     frame_mode: FrameFormat,
+//     console_mode: ConsoleMode,
+//     rx_receiver: &mut CdcReceiver,
+//     tx: &std::sync::mpsc::Sender<Measurement>,
+//     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
+//     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
+// ) -> Result<(), DigimaticError> {
+//     loop {
+//         // raw data 取得に専念
+//         // 受信データがstr/binを問わず cdc receiverはVec<u8>を返してくる
+//         let raw_data = match rx_receiver.read_measurement() {
+//             Ok(data) => data,
+//             // timeoutは無視
+//             Err(DigimaticError::Comm(crate::errors::CommError::Timeout)) => continue,
+//             // 上記以外は致命扱いで上位へエラー上げる
+//             Err(e) => return Err(e),
+//         };
 
-        // データをハンドラに投げる ここでは投げるだけで処理・解釈等は行わない
-        // 生ログ保存
-        if let Err(e) = handle_received_data(
-            &raw_data,
-            rx_wtr,
-            m_wtr,
-            &Some(tx.clone()),
-            frame_mode,
-            console_mode,
-        ) {
-            if e.is_fatal() {
-                return Err(e);
-            }
-            eprintln!("[Warning] data process error (Log saved) : {}", e);
-        }
-    }
-}
+//         // データをハンドラに投げる ここでは投げるだけで処理・解釈等は行わない
+//         // 生ログ保存
+//         if let Err(e) = handle_received_data(
+//             &raw_data,
+//             rx_wtr,
+//             m_wtr,
+//             &Some(tx.clone()),
+//             frame_mode,
+//             console_mode,
+//         ) {
+//             if e.is_fatal() {
+//                 return Err(e);
+//             }
+//             eprintln!("[Warning] data process error (Log saved) : {}", e);
+//         }
+//     }
+// }
 
 /// 受信データに対する「保存・パース・送信」の共通ハンドラ
 pub fn handle_received_data(
