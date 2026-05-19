@@ -3,27 +3,8 @@
 
 // args.rs
 
+use crate::config::{AppConfig, DataSource, UiMode};
 use crate::errors::{ArgumentError, DigimaticError};
-use crate::logger::ConsoleMode;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DataSource {
-    Sim,
-    Actual,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UiMode {
-    Cli,
-    Gui,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct AppConfig {
-    pub source: DataSource,
-    pub ui: UiMode,
-    pub console_mode: ConsoleMode,
-}
 
 #[derive(Debug)]
 enum Token {
@@ -64,14 +45,8 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
     let source = source.ok_or(invalid_usage())?;
     let ui = ui.ok_or(invalid_usage())?;
 
-    Ok(AppConfig {
-        source,
-        ui,
-        console_mode: match ui {
-            UiMode::Gui => ConsoleMode::Silent,
-            UiMode::Cli => ConsoleMode::Verbose,
-        },
-    })
+    // config.rs の builder 呼び出し
+    Ok(crate::config::AppConfig::build(source, ui))
 }
 
 fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {

@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use crate::communicator::CdcReceiver;
 use crate::communicator::MeasurementRead;
+use crate::config::ConsoleMode;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement};
 use crate::logger::*;
