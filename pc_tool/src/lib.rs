@@ -4,6 +4,7 @@
 
 pub mod args;
 pub mod communicator;
+pub mod config;
 pub mod errors;
 pub mod execute_communicate;
 pub mod frame;
