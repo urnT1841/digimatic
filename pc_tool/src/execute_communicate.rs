@@ -107,17 +107,6 @@ pub fn create_log_writer(path: &str) -> Result<Writer<File>, CommError> {
     Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }
 
-///
-/// portのpathを受け取って Open する
-///
-fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> {
-    let port = serialport::new(path, 115200)
-        .timeout(Duration::from_millis(100))
-        .open()?;
-
-    Ok(port)
-}
-
 fn data_receiver(
     frame_mode: FrameFormat,
     console_mode: ConsoleMode,
