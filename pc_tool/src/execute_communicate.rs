@@ -31,43 +31,6 @@ pub fn create_log_writer(path: &str) -> Result<Writer<File>, CommError> {
     Ok(WriterBuilder::new().has_headers(false).from_writer(file))
 }
 
-// fn data_receiver(
-//     frame_mode: FrameFormat,
-//     console_mode: ConsoleMode,
-//     rx_receiver: &mut CdcReceiver,
-//     tx: &std::sync::mpsc::Sender<Measurement>,
-//     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
-//     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
-// ) -> Result<(), DigimaticError> {
-//     loop {
-//         // raw data 取得に専念
-//         // 受信データがstr/binを問わず cdc receiverはVec<u8>を返してくる
-//         let raw_data = match rx_receiver.read_measurement() {
-//             Ok(data) => data,
-//             // timeoutは無視
-//             Err(DigimaticError::Comm(crate::errors::CommError::Timeout)) => continue,
-//             // 上記以外は致命扱いで上位へエラー上げる
-//             Err(e) => return Err(e),
-//         };
-
-//         // データをハンドラに投げる ここでは投げるだけで処理・解釈等は行わない
-//         // 生ログ保存
-//         if let Err(e) = handle_received_data(
-//             &raw_data,
-//             rx_wtr,
-//             m_wtr,
-//             &Some(tx.clone()),
-//             frame_mode,
-//             console_mode,
-//         ) {
-//             if e.is_fatal() {
-//                 return Err(e);
-//             }
-//             eprintln!("[Warning] data process error (Log saved) : {}", e);
-//         }
-//     }
-// }
-
 /// 受信データに対する「保存・パース・送信」の共通ハンドラ
 pub fn handle_received_data(
     raw_data: &[u8],
