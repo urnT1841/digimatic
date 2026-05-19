@@ -1,26 +1,10 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
+use crate::config::GuiConfig;
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
 use crate::presentation::format_with_display_unit;
-//設定用構造体
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct GuiConfig {
-    pub display_unit: Unit,
-    pub font_size: f32,
-    pub dark_mode: bool,
-}
-
-impl Default for GuiConfig {
-    fn default() -> Self {
-        Self {
-            display_unit: Unit::Mm,
-            font_size: 24.0,
-            dark_mode: true,
-        }
-    }
-}
 
 struct DisplayApp {
     measurement_data: Measurement,

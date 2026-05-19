@@ -3,13 +3,12 @@
 
 use std::sync::mpsc;
 
-use crate::args::{AppConfig, DataSource, UiMode};
 use crate::communicator::{CdcReceiver, MeasurementRead, SimReceiver};
+use crate::config::{AppConfig, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
 use crate::execute_communicate;
 use crate::execute_communicate::handle_received_data;
 use crate::frame::Measurement;
-use crate::logger::ConsoleMode;
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
