@@ -5,60 +5,8 @@
 //!
 
 use std::sync::mpsc::Sender;
-use std::{thread, time::Duration};
 
-use crate::errors::{CommError, DigimaticError};
-use crate::execute_communicate;
-use crate::frame::Measurement;
 use crate::sim::{frame_array_builder, generator};
-
-// ループコア
-pub fn run_simulation_core(
-    mut receiver: Box<dyn crate::communicator::MeasurementRead>,
-    mut rx_wtr: Option<csv::Writer<std::fs::File>>,
-    mut m_wtr: Option<csv::Writer<std::fs::File>>,
-    tx_gui: Option<Sender<Measurement>>,
-    console_mode: crate::logger::ConsoleMode,
-) -> Result<(), DigimaticError> {
-    const WAIT_TIME_MS: u64 = 700;
-
-    loop {
-        // 受信 (Timeoutは無視し、それ以外のエラーは上位へ)
-        let data = match receiver.read_measurement() {
-            Ok(d) if d.is_empty() => continue,
-            Ok(d) => d,
-            // タイムアウト（非致命的）は無視して次へ
-            Err(DigimaticError::Comm(CommError::Timeout)) => {
-                thread::sleep(Duration::from_millis(10));
-                continue;
-            }
-            // timeout以外
-            Err(e) => {
-                if e.is_fatal() {
-                    return Err(e); // 致命的なら上位へ報告
-                }
-                eprintln!("Non-fatal sim error: {}", e);
-                continue;
-            }
-        };
-
-        // データのパイプライン処理
-        if let Err(e) = execute_communicate::handle_received_data(
-            &data,
-            &mut rx_wtr,
-            &mut m_wtr,
-            &tx_gui,
-            crate::execute_communicate::FrameFormat::Str,
-            console_mode,
-        ) {
-            if e.is_fatal() {
-                return Err(e);
-            }
-            eprintln!("pipeline error: {e}");
-        }
-        thread::sleep(Duration::from_millis(WAIT_TIME_MS));
-    }
-}
 
 /// データ生成スレッド
 /// channel使ってreceiverに流し込む
