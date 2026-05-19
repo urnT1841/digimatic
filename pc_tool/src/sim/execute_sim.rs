@@ -18,6 +18,7 @@ pub fn run_simulation_core(
     mut rx_wtr: Option<csv::Writer<std::fs::File>>,
     mut m_wtr: Option<csv::Writer<std::fs::File>>,
     tx_gui: Option<Sender<Measurement>>,
+    console_mode: crate::logger::ConsoleMode,
 ) -> Result<(), DigimaticError> {
     const WAIT_TIME_MS: u64 = 700;
 
@@ -48,6 +49,7 @@ pub fn run_simulation_core(
             &mut m_wtr,
             &tx_gui,
             crate::execute_communicate::FrameFormat::Str,
+            console_mode,
         ) {
             if e.is_fatal() {
                 return Err(e);

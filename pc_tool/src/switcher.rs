@@ -7,9 +7,9 @@ use crate::args::{AppConfig, DataSource, UiMode};
 use crate::communicator::{CdcReceiver, MeasurementRead, SimReceiver};
 use crate::errors::DigimaticError;
 use crate::execute_communicate;
-use crate::execute_communicate::{handle_received_data, console_mode_from_tx};
+use crate::execute_communicate::handle_received_data;
 use crate::frame::Measurement;
-use crate::presentation::format_with_display_unit;
+use crate::logger::ConsoleMode;
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
@@ -40,7 +40,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
             // パイプラインを別スレッドで起動
             // inputの所有権をスレッド内に移動させる
             std::thread::spawn(move || {
-                if let Err(e) = run_pipeline(input, Some(tx_gui)) {
+                if let Err(e) = run_pipeline(input, Some(tx_gui), config.console_mode) {
                     eprintln!("[Error] Pipeline failde: {:?}", e);
                 }
             });
@@ -50,7 +50,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
         UiMode::Cli => {
             // cliの時はメインスレッドで直接パイプラン実行
             // txは不要 → Noneにしておく
-            run_pipeline(input, None)
+            run_pipeline(input, None, config.console_mode)
         }
     }
 }
@@ -59,6 +59,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
 pub fn run_pipeline(
     mut input: Box<dyn MeasurementRead>,
     tx: Option<mpsc::Sender<Measurement>>,
+    console_mode: ConsoleMode,
 ) -> Result<(), DigimaticError> {
     let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
     let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
@@ -70,6 +71,13 @@ pub fn run_pipeline(
         let data = input.read_measurement()?;
 
         // 共通ハンドラ処理
-        handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx, frame_mode)?;
+        handle_received_data(
+            &data,
+            &mut rx_wtr,
+            &mut m_wtr,
+            &tx,
+            frame_mode,
+            console_mode,
+        )?;
     }
 }

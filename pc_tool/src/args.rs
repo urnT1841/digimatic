@@ -4,6 +4,7 @@
 // args.rs
 
 use crate::errors::{ArgumentError, DigimaticError};
+use crate::logger::ConsoleMode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DataSource {
@@ -21,6 +22,7 @@ pub enum UiMode {
 pub struct AppConfig {
     pub source: DataSource,
     pub ui: UiMode,
+    pub console_mode: ConsoleMode,
 }
 
 #[derive(Debug)]
@@ -57,9 +59,18 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
         }
     }
 
+    // シャドーイング 中身を確定させる -> unwrap() 対策
+    // これをしないでOk(AppConfig) を組み立てようとしても uiがOptionのままでConsole_modeが確定できない
+    let source = source.ok_or(invalid_usage())?;
+    let ui = ui.ok_or(invalid_usage())?;
+
     Ok(AppConfig {
-        source: source.ok_or(invalid_usage())?,
-        ui: ui.ok_or(invalid_usage())?,
+        source,
+        ui,
+        console_mode: match ui {
+            UiMode::Gui => ConsoleMode::Silent,
+            UiMode::Cli => ConsoleMode::Verbose,
+        },
     })
 }
 
