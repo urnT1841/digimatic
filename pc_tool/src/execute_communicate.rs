@@ -28,6 +28,7 @@ pub enum FrameFormat {
 ///
 pub fn run_actual_loop(
     tx: std::sync::mpsc::Sender<Measurement>, // guiへデータ送るため
+    console_mode: ConsoleMode,
 ) -> Result<(), DigimaticError> {
     let frame_mode: FrameFormat = FrameFormat::Bin;
     let _ = tx; // for gui
@@ -75,7 +76,14 @@ pub fn run_actual_loop(
         let mut m_wtr = Some(create_log_writer("measurement.csv")?);
 
         // 受信と処理
-        if let Err(e) = data_receiver(frame_mode, &mut rx_receiver, &tx, &mut rx_wtr, &mut m_wtr) {
+        if let Err(e) = data_receiver(
+            frame_mode,
+            console_mode,
+            &mut rx_receiver,
+            &tx,
+            &mut rx_wtr,
+            &mut m_wtr,
+        ) {
             if e.is_fatal() {
                 return Err(e); // エラーで致命なら終了
             }
@@ -111,6 +119,7 @@ fn open_pico_port(path: &str) -> Result<Box<dyn SerialPort>, serialport::Error> 
 
 fn data_receiver(
     frame_mode: FrameFormat,
+    console_mode: ConsoleMode,
     rx_receiver: &mut CdcReceiver,
     tx: &std::sync::mpsc::Sender<Measurement>,
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
@@ -129,9 +138,14 @@ fn data_receiver(
 
         // データをハンドラに投げる ここでは投げるだけで処理・解釈等は行わない
         // 生ログ保存
-        if let Err(e) =
-            handle_received_data(&raw_data, rx_wtr, m_wtr, &Some(tx.clone()), frame_mode)
-        {
+        if let Err(e) = handle_received_data(
+            &raw_data,
+            rx_wtr,
+            m_wtr,
+            &Some(tx.clone()),
+            frame_mode,
+            console_mode,
+        ) {
             if e.is_fatal() {
                 return Err(e);
             }
@@ -147,6 +161,7 @@ pub fn handle_received_data(
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
     tx: &Option<Sender<Measurement>>,
     format: FrameFormat,
+    console_mode: ConsoleMode,
 ) -> Result<(), DigimaticError> {
     // 鑑定・解析
     let (measurement_result, raw_str_for_log) = match format {
@@ -175,9 +190,8 @@ pub fn handle_received_data(
     match measurement_result {
         Ok(m) => {
             handle_save_measurement_data(m, m_wtr, tx)?;
-            let mode = console_mode_from_tx(&tx);
             crate::logger::console_info(
-                mode,
+                console_mode,
                 format!("[Decoded]: {}", format_with_display_unit(&m, m.unit)),
             );
             Ok(())
@@ -186,7 +200,11 @@ pub fn handle_received_data(
             // 画像のエラー解消: &[u8] ではなく &str を渡す
             handle_save_raw_log(&raw_str_for_log, rx_wtr, Some(&e))?;
             // data 未定義エラー解消: raw_str_for_log を使う
-            eprintln!("[Error] Parse Failed: {} | Raw: {}", e, raw_str_for_log);
+            crate::logger::console_error(format!(
+                "[Error] Parse Failed: {} | Raw: {}",
+                e, raw_str_for_log
+            ));
+            //eprintln!("[Error] Parse Failed: {} | Raw: {}", e, raw_str_for_log);
             Err(e.into())
         }
     }
