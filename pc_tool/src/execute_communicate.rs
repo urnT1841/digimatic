@@ -250,12 +250,3 @@ fn handle_save_measurement_data(
 
     Ok(())
 }
-
-// console出力mode制御
-pub fn console_mode_from_tx<T>(tx: &Option<Sender<T>>) -> ConsoleMode {
-    if tx.is_some() {
-        ConsoleMode::Silent
-    } else {
-        ConsoleMode::Verbose
-    }
-}
