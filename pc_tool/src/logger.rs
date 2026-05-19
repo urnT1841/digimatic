@@ -89,12 +89,6 @@ fn write_csv_and_flush<T: Serialize, W: Write>(
 
 /// console output control
 
-#[derive(Debug, Clone, Copy)]
-pub enum ConsoleMode {
-    Silent,
-    Verbose,
-}
-
 //helper x3
 pub fn console_info(mode: ConsoleMode, msg: impl AsRef<str>) {
     if matches!(mode, ConsoleMode::Verbose) {
