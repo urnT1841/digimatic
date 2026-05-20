@@ -6,9 +6,8 @@ use std::sync::mpsc;
 use crate::communicator::{CdcReceiver, MeasurementRead, SimReceiver};
 use crate::config::{AppConfig, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
-use crate::execute_communicate;
-use crate::execute_communicate::handle_received_data;
 use crate::frame::Measurement;
+use crate::received_data_handler::{create_log_writer, handle_received_data};
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
@@ -27,7 +26,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
 
             Box::new(CdcReceiver::new(
                 port,
-                crate::execute_communicate::FrameFormat::Str,
+                crate::received_data_handler::FrameFormat::Str,
             ))
         }
     };
@@ -60,8 +59,8 @@ pub fn run_pipeline(
     tx: Option<mpsc::Sender<Measurement>>,
     console_mode: ConsoleMode,
 ) -> Result<(), DigimaticError> {
-    let mut rx_wtr = Some(execute_communicate::create_log_writer("rx_log.csv")?);
-    let mut m_wtr = Some(execute_communicate::create_log_writer("measurement.csv")?);
+    let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
+    let mut m_wtr = Some(create_log_writer("measurement.csv")?);
 
     let frame_mode = input.get_format();
     loop {

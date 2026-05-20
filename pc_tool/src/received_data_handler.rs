@@ -35,33 +35,18 @@ pub fn handle_received_data(
     format: FrameFormat,
     console_mode: ConsoleMode,
 ) -> Result<(), DigimaticError> {
-    // 鑑定・解析
-    let (measurement_result, raw_str_for_log) = match format {
-        FrameFormat::Str => {
-            if !raw_data.is_ascii() {
-                return Err(DigimaticError::from(FrameParseError::NonAscii));
-            }
-            let s = std::str::from_utf8(raw_data).map_err(|_| FrameParseError::NonAscii)?;
-            let trimmed = s.trim();
-            (
-                DigimaticFrame::try_from(trimmed).and_then(Measurement::try_from),
-                trimmed.to_string(), // String にして所有権を持つ
-            )
-        }
-        FrameFormat::Bin => {
-            let res = crate::parser::parse_bits(raw_data, crate::frame::BitMode::Lsb)
-                .and_then(|nibbles| DigimaticFrame::try_from(&nibbles[..]))
-                .and_then(Measurement::try_from);
-            (res, hex::encode(raw_data)) // ログ用は16進数文字列
-        }
-    };
+    //受信した生データを検証・解析
+    let (measurement_result, raw_str_for_log) = decode_raw_data(raw_data, format)?;
 
-    // ログ保存（&str が必要なので &raw_str_for_log を渡す）
+    // 生ログ保存（&str が必要なので &raw_str_for_log を渡す）
     handle_save_raw_log(&raw_str_for_log, rx_wtr, None)?;
 
+    // 計測データとGUIへのデータ送信
     match measurement_result {
         Ok(m) => {
-            handle_save_measurement_data(m, m_wtr, tx)?;
+            save_measurement_to_csv(&m, m_wtr)?;
+            push_measurement_to_gui(&m, tx)?;
+
             crate::logger::console_info(
                 console_mode,
                 format!("[Decoded]: {}", format_with_display_unit(&m, m.unit)),
@@ -69,17 +54,47 @@ pub fn handle_received_data(
             Ok(())
         }
         Err(e) => {
-            // 画像のエラー解消: &[u8] ではなく &str を渡す
             handle_save_raw_log(&raw_str_for_log, rx_wtr, Some(&e))?;
             // data 未定義エラー解消: raw_str_for_log を使う
             crate::logger::console_error(format!(
                 "[Error] Parse Failed: {} | Raw: {}",
                 e, raw_str_for_log
             ));
-            //eprintln!("[Error] Parse Failed: {} | Raw: {}", e, raw_str_for_log);
             Err(e.into())
         }
     }
+}
+
+//生データ解釈
+fn decode_raw_data(
+    raw_data: &[u8],
+    format: FrameFormat,
+) -> Result<(Result<Measurement, FrameParseError>, String), DigimaticError> {
+    let pair = match format {
+        FrameFormat::Str => {
+            // 1. 鑑定 (バリデーション)
+            if !raw_data.is_ascii() {
+                return Err(DigimaticError::from(FrameParseError::NonAscii));
+            }
+            let s = std::str::from_utf8(raw_data).map_err(|_| FrameParseError::NonAscii)?;
+            let trimmed = s.trim();
+
+            // 2. 解析
+            (
+                DigimaticFrame::try_from(trimmed).and_then(Measurement::try_from),
+                trimmed.to_string(),
+            )
+        }
+        FrameFormat::Bin => {
+            // バイナリ版の解析
+            let res = crate::parser::parse_bits(raw_data, crate::frame::BitMode::Lsb)
+                .and_then(|nibbles| DigimaticFrame::try_from(&nibbles[..]))
+                .and_then(Measurement::try_from);
+            (res, hex::encode(raw_data))
+        }
+    };
+
+    Ok(pair)
 }
 
 /// 生データ保存
@@ -101,16 +116,22 @@ fn handle_save_raw_log(
     Ok(())
 }
 
-/// 計測値保存 + GUIへのデータ送信 (txに流し込み))
-fn handle_save_measurement_data(
-    m: Measurement,
+// 計測値保存
+fn save_measurement_to_csv(
+    m: &Measurement,
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
-    tx: &Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
     if let Some(w) = m_wtr {
         MeasurementLog::new(m.to_f64()).save(w)?;
     }
+    Ok(())
+}
 
+// GUIへのデータ送信
+fn push_measurement_to_gui(
+    m: &Measurement,
+    tx: &Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
     if let Some(t) = tx {
         t.send(m.clone()).map_err(|_| {
             DigimaticError::System(crate::errors::SystemError {
@@ -119,6 +140,5 @@ fn handle_save_measurement_data(
             })
         })?;
     }
-
     Ok(())
 }
