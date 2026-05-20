@@ -1,3 +1,9 @@
+//! # Digimatic Application Binary
+//!
+//! This is the entry point for the executable.
+//! For the core logic, system architecture, and data flow documentation,
+//! please refer to the [`digimatic`] library crate root.
+//!
 //! main.rs
 //!
 //! entry point -> switcher
