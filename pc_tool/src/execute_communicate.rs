@@ -101,16 +101,22 @@ fn handle_save_raw_log(
     Ok(())
 }
 
-/// 計測値保存 + GUIへのデータ送信 (txに流し込み))
-fn handle_save_measurement_data(
-    m: Measurement,
+// 計測値保存
+pub fn save_measurement_to_csv(
+    m: &Measurement,
     m_wtr: &mut Option<csv::Writer<std::fs::File>>,
-    tx: &Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
     if let Some(w) = m_wtr {
         MeasurementLog::new(m.to_f64()).save(w)?;
     }
+    Ok(())
+}
 
+// GUIへのデータ送信
+fn push_measurement_to_gui(
+    m: &Measurement,
+    tx: &Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
     if let Some(t) = tx {
         t.send(m.clone()).map_err(|_| {
             DigimaticError::System(crate::errors::SystemError {
@@ -119,6 +125,16 @@ fn handle_save_measurement_data(
             })
         })?;
     }
+    Ok(())
+}
 
+/// 計測値保存 + GUIへのデータ送信 (txに流し込み))
+fn handle_save_measurement_data(
+    m: Measurement,
+    m_wtr: &mut Option<csv::Writer<std::fs::File>>,
+    tx: &Option<Sender<Measurement>>,
+) -> Result<(), DigimaticError> {
+    save_measurement_to_csv(&m, m_wtr)?;
+    push_measurement_to_gui(&m, tx)?;
     Ok(())
 }
