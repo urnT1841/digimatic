@@ -10,8 +10,8 @@ use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
 use crate::errors::{CommError, DigimaticError, FrameParseError};
-use crate::execute_communicate::FrameFormat;
 use crate::frame::FRAME_LENGTH;
+use crate::received_data_handler::FrameFormat;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
