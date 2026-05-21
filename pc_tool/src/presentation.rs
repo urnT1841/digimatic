@@ -3,7 +3,7 @@
 
 use crate::frame::{Measurement, Unit};
 
-/// 共通整形ルール 見せる必要ないので pubにしない
+/// 内部用の共通整形ロジック
 fn format_logic(val: f64, unit: Unit, precision: usize) -> String {
     let unit_str = match unit {
         Unit::Mm => "mm",

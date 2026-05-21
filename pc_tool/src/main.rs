@@ -11,7 +11,7 @@
 use digimatic::{args, switcher};
 
 fn main() {
-    // 引数解析はswitcher側に委譲する
+    // 引数解析モジュールからアプリケーション設定を取得
     let mode = args::parse_args().unwrap_or_else(|e| {
         eprintln!("引数エラー: {}", e);
         std::process::exit(1);
@@ -19,7 +19,7 @@ fn main() {
 
     // switcherへ
     if let Err(e) = switcher::run(mode) {
-        //  全体で起きたエラーの最終処理
+        //  App全体で起きたエラーの最終処理
         eprintln!("【システム停止】原因: {}", e);
         std::process::exit(1);
     }
