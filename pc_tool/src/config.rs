@@ -1,5 +1,5 @@
 //! config.rs
-//! アプリケーション全体のぜっていと動作ポリシーの管理
+//! アプリケーション全体の設定と動作ポリシーの管理
 
 use crate::frame::Unit;
 
@@ -13,7 +13,7 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    /// 引数解析結果からアプリのどーさ設定を組み立てる
+    /// 引数解析結果からアプリの動作設定
     pub fn build(source: DataSource, ui: UiMode) -> Self {
         let console_mode = match ui {
             UiMode::Gui => ConsoleMode::Silent,
@@ -41,7 +41,7 @@ pub enum UiMode {
     Gui,
 }
 
-/// GUIの表示，スタイル関する設定
+/// GUIの表示，スタイル設定
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GuiConfig {
     pub display_unit: Unit,

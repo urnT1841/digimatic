@@ -195,7 +195,7 @@ mod tests {
     }
 
     #[test]
-    fn except_illigal_length_nibbles() {
+    fn expect_illegal_length_nibbles() {
         let nibbles = [
             0x0F, 0x0F, 0x0F, 0x0F, // header
             0x00, // sign

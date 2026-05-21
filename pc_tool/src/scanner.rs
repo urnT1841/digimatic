@@ -49,7 +49,7 @@ mod tests {
             }
             Err(e) => {
                 panic!(
-                    "\n✖ Pico not found! Check connectino or VDI/PID. Error {} ",
+                    "\n✖ Pico not found! Check connection or VID/PID. Error {} ",
                     e
                 );
             }

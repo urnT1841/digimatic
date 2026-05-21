@@ -69,7 +69,7 @@ impl MeasurementLog {
     }
 }
 
-// IO(CSV書き込み+Flush)を共通化
+// I/O (CSV書き込み+Flush)を共通化
 fn write_csv_and_flush<T: Serialize, W: Write>(
     wtr: &mut csv::Writer<W>,
     value: &T,
@@ -88,8 +88,7 @@ fn write_csv_and_flush<T: Serialize, W: Write>(
 }
 
 /// console output control
-
-//helper x3
+/// helpers
 pub fn console_info(mode: ConsoleMode, msg: impl AsRef<str>) {
     if matches!(mode, ConsoleMode::Verbose) {
         println!("[INFO] {}", msg.as_ref());

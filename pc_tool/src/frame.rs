@@ -1,13 +1,13 @@
 //!
 //! frame.rs
 //!
-//! デジマチックのデータフォーマット用の定数や構造体
+//! デジマチックの  データフォーマット用の定数や構造体
 //!
 //!
 
 use crate::errors::FrameParseError;
 
-// デジマッチック データフレームの位置
+// デジマチック データフレームの位置
 // インデックスだとずれるので
 pub const D1: usize = 0; // header
 pub const D2: usize = 1; // header
@@ -107,7 +107,7 @@ pub struct Measurement {
     pub val: u32,             // デジマチックフレームの D4-D11
     pub sign: Sign,           // 符号
     pub point: PointPosition, // 小数点位置
-    pub unit: Unit,           // 測定値単位 mm ,r inch (ただmmしか使わない
+    pub unit: Unit,           // 測定値単位 mm ,inch (ただmmしか使わない)
 }
 
 // 初期化 (コンストラクタ)

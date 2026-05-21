@@ -10,7 +10,7 @@ use crate::sim::{frame_array_builder, generator};
 
 /// データ生成スレッド
 /// channel使ってreceiverに流し込む
-pub fn start_geerator_thread(tx: Sender<String>) {
+pub fn start_generator_thread(tx: Sender<String>) {
     std::thread::spawn(move || {
         loop {
             let val = generator::generator();
