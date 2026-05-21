@@ -110,11 +110,11 @@ mod tests {
 
     #[test]
     fn test_duplicate_detection() {
-        // 1. sourceの重複を検知できるか
+        // sourceの重複を検知できるか
         let args_dup_source = vec!["sim".to_string(), "actual".to_string()];
         assert!(parse_from_tokens(args_dup_source).is_err());
 
-        // 2. uiの重複を検知できるか
+        // uiの重複を検知できるか
         let args_dup_ui = vec!["gui".to_string(), "cli".to_string()];
         assert!(parse_from_tokens(args_dup_ui).is_err());
     }
