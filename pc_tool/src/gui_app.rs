@@ -23,7 +23,7 @@ impl DisplayApp {
         Self::setup_custom_fonts(&cc.egui_ctx);
 
         Self {
-            measurement_data: Measurement::dummy(), // 将来にraw_dataの扱いが変わる見込みなので dummy() で
+            measurement_data: Measurement::dummy(), // 将来的にraw_dataの扱いが変わる見込みなので dummy() で
             receiver: rx,
             config: GuiConfig::default(),
         }
@@ -62,7 +62,7 @@ impl eframe::App for DisplayApp {
             ui.vertical_centered(|ui| {
                 ui.add_space(20.0);
 
-                // --- 2. 単位切り替えボタンの配置 ---
+                // 単位切り替えボタンの配置
                 ui.horizontal(|ui| {
                     ui.label("Unit:");
                     // セレクトボックス風のラジオボタン。現在の設定と一致するかで判定
@@ -72,7 +72,7 @@ impl eframe::App for DisplayApp {
 
                 ui.add_space(10.0);
 
-                // --- 3. 変換した値の表示 ---
+                // 変換した値の表示
                 // 実装した get_display_value を呼び出す
                 let display_val =
                     format_with_display_unit(&self.measurement_data, self.config.display_unit);
@@ -90,7 +90,7 @@ impl eframe::App for DisplayApp {
     }
 }
 
-// switcher から呼ばれる公開エントリポイント
+// switcher から呼ばれる公開エントリーポイント
 pub fn launch_display(rx: Receiver<Measurement>) -> Result<(), DigimaticError> {
     gui_run(rx)?;
     Ok(())

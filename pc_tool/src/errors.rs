@@ -19,7 +19,7 @@ pub enum CommError {
     #[error("connection closed")]
     ConnectionClosed,
 
-    #[error("connection Timeout")]
+    #[error("connection timeout")]
     Timeout,
 }
 
