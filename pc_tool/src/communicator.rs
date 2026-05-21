@@ -17,7 +17,7 @@ use crate::received_data_handler::FrameFormat;
 pub enum StopCode {
     Normal,      // 正常
     Stop,        //
-    TimeOut,     // 既定の時間Picoが見つからなかった
+    Timeout,     // 既定の時間Picoが見つからなかった
     HWInterrupt, // 外部の停止ボタン
     HWIssue,     // Picoがノギスを見失ったなど(ノギス取り外したとか)
     UserForce,   // Ctrl-c  (これ捕まえられるの?)
@@ -78,7 +78,7 @@ pub trait MeasurementRead: Send {
     fn get_format(&self) -> FrameFormat;
 }
 
-// CdcRPeceiver にトレイトを適用
+// CdcReceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
     fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
         self.read_raw_frame()
@@ -128,7 +128,7 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
         let elapsed = start_time.elapsed();
 
         if elapsed > MAX_WAIT_DURATION {
-            return Err(StopCode::TimeOut);
+            return Err(StopCode::Timeout);
         }
         print!("\rpicoを探しています。{}秒 ", elapsed.as_secs());
         std::io::Write::flush(&mut std::io::stdout()).unwrap();

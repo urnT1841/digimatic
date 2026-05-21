@@ -55,7 +55,6 @@ pub fn handle_received_data(
         }
         Err(e) => {
             handle_save_raw_log(&raw_str_for_log, rx_wtr, Some(&e))?;
-            // data 未定義エラー解消: raw_str_for_log を使う
             crate::logger::console_error(format!(
                 "[Error] Parse Failed: {} | Raw: {}",
                 e, raw_str_for_log
@@ -72,14 +71,14 @@ fn decode_raw_data(
 ) -> Result<(Result<Measurement, FrameParseError>, String), DigimaticError> {
     let pair = match format {
         FrameFormat::Str => {
-            // 1. 鑑定 (バリデーション)
+            // バリデーション
             if !raw_data.is_ascii() {
                 return Err(DigimaticError::from(FrameParseError::NonAscii));
             }
             let s = std::str::from_utf8(raw_data).map_err(|_| FrameParseError::NonAscii)?;
             let trimmed = s.trim();
 
-            // 2. 解析
+            // 文字列解析
             (
                 DigimaticFrame::try_from(trimmed).and_then(Measurement::try_from),
                 trimmed.to_string(),
