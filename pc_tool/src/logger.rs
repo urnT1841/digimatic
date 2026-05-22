@@ -32,6 +32,8 @@ impl RxDataLog {
     }
 
     /// バイナリデータのコンストラクタ
+    /// 現在 unused の ワーニングが出ている (が，バイナリも受けるようにしていたつもりなのにおかしい)
+    /// とりあえず残しておいてあとで追いかける。
     pub fn new_bin(raw: &[u8]) -> Self {
         Self {
             timestamp: Local::now().to_rfc3339(),
@@ -95,6 +97,7 @@ pub fn console_info(mode: ConsoleMode, msg: impl AsRef<str>) {
     }
 }
 
+#[allow(dead_code)]
 pub fn console_warn(msg: impl AsRef<str>) {
     eprintln!("[WARN] {}", msg.as_ref());
 }
