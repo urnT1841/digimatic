@@ -6,6 +6,11 @@
 //!  返値：PortPair構造体
 //!
 
+// 今このモジュールは mpscに移行して未使用状態
+// ただし将来改めて仮想ポートへの流し込みは行いたいので残しておく
+// ということでコンパイラ，アナライザが使ってないとうるさいので dead_code しておく
+#![allow(dead_code)]
+
 use crate::errors::CommError;
 use serialport::SerialPort;
 use std::process::{Child, Command};
