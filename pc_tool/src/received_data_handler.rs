@@ -38,8 +38,8 @@ pub fn handle_received_data(
     //受信した生データを検証・解析
     let (measurement_result, raw_str_for_log) = decode_raw_data(raw_data, format)?;
 
-    // 生ログ保存（&str が必要なので &raw_str_for_log を渡す）
-    handle_save_raw_log(&raw_str_for_log, rx_wtr, None)?;
+    // 生ログ保存
+    handle_save_raw_log(&raw_data, format, rx_wtr, None)?;
 
     // 計測データとGUIへのデータ送信
     match measurement_result {
@@ -54,7 +54,7 @@ pub fn handle_received_data(
             Ok(())
         }
         Err(e) => {
-            handle_save_raw_log(&raw_str_for_log, rx_wtr, Some(&e))?;
+            handle_save_raw_log(&raw_data, format, rx_wtr, Some(&e))?;
             crate::logger::console_error(format!(
                 "[Error] Parse Failed: {} | Raw: {}",
                 e, raw_str_for_log
@@ -98,11 +98,19 @@ fn decode_raw_data(
 
 /// 生データ保存
 fn handle_save_raw_log(
-    data: &str,
+    raw_data: &[u8],
+    format: FrameFormat,
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
     err: Option<&FrameParseError>,
 ) -> Result<(), DigimaticError> {
-    let mut rx_log = RxDataLog::new_str(data);
+    // 受信した str / bin により適切な構造体を生成
+    let mut rx_log = match format {
+        FrameFormat::Str => {
+            let s = std::str::from_utf8(raw_data).unwrap_or("");
+            RxDataLog::new_str(s.trim())
+        }
+        FrameFormat::Bin => RxDataLog::new_bin(raw_data),
+    };
 
     if let Some(e) = err {
         rx_log.error_log = Some(e.clone());
@@ -140,4 +148,55 @@ fn push_measurement_to_gui(
         })?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::received_data_handler::FrameFormat;
+    use std::fs;
+
+    #[test]
+    fn test_handle_save_raw_log_binary_hex_roundtrip() {
+        // 1. テスト用の生バイナリデータを用意
+        let dummy_raw_bytes = vec![0x00, 0x11, 0x22, 0x33, 0xAA, 0xBB, 0xCC];
+
+        // 2. プロジェクトルート直下にテスト用ファイルを指定
+        let test_file_path = "test_rx_binary_raw.csv";
+
+        // 前回の残骸があれば削除
+        if std::path::Path::new(test_file_path).exists() {
+            let _ = fs::remove_file(test_file_path);
+        }
+
+        {
+            // 本番と全く同じ `Writer<File>` をルート直下に生成！
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(test_file_path)
+                .unwrap();
+            let wtr = csv::WriterBuilder::new()
+                .has_headers(false)
+                .from_writer(file);
+
+            // 今回修正した関数を呼び出す（Windowsでも100%確実に通ります）
+            handle_save_raw_log(&dummy_raw_bytes, FrameFormat::Bin, &mut Some(wtr), None).unwrap();
+        } // ここでファイルが完全にクローズ
+
+        // 3. 書き出されたファイルを読み込んで検証
+        let csv_string = fs::read_to_string(test_file_path).unwrap();
+
+        // 後始末（テスト用ファイルを綺麗に削除）
+        let _ = fs::remove_file(test_file_path);
+
+        // 🌟 検証：生バイナリがちゃんと「16進数文字列」になってCSVに刻まれているか！
+        let expected_hex = hex::encode(&dummy_raw_bytes);
+
+        assert!(
+            csv_string.contains(&expected_hex),
+            "CSVに出力されたログに、正しい16進数文字列が含まれていません！ 出力: {}",
+            csv_string
+        );
+    }
 }
