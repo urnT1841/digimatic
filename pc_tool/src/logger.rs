@@ -32,8 +32,6 @@ impl RxDataLog {
     }
 
     /// バイナリデータのコンストラクタ
-    /// 現在 unused の ワーニングが出ている (が，バイナリも受けるようにしていたつもりなのにおかしい)
-    /// とりあえず残しておいてあとで追いかける。
     pub fn new_bin(raw: &[u8]) -> Self {
         Self {
             timestamp: Local::now().to_rfc3339(),
