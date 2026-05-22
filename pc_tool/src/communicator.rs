@@ -13,6 +13,9 @@ use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::FRAME_LENGTH;
 use crate::received_data_handler::FrameFormat;
 
+// PC側からのコード送出は未実装
+// 一部(timeoutは使用しているが他は未使用)
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StopCode {
     Normal,      // 正常

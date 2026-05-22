@@ -77,15 +77,16 @@
 //!
 
 pub mod args;
-pub mod communicator;
 pub mod config;
 pub mod errors;
-pub mod frame;
 pub mod gui_app;
-pub mod logger;
-pub mod parser;
-pub mod presentation;
-pub mod received_data_handler;
-pub mod scanner;
-pub mod sim;
 pub mod switcher;
+
+pub(crate) mod communicator;
+pub(crate) mod frame;
+pub(crate) mod logger;
+pub(crate) mod parser;
+pub(crate) mod presentation;
+pub(crate) mod received_data_handler;
+pub(crate) mod scanner;
+pub(crate) mod sim;

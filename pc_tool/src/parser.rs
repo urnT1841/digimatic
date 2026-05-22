@@ -94,6 +94,7 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
 /// DigimaticFrame化により本体用途では不要
 /// デバッグ時のbin→文字列確認用
 #[cfg(debug_assertions)]
+#[allow(dead_code)]
 pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {
         return Err(FrameParseError::IncompleteNibble(nibbles.len()));
@@ -105,6 +106,9 @@ pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
 }
 
 /// ニブル値(u8) → ASCII16進文字
+/// この関数は直上の decode_frame() から呼ばれるが これがdead_codeなのでこっちにもつけておく
+#[cfg(debug_assertions)]
+#[allow(dead_code)]
 fn nibble_to_char(v: u8) -> Result<char, FrameParseError> {
     match v {
         0x00..=0x09 => Ok((b'0' + v) as char),
