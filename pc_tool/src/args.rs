@@ -12,9 +12,14 @@ enum Token {
     Ui(UiMode),
 }
 
+/// API窓口：環境から生の引数を集めてコアロジックへ流す
 pub fn parse_args() -> Result<AppConfig, DigimaticError> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    parse_from_tokens(args)
+}
 
+fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
+    //今は引数を2つセットで要求 (cli or gui), (actual or sim)
     if args.len() != 2 {
         return Err(invalid_usage());
     }
@@ -51,18 +56,13 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
 
 fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
     let normalized = arg.to_lowercase();
-
     let normalized = normalized.trim_start_matches('-');
 
     match normalized {
         "sim" | "s" => Ok(Token::Source(DataSource::Sim)),
-
         "actual" | "a" => Ok(Token::Source(DataSource::Actual)),
-
         "gui" | "g" => Ok(Token::Ui(UiMode::Gui)),
-
         "cli" | "c" => Ok(Token::Ui(UiMode::Cli)),
-
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
             format!("不正な引数です: {}", arg),
         ))),
@@ -110,8 +110,22 @@ mod tests {
 
     #[test]
     fn test_duplicate_detection() {
-        let args = vec!["sim".to_string(), "sim".to_string()];
+        // sourceの重複を検知できるか
+        let args_dup_source = vec!["sim".to_string(), "actual".to_string()];
+        assert!(parse_from_tokens(args_dup_source).is_err());
 
-        // parse_args相当のロジックを切り出すのが本筋だが，今はいいや
+        // uiの重複を検知できるか
+        let args_dup_ui = vec!["gui".to_string(), "cli".to_string()];
+        assert!(parse_from_tokens(args_dup_ui).is_err());
+    }
+
+    #[test]
+    fn test_parse_success_combinations() {
+        // 順序が逆（gui sim）でも正しく設定を組み立てられるか検証
+        let args = vec!["gui".to_string(), "sim".to_string()];
+        let config = parse_from_tokens(args).unwrap();
+
+        assert_eq!(config.source, DataSource::Sim);
+        assert_eq!(config.ui, UiMode::Gui);
     }
 }
