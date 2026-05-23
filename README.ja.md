@@ -1,65 +1,194 @@
-# これは何?
-これはミツトヨのデジタルキャリパーからの出力をPCで受けられるようにするツールです。
-ノギスからの信号は RaspberryPi Pico (実際は seeed RP2040) が受けて PCに送ります。
-PC側は Rust ，ノギス→PCへの間に raspberryPi Pico (実際にはXiao RP2040) です。
+# Mitutoyo Digital Caliper to PC Interface (SPC)
 
-ノギス
-  →
-レベルシフタ(SN74LXC8T245PWR) をDip化
-  →
-RP Pico
-   → 
-PC (Linux / Windows)
+*[English version](README.md)*
 
+Raspberry Pi Pico と Rust ベースの PC パイプラインを使用して、ミツトヨ製デジタルノギスからの測定データのキャプチャ、デコード、およびログ記録を行います。
+
+---
+
+## ✨ Overview (概要)
+
+本プロジェクトは、ミツトヨ製ノギスからデジマチック（Digimatic）データを受信し、PC で処理する計測システムです。
 
 
-## 現状
-今の段階：
-  - Simとして動きます (socatを使うのでLinux用)
-      + ノギスの測定データ(ぽいものを生成)
-      + ミツトヨ仕様に準じたフレーム文字列を生成
-      + 送受信用にそれぞれ仮想ポートを生成
-      + ポートを介してデータを送受信
-      + フレームをデコードして測定値を得る
+<p align="left">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" width="230">
+</p>
 
-  - GUI表示:
-    <a href="./pc_tool/assets/DisplayWindow(windows).png">
-  <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUIモード表示" width="280">
+
+本システムは、アーキテクチャの境界を明確にし、データフローを安定させるために **v2.0.0** でリファクタリングされました。
+
+- 📡 Raspberry Pi Pico (XIAO RP2040) を介して生信号（raw signals）をキャプチャ
+- 🔄 デジマチックフレームを構造化された測定データにデコード
+- 💾 生データおよび処理済みデータをログに記録
+- 🧪 ハードウェアなしで動作する完全なシミュレーションモード
+
+---
+
+## 🧭 Architecture (v2) (アーキテクチャ)
+
+システムはレイヤーを強く意識して構築：
+
+```text
+Sim / Hardware Input
+↓
+Frame Parser (frame.rs / parser.rs)
+↓
+Measurement (core domain model)
+↓
+Presentation / Logger / GUI
+```
+
+v2 における主な変更点：
+> Measurement（測定データ）が、すべてのデコードされたデータの統一された中間表現になりました。
+
+---
+
+
+## 🎯 Who is this for? (対象となるユーザー)
+
+本プロジェクトは主に個人利用およびホビー用途を想定していますが、以下のような実用的なツールとしても機能します：
+
+- デジタルノギスからの測定データのログ記録  
+- デジマチック通信プロトコルの実験  
+- 組み込み ↔ PC 間のデータ通信の学習  
+- 低レベル信号処理のデバッグ  
+
+**通信の生データ**と**デコードされた測定値**の両方にアクセスしたい場合に特に有用です。
+
+---
+
+## 🔧 Tech Stack (技術スタック)
+
+- **PC 側:** Rust  
+- **ハードウェアインターフェース:** MicroPython (Raspberry Pi Pico / XIAO RP2040)
+
+---
+
+## 🔁 Data Flow (データフロー)
+
+`Caliper` → `Level Shifter (SN74LXC8T245PWR)` → `XIAO RP2040` → `PC (Linux / Windows)`
+
+シミュレーションモードでは、ハードウェア入力ステージが置き換えられます。
+
+---
+
+## 🚀 Features (機能)
+
+- リアルタイム測定データのキャプチャ  
+- デジマチックフレームのデコード（v2 で安定化したパーサー）
+- CSV ロギング（生データ + 処理済みデータ）およびターミナル表示  
+- CLI シミュレーションモード（ハードウェア不要）
+- GUI 可視化（egui ベース）
+- オプションのレガシー I/O サポート（隔離済み）
+- Pico への診断モードの組み込み  
+
+---
+
+## 🧪 Simulation Mode (シミュレーションモード)
+
+シミュレーターを使用することで、ハードウェアなしでパイプライン全体を実行できます。
+
+### ジェネレーターベースのシミュレーション
+- 実際のノギスに近い値（0.01mm 〜 150mm）を生成
+- 値をデジマチックフレームフォーマットに変換
+- 実際のハードウェアと同じパーサーにデータを供給
+
+### Pico シミュレーションモード
+- 模擬的なノギス測定データを生成  
+- CDC-USB（仮想シリアルポート）を介してデジマチックフレームを文字列として送信  
+
+### 注意事項
+- 仮想シリアルポートはデフォルトの経路として使用されなくなりました
+- 従来の `socat` ベースのパイプラインは `/legacy` に隔離されています
+
+---
+
+### 特徴
+- メモリ内（in-memory）ではなく、現実的な仮想シリアル通信  
+- ミツトヨの仕様に基づくフレーム生成  
+- フレームのデコードと検証  
+
+---
+
+## 🧰 Embedded (Pico) Diagnostic Mode (組み込み診断モード)
+
+GPIO やデバイスの挙動を確認するための、組み込みのインタラクティブな診断ツールです。
+
+- テキストベースのメニューインターフェース  
+- リアルタイムの GPIO モニタリング  
+- 一時的なデバイス設定  
+- ピンのトグル（反転）テスト  
+
+ターミナルで `Diag` と入力すると、このモードに移行します。
+
+> この診断モードは、スタンドアロンのデバッグツールとして十分に機能するほど豊富な機能を備えています。
+
+---
+
+## 🖥 GUI Display (Windows) (GUI 表示)
+
+Rust のデスクトップアプリケーション（egui ベース）を介して GUI を利用できます。
+
+<a href="./pc_tool/assets/DisplayWindow(windows).png">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" alt="GUI Mode Display" width="220">
 </a>
-  + このGUIモードはWindows用です。Linuxではまだ。
-    * 起動: -gui -sim オプションをつけて起動
-    * cargo run --bin digimatic -gui -sim
 
-  - ノギス実機との接続
-      + breadBord上では通信を確認 → ユニバーサル基板へ組み込み中
+- 現在は **Windows** のみ対応（Linux サポートは未定）
 
-  ‐ software
-      + Pico (micropython) : ノギスbit列受信 → PCへ送出
-      + PC (Rust) : 文字列フレーム受信 → csv記録 / ターミナル表示
-                    表示用ウィンドウへの表示 実装中
+**起動方法:**
+```bash
+cargo run --bin digimatic -- -gui -sim
+```
+
+---
+
+## 📦 Legacy System (v2) (レガシーシステム)
+
+以下のコンポーネントは、アクティブなパイプラインの一部ではなくなりました：
+
+- 仮想シリアルポート（socat ベースのトランスポート）
+- 直接的な SerialPort 送信抽象化
+
+これらは以下に保存されています：
+
+```text
+cargo run --bin digimatic -- -gui -sim
+```
+
+これらは参考用、および将来の OS レベルの I/O 再設計の可能性のために残されています。
+
+---
 
 
-## Software
-  - PC
-  - rp pico :firmware 
-              {main.py, pin_definitions.py, led_switch.py, state_process.py, 
-               decoder.py, communicator.py}
-               
-            をPicoへ転送してください。picoを再起動するとmainが起動します。
+## 🧭 Design Philosophy (v2) (設計思想)
 
+- シミュレーションとコアのパースロジックの明確な分離
+- 安定したドメインモデルとしての Measurement
+- ドメインロジックから隔離された IO レイヤー
+- 将来の拡張性を最優先
+- バイナリフレームのサポート
 
+### OS の抽象化
+- 代替トランスポートレイヤー
 
+---
 
-## ノギスとの接続に使うデバイス
-実機(デジタルノギス)との接続環境構築(電子工作)
-  - ノギスとの接続ケーブル:ミツトヨ純正平形ストレート 905338
-  - ケーブルoutput受け:ボックスヘッダ 10P 基板取付け (マルツオンライン 217010SE)
-  - データ受けマイコン:seeed XIAO-RP2040
-  - キャリパーからの信号レベルシフタ(1.5V -> 3.3V):SN74LXC8T245PWR
-  - TSSOP24 → DIP変換基板:DA-TSSOP24-P65
-  - レベルシフタへの電源供給：LDO AP2112
+## 🚀 Future Direction (v3+) (今後の方向性)
 
-## TODO
-- [ ] シリアル通信の統合: generator を CdcReceiver に差し替え、実機の数値を DisplayApp に流す。
-- [ ] 設定UIの実装: フォントサイズや色の変更を egui のウィンドウから行えるようにする。
-- [ ] 単位表示の追加: 数値の横に "mm" などの単位を添える。
+- バイナリフレームのサポート
+- トレイトベースのフレームジェネレーター抽象化
+- クロスプラットフォームな仮想ポートレイヤーの再設計
+- ログ / コンソールの統一
+- GUI / CLI プレゼンテーションレイヤーの統合
+
+---
+
+## ✅ Status (ステータス)
+
+- v2.0.0 は、安定したアーキテクチャの節目を示しています。
+- 現在のシステムは以下の通りです：
+- 構造的にレイヤー化されている
+- 隠れた IO 依存関係がない
+- ハードウェアなしで完全にシミュレーション可能
+- 将来のプロトコル拡張への準備が整っている
