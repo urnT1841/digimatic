@@ -54,7 +54,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
 }
 
 // 共通ループ
-pub fn run_pipeline(
+fn run_pipeline(
     mut input: Box<dyn MeasurementRead>,
     tx: Option<mpsc::Sender<Measurement>>,
     console_mode: ConsoleMode,
