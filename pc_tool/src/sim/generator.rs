@@ -7,7 +7,7 @@
 
 use rand::Rng;
 
-pub fn generator() -> f64 {
+pub(crate) fn generator() -> f64 {
     // 生成する値は Caliperの測定値を模して 0.01mm ~ 150.0 mm
 
     let mut rng = rand::rng();

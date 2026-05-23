@@ -95,7 +95,7 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
 /// デバッグ時のbin→文字列確認用
 #[cfg(debug_assertions)]
 #[allow(dead_code)]
-pub fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
+fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {
         return Err(FrameParseError::IncompleteNibble(nibbles.len()));
     }
@@ -291,57 +291,53 @@ mod tests {
 
         assert!(validator_bits(&nibbles).is_err());
     }
-    #[cfg(test)]
-    mod tests {
-        use super::*;
 
-        #[test]
-        fn test_string_to_nibbles_conversion() {
-            // 変換したい文字列
-            let input_str = "FFFF001257720";
+    #[test]
+    fn test_string_to_nibbles_conversion() {
+        // 変換したい文字列
+        let input_str = "FFFF001257720";
 
-            // 文字列からニブルに変換
-            let nibbles: Vec<u8> = input_str
-                .chars()
-                .map(char_to_nibble)
-                .collect::<Result<Vec<_>, FrameParseError>>()
-                .unwrap();
+        // 文字列からニブルに変換
+        let nibbles: Vec<u8> = input_str
+            .chars()
+            .map(char_to_nibble)
+            .collect::<Result<Vec<_>, FrameParseError>>()
+            .unwrap();
 
-            // 期待されるニブル値
-            let expected_nibbles: Vec<u8> = vec![
-                0xF, 0xF, 0xF, 0xF, // FFFF
-                0x0, 0x0, // 00
-                0x1, 0x2, // 12
-                0x5, 0x7, // 57
-                0x7, 0x2, // 72
-                0x0, // 0
-            ];
+        // 期待されるニブル値
+        let expected_nibbles: Vec<u8> = vec![
+            0xF, 0xF, 0xF, 0xF, // FFFF
+            0x0, 0x0, // 00
+            0x1, 0x2, // 12
+            0x5, 0x7, // 57
+            0x7, 0x2, // 72
+            0x0, // 0
+        ];
 
-            // 結果の確認
-            assert_eq!(nibbles, expected_nibbles);
-        }
+        // 結果の確認
+        assert_eq!(nibbles, expected_nibbles);
+    }
 
-        // 追加：ニブルから文字列フレームへの変換テスト
-        #[test]
-        fn test_nibbles_to_string_conversion() {
-            let nibbles: Vec<u8> = vec![
-                0xF, 0xF, 0xF, 0xF, // FFFF
-                0x0, 0x0, // 00
-                0x1, 0x2, // 12
-                0x5, 0x7, // 57
-                0x7, 0x2, // 72
-                0x0, // 0
-            ];
+    // 追加：ニブルから文字列フレームへの変換テスト
+    #[test]
+    fn test_nibbles_to_string_conversion() {
+        let nibbles: Vec<u8> = vec![
+            0xF, 0xF, 0xF, 0xF, // FFFF
+            0x0, 0x0, // 00
+            0x1, 0x2, // 12
+            0x5, 0x7, // 57
+            0x7, 0x2, // 72
+            0x0, // 0
+        ];
 
-            // ニブル列から文字列へ変換
-            let result = decode_frame(&nibbles).unwrap();
+        // ニブル列から文字列へ変換
+        let result = decode_frame(&nibbles).unwrap();
 
-            // 期待される文字列
-            let expected_str = "FFFF001257720".to_string();
+        // 期待される文字列
+        let expected_str = "FFFF001257720".to_string();
 
-            // 結果の確認
-            assert_eq!(result, expected_str);
-        }
+        // 結果の確認
+        assert_eq!(result, expected_str);
     }
 
     // 表示用 .to_f64() チェック

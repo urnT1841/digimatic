@@ -8,7 +8,7 @@ use crate::frame::*;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
 
-pub fn build_frame_array(val: f64) -> [u8; FRAME_LENGTH] {
+pub(crate) fn build_frame_array(val: f64) -> [u8; FRAME_LENGTH] {
     let mut digi_frame = [0x0Fu8; FRAME_LENGTH]; //  (0~12の13個 d1->0, d13->12)
 
     // 下記は固定なので書き換える
