@@ -8,7 +8,7 @@ use serialport::SerialPort;
 /// 送信モード
 #[cfg(debug_assertions)]
 #[allow(dead_code)]
-pub enum SendMode {
+enum SendMode {
     /// デバッグ用：単純なテキスト形式 (例: "123.45\n")
     SimpleText(f64),
     /// 本番用：デジマチック・13デジット形式 (例: "FFFF001234520\n")
@@ -32,7 +32,7 @@ fn write_to_port(packet: String, tx_p: &mut dyn SerialPort) {
 /// 外部から呼び出す窓口関数
 #[cfg(debug_assertions)]
 #[allow(dead_code)]
-pub fn send(mode: SendMode, tx_p: &mut dyn SerialPort) {
+fn send(mode: SendMode, tx_p: &mut dyn SerialPort) {
     let packet = match mode {
         SendMode::SimpleText(val) => format!("{:.2}\n", val),
 
