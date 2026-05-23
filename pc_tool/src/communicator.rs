@@ -43,7 +43,7 @@ impl CdcReceiver {
     }
 
     // データ受信
-    pub fn read_raw_frame(&mut self) -> Result<Vec<u8>, DigimaticError> {
+    fn read_raw_frame(&mut self) -> Result<Vec<u8>, DigimaticError> {
         match self.mode {
             FrameFormat::Str => {
                 let mut rx_stream = Vec::new();
