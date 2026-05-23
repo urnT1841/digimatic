@@ -39,6 +39,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "hardware test"]
     fn test_actual_pico_connection() {
         let result = find_pico_port();
 
