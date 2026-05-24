@@ -10,6 +10,7 @@ use crate::errors::{ArgumentError, DigimaticError};
 enum Token {
     Source(DataSource),
     Ui(UiMode),
+    FrameMode,
 }
 
 /// API窓口：環境から生の引数を集めてコアロジックへ流す
@@ -19,13 +20,14 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
 }
 
 fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
-    //今は引数を2つセットで要求 (cli or gui), (actual or sim)
-    if args.len() != 2 {
+    // 受信FrameがStr/Binかの指定も追加。なければStr. なので引数は2つか3つとする。
+    if args.len() < 2 || args.len() > 3 {
         return Err(invalid_usage());
     }
 
     let mut source = None;
     let mut ui = None;
+    let mut is_bin = false; // FrameFormat のモード判別用
 
     for arg in args {
         match normalize_arg(&arg)? {
@@ -42,6 +44,9 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                 }
                 ui = Some(u);
             }
+            Token::FrameMode => {
+                is_bin = true;
+            }
         }
     }
 
@@ -51,7 +56,7 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
     let ui = ui.ok_or(invalid_usage())?;
 
     // config.rs の builder 呼び出し
-    Ok(crate::config::AppConfig::build(source, ui))
+    Ok(crate::config::AppConfig::build(source, ui, is_bin))
 }
 
 fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
@@ -63,6 +68,7 @@ fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
         "actual" | "a" => Ok(Token::Source(DataSource::Actual)),
         "gui" | "g" => Ok(Token::Ui(UiMode::Gui)),
         "cli" | "c" => Ok(Token::Ui(UiMode::Cli)),
+        "bin" | "b" => Ok(Token::FrameMode),
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
             format!("不正な引数です: {}", arg),
         ))),
@@ -127,5 +133,20 @@ mod tests {
 
         assert_eq!(config.source, DataSource::Sim);
         assert_eq!(config.ui, UiMode::Gui);
+    }
+
+    #[test]
+    fn test_parse_success_with_binary_option() {
+        // 🌟 3つ目に `--bin` を指定した3面待ちの組み合わせテスト
+        let args = vec!["cli".to_string(), "actual".to_string(), "--bin".to_string()];
+        let config = parse_from_tokens(args).unwrap();
+
+        assert_eq!(config.source, DataSource::Actual);
+        assert_eq!(config.ui, UiMode::Cli);
+        // 🌟 ちゃんと Bin モードが有効になっているか検証！
+        assert!(matches!(
+            config.format,
+            crate::received_data_handler::FrameFormat::Bin
+        ));
     }
 }
