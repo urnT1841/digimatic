@@ -2,19 +2,26 @@
 //! アプリケーション全体の設定と動作ポリシーの管理
 
 use crate::frame::Unit;
+use crate::received_data_handler::FrameFormat;
 
 /// アプリケーションの全般設定
 #[derive(Debug, Clone, Copy)]
 pub struct AppConfig {
     pub source: DataSource,
     pub ui: UiMode,
+    pub format: FrameFormat,
     pub console_mode: ConsoleMode,
     pub gui_config: GuiConfig,
 }
 
 impl AppConfig {
     /// 引数解析結果からアプリの動作設定
-    pub fn build(source: DataSource, ui: UiMode) -> Self {
+    pub fn build(source: DataSource, ui: UiMode, is_bin: bool) -> Self {
+        let format = if is_bin {
+            FrameFormat::Bin
+        } else {
+            FrameFormat::Str
+        };
         let console_mode = match ui {
             UiMode::Gui => ConsoleMode::Silent,
             UiMode::Cli => ConsoleMode::Verbose,
@@ -23,6 +30,7 @@ impl AppConfig {
         Self {
             source,
             ui,
+            format,
             console_mode,
             gui_config: GuiConfig::default(),
         }
