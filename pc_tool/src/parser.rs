@@ -20,7 +20,10 @@ use crate::frame::*;
 use std::convert::TryFrom;
 
 // 物理層から来た信号フレームをnibble_makerに渡すための仲介関数
-pub fn parse_bits(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
+pub(crate) fn parse_bits(
+    bits: &[u8],
+    mode: BitMode,
+) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     nibble_maker(bits, mode)
 }
 
@@ -58,7 +61,7 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameP
 
 /// nibbles: 52要素(13ニブル×4bit)のスライス
 /// ここを通ったフレームはデジマチック仕様に沿った正規フレームになる
-pub fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
+fn validator_bits(nibbles: &[u8]) -> Result<DigimaticFrame, FrameParseError> {
     // 何はともあれ長さチェック
     if nibbles.len() != FRAME_LENGTH {
         return Err(FrameParseError::InvalidBitLength {
