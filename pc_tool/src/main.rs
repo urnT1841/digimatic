@@ -6,9 +6,9 @@
 //!
 //! main.rs
 //!
-//! entry point -> switcher
+//! entry point -> dispatcher
 
-use digimatic::{args, switcher};
+use digimatic::{args, dispatcher};
 
 fn main() {
     // 引数解析モジュールからアプリケーション設定を取得
@@ -17,8 +17,8 @@ fn main() {
         std::process::exit(1);
     });
 
-    // switcherへ
-    if let Err(e) = switcher::run(mode) {
+    // dispatcherへ
+    if let Err(e) = dispatcher::run(mode) {
         //  App全体で起きたエラーの最終処理
         eprintln!("【システム停止】原因: {}", e);
         std::process::exit(1);
