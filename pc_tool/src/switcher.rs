@@ -24,10 +24,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
 
             let port = crate::communicator::open_cdc_port(&port_path, 115200)?;
 
-            Box::new(CdcReceiver::new(
-                port,
-                crate::received_data_handler::FrameFormat::Str,
-            ))
+            Box::new(CdcReceiver::new(port, config.format))
         }
     };
 
