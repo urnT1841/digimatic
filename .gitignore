@@ -9,6 +9,9 @@
 /pc_tool/target/
 **/*.rs.bk
 
+* --- Micro Pico --
+.micropyco/
+
 # --- Python / MicroPython ---
 __pycache__/
 *.py[cod]
