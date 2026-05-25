@@ -90,7 +90,7 @@ impl eframe::App for DisplayApp {
     }
 }
 
-// switcher から呼ばれる公開エントリーポイント
+// dispatcher から呼ばれる公開エントリーポイント
 pub fn launch_display(rx: Receiver<Measurement>) -> Result<(), DigimaticError> {
     gui_run(rx)?;
     Ok(())

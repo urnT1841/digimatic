@@ -17,7 +17,7 @@
 //! [Data Source (Sim / Actual)]
 //!        │ (Raw Data: &[u8])
 //!        ▼
-//! [Common Pipeline: switcher::run_pipeline] ── (Infinitely loops to read data)
+//! [Common Pipeline: dispatcher::run_pipeline] ── (Infinitely loops to read data)
 //!        │
 //!        ▼
 //! [Received Data Handler: received_data_handler::handle_received_data] ── (Central Controller)
@@ -34,7 +34,7 @@
 //! - [`config`]: Configuration for application execution modes (GUI/CLI, data sources).
 //! - [`communicator`]: Defines serial port management and the data-reading (`MeasurementRead`) trait.
 //! - [`received_data_handler`]: The core domain engine that validates, parses, and dispatches received raw data.
-//! - [`switcher`]: The system entry point that launches the appropriate pipeline loop based on configuration.
+//! - [`dispatcher`]: The system entry point that launches the appropriate pipeline loop based on configuration.
 //! - [`frame`]: Data structures defining Digimatic frames and physical quantities (`Measurement`).
 //!
 //!
@@ -55,7 +55,7 @@
 //! [データソース (Sim / Actual)]
 //!        │ (生データ: &[u8])
 //!        ▼
-//! [共通パイプライン: switcher::run_pipeline] ── (無限ループでデータ吸い上げ)
+//! [共通パイプライン: dispatcher::run_pipeline] ── (無限ループでデータ吸い上げ)
 //!        │
 //!        ▼
 //! [受信データハンドラー: received_data_handler::handle_received_data] ── (全体の管制塔)
@@ -72,15 +72,15 @@
 //! - [`config`]: アプリケーションの起動モード（GUI/CLI、データソース）を制御する設定情報。
 //! - [`communicator`]: シリアルポートの開閉や、データの読み込み（Reader）トレイトを定義。
 //! - [`received_data_handler`]: 受信した生データの鑑定、パース、および各出力先への配送（本システムのコア）。
-//! - [`switcher`]: 起動モード（GUI/CLI）やソースに応じて、適切なパイプラインループを起動するエントリポイント。
+//! - [`dispatcher`]: 起動モード（GUI/CLI）やソースに応じて、適切なパイプラインループを起動するエントリポイント。
 //! - [`frame`]: デジマチックフレームおよび物理量（Measurement）のデータ構造の定義。
 //!
 
 pub mod args;
 pub mod config;
+pub mod dispatcher;
 pub mod errors;
 pub mod gui_app;
-pub mod switcher;
 
 pub(crate) mod communicator;
 pub(crate) mod frame;
