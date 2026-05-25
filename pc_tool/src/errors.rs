@@ -1,5 +1,21 @@
-//! Err type definitions
+//! # エラー定義
+//! errors.rs
 //!
+//! # Error Handling and Domain Exception Definitions
+//!
+//! This module defines the central error hierarchy for the Digimatic tool.
+//! It aggregates lower-level errors (such as I/O, serial communication, and frame parsing issues)
+//! into a unified, domain-specific `DigimaticError` wrapping enum to ensure type-safe,
+//! idiomatic Rust error propagation across the entire pipeline.
+//!
+//!
+//! # エラーハンドリングとドメイン例外の定義
+//!
+//! Digimatic ツールにおけるエラー階層構造を定義
+//! I/O、シリアル通信、フレーム解析などの下位レイヤーのエラーを、ドメイン固有の
+//! 統合型列挙体 `DigimaticError` に集約・カプセル化し、パイプライン全体における
+//! エラー伝播（? 演算子による伝播）を実現させる
+
 use serde::Serialize;
 use std::io;
 use thiserror::Error;

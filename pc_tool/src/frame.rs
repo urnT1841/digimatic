@@ -1,9 +1,19 @@
-//!
+//! # デジマチックの  データフォーマット用の定数や構造体
 //! frame.rs
 //!
-//! デジマチックの  データフォーマット用の定数や構造体
+//! # Measurement Frame Representation
 //!
+//! This module defines the core domain models and data structures that represent
+//! parsed measurement data within the application. It acts as a bridge between
+//! raw serial inputs and the presentation layer, holding typed values, units,
+//! and validation metadata to ensure data integrity across the entire pipeline.
 //!
+//! # 計測フレームの構造定義
+//!
+//! アプリケーション内でパースされた計測データを表現する、コアドメインモデルおよび
+//! データ構造を定義する。生のシリアル入力を、型安全な数値・単位・バリデーション
+//! メタデータを持つ構造体に変換し保持することで、下流の表示レイヤー（GUI/CLI）に対して
+//! 常に整合性の取れたデータを提供。
 
 use crate::errors::FrameParseError;
 
