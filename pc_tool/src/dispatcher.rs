@@ -23,12 +23,13 @@ use crate::received_data_handler::{create_log_writer, handle_received_data};
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
+    let frame_mode = config.format;
     let input: Box<dyn MeasurementRead> = match config.source {
         DataSource::Sim => {
             // sim用チャンネル作成 -> sim thread生成 → Box詰め
             let (tx_raw, rx_raw) = mpsc::channel();
-            crate::sim::execute_sim::start_generator_thread(tx_raw);
-            Box::new(SimReceiver::new(rx_raw))
+            crate::sim::execute_sim::start_generator_thread(tx_raw, frame_mode);
+            Box::new(SimReceiver::new(rx_raw, frame_mode))
         }
         DataSource::Actual => {
             let port_path = crate::communicator::wait_until_connection()
@@ -76,6 +77,12 @@ fn run_pipeline(
         // data受信
         // read_measurement は measurement構造体を返すので異常値は来ない
         let data = input.read_measurement()?;
+
+        println!(
+            "[DEBUG] 物理層から受信した生データ長: {} バイト (中身: {:?})",
+            data.len(),
+            data
+        );
 
         // 共通ハンドラ処理
         handle_received_data(
