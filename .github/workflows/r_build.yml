@@ -1,0 +1,63 @@
+name: Draft Release Builder
+
+# trigger：local terminalで 「v」から始まるタグ(v1.x.yなど)をプッシュしたら起動
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    # Windows、Linux、Mac(Mシリーズ対応)の3台起動
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: digimatic-linux
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: digimatic-windows.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: digimatic-macos
+
+    steps:
+      # コードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 各OS環境にRustをインストール
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # 爆速ビルドのためのキャッシュを設定 (Swatinem)
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      # 本番用バイナリのビルドを実行 (cargo build --release)
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      # 生成されたバイナリのパスを整理（Windowsだけ.exeがつくので調整）
+      - name: Prepare binary path
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv target/${{ matrix.target }}/release/digimatic.exe ./${{ matrix.artifact_name }}
+          else
+            mv target/${{ matrix.target }}/release/digimatic ./${{ matrix.artifact_name }}
+          fi
+
+      # 生成されたファイルをアタッチ
+      - name: Create Draft Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true # trueにすることで「下書き保存」
+          files: ./${{ matrix.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
