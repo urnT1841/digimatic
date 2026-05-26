@@ -1,0 +1,30 @@
+name: Rust CI
+
+# 🤖 どのタイミングでロボットを起動するか
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build_and_test:
+    name: Ubuntuでテストを実行
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. ロボットの環境にコードをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Rust の環境をセットアップする（キャッシュも効く）
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    # 3. ビルドチェック
+    - name: Cargo check
+      run: cargo check --all-targets
+
+    # 4. テストがすべて合格するか
+    - name: Run tests
+      run: cargo test --all-targets
