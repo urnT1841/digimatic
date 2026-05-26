@@ -23,12 +23,13 @@ use crate::received_data_handler::{create_log_writer, handle_received_data};
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
+    let frame_mode = config.format;
     let input: Box<dyn MeasurementRead> = match config.source {
         DataSource::Sim => {
             // sim用チャンネル作成 -> sim thread生成 → Box詰め
             let (tx_raw, rx_raw) = mpsc::channel();
-            crate::sim::execute_sim::start_generator_thread(tx_raw);
-            Box::new(SimReceiver::new(rx_raw))
+            crate::sim::execute_sim::start_generator_thread(tx_raw, frame_mode);
+            Box::new(SimReceiver::new(rx_raw, frame_mode))
         }
         DataSource::Actual => {
             let port_path = crate::communicator::wait_until_connection()

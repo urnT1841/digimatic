@@ -6,21 +6,20 @@
 
 use std::sync::mpsc::Sender;
 
-use crate::sim::{frame_builder, generator};
+use crate::received_data_handler::FrameFormat;
+use crate::sim::frame_builder::build_simurator_payload;
+use crate::sim::generator;
 
 /// データ生成スレッド
 /// channel使ってreceiverに流し込む
-pub fn start_generator_thread(tx: Sender<String>) {
+pub fn start_generator_thread(tx: Sender<Vec<u8>>, frame_mode: FrameFormat) {
     std::thread::spawn(move || {
         loop {
             let val = generator::generator();
-            let frame = frame_builder::build_frame_array(val);
-            let hex: String = frame.iter().map(|b| format!("{:X}", b)).collect();
 
-            // デコード前データ  (debug用)
-            // println!("[SIM] gen = {:.3} -> frame={:?}, HEX={:?}", val, frame, hex);
+            let sim_payload = build_simurator_payload(val, frame_mode);
 
-            if tx.send(hex).is_err() {
+            if tx.send(sim_payload).is_err() {
                 break;
             }
 
