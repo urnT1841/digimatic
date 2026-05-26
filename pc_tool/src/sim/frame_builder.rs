@@ -5,6 +5,7 @@
 //!
 
 use crate::frame::*;
+use crate::parser::nibble_to_bits;
 use crate::received_data_handler::FrameFormat;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
@@ -14,21 +15,16 @@ pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> Vec<u8> {
 
     match mode {
         FrameFormat::Str => {
-            // execute_sim で送信前にやっていた処理をここに持ってくる
+            // execute_sim でやっていた組立処理をここに持ってくる
             let hex: String = digi_frame.iter().map(|b| format!("{:x}", b)).collect();
             hex.into_bytes()
         }
         FrameFormat::Bin => {
             // 生成したニブルをlsbで並べて52bitのbit streamにする
-            let mut bit_stream = Vec::with_capacity(FRAME_LENGTH * FRAME_NIBBLES);
-
-            for &nibble in &digi_frame {
-                // LSBとして下位Bitから並べていく
-                bit_stream.push((nibble >> 0) & 1);
-                bit_stream.push((nibble >> 1) & 1);
-                bit_stream.push((nibble >> 2) & 1);
-                bit_stream.push((nibble >> 3) & 1);
-            }
+            let bit_stream: Vec<u8> = digi_frame
+                .iter()
+                .flat_map(|&n| nibble_to_bits(n, BitMode::Lsb))
+                .collect();
 
             bit_stream
         }
