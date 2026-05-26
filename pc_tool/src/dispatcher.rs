@@ -78,12 +78,6 @@ fn run_pipeline(
         // read_measurement は measurement構造体を返すので異常値は来ない
         let data = input.read_measurement()?;
 
-        println!(
-            "[DEBUG] 物理層から受信した生データ長: {} バイト (中身: {:?})",
-            data.len(),
-            data
-        );
-
         // 共通ハンドラ処理
         handle_received_data(
             &data,
