@@ -1,0 +1,41 @@
+name: Rust CI
+
+# 🤖 どのタイミングでロボットを起動するか
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build_and_test:
+    name: Ubuntuでテストを実行
+    runs-on: ubuntu-latest
+
+  # project直下に cargo.toml がないので，存在するdirを指定
+    defaults:
+      run:
+        working-directory: pc_tool
+
+
+    steps:
+    # ロボットの環境にコードをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install libudev (Linux only)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev pkg-config
+
+    # Rust の環境をセットアップする（キャッシュも効く）
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    # ビルドチェック
+    - name: Cargo check
+      run: cargo check --all-targets
+
+    # テストがすべて合格するか
+    - name: Run tests
+      run: cargo test --all-targets
