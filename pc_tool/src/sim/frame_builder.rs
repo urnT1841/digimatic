@@ -5,10 +5,33 @@
 //!
 
 use crate::frame::*;
+use crate::parser::nibble_to_bits;
+use crate::received_data_handler::FrameFormat;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
 
-pub(crate) fn build_frame_array(val: f64) -> [u8; FRAME_LENGTH] {
+pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> Vec<u8> {
+    let digi_frame = build_frame(val);
+
+    match mode {
+        FrameFormat::Str => {
+            // execute_sim でやっていた組立処理をここに持ってくる
+            let hex: String = digi_frame.iter().map(|b| format!("{:x}", b)).collect();
+            hex.into_bytes()
+        }
+        FrameFormat::Bin => {
+            // 生成したニブルをlsbで並べて52bitのbit streamにする
+            let bit_stream: Vec<u8> = digi_frame
+                .iter()
+                .flat_map(|&n| nibble_to_bits(n, BitMode::Lsb))
+                .collect();
+
+            bit_stream
+        }
+    }
+}
+
+fn build_frame(val: f64) -> [u8; FRAME_LENGTH] {
     let mut digi_frame = [0x0Fu8; FRAME_LENGTH]; //  (0~12の13個 d1->0, d13->12)
 
     // 下記は固定なので書き換える
@@ -46,7 +69,7 @@ mod tests {
     #[test]
     fn test_build_frame() {
         let val = 123.456;
-        let frame = build_frame_array(val);
+        let frame = build_frame(val);
 
         // 期待される値をチェック
         assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置 
@@ -61,7 +84,7 @@ mod tests {
     #[test]
     fn build_frame_digits() {
         let val = 123.45;
-        let frame = build_frame_array(val);
+        let frame = build_frame(val);
 
         // 12345 → [1,2,3,4,5]
         assert_eq!(frame[D6], 0);
@@ -75,7 +98,7 @@ mod tests {
     #[test]
     fn build_frame_negative() {
         let val = -12.34;
-        let frame = build_frame_array(val);
+        let frame = build_frame(val);
 
         assert_eq!(frame[D5], Sign::Minus as u8);
     }

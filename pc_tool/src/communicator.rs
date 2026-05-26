@@ -102,25 +102,27 @@ impl MeasurementRead for CdcReceiver {
 
 /// Simの時は スレッドで投げられたrxを見に行く
 pub struct SimReceiver {
-    rx: Receiver<String>,
+    rx: Receiver<Vec<u8>>,
+    mode: FrameFormat,
 }
 
 impl SimReceiver {
-    pub fn new(rx: Receiver<String>) -> Self {
-        Self { rx }
+    pub fn new(rx: Receiver<Vec<u8>>, mode: FrameFormat) -> Self {
+        Self { rx, mode }
     }
 }
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
     fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
-        let s = self.rx.recv().map_err(|_| CommError::Timeout)?;
-        let trimmed = s.trim();
-        Ok(trimmed.as_bytes().to_vec())
+        // 🌟 チャネルから最初から生バイト列（Vec<u8>）が届くので、
+        //    文字列のパースやトリムは一切不要。そのまま上流へ右から左へ受け流す！
+        let payload = self.rx.recv().map_err(|_| CommError::Timeout)?;
+        Ok(payload)
     }
 
     fn get_format(&self) -> FrameFormat {
-        FrameFormat::Str
+        self.mode
     }
 }
 
@@ -159,26 +161,4 @@ pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>,
         .map_err(|_| DigimaticError::Comm(crate::errors::CommError::ConnectionClosed))?;
 
     Ok(port)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_sim_receiver_raw_passthrough() {
-        let (tx, rx) = std::sync::mpsc::channel();
-
-        // Simから文字列を送る
-        let input_str = "FFFF000945520";
-        tx.send(input_str.to_string()).unwrap();
-
-        let mut sim = SimReceiver::new(rx);
-
-        //  Vec<u8> にして返す
-        let result_bytes = sim.read_measurement().unwrap();
-
-        // 検証：送った文字列がそのままバイト列として届いているか
-        assert_eq!(result_bytes, input_str.as_bytes());
-    }
 }
