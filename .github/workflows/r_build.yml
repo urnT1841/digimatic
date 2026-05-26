@@ -12,6 +12,11 @@ jobs:
     name: Build for ${{ matrix.os }}
     # Windows、Linux、Mac(Mシリーズ対応)の3台起動
     runs-on: ${{ matrix.os }}
+    # project直下に cargo.toml がないので，存在するdirを指定
+    defaults:
+      run:
+        working-directory: pc_tool
+
     strategy:
       matrix:
         include:
