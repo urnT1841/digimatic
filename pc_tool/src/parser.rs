@@ -19,19 +19,19 @@ use crate::errors::FrameParseError;
 use crate::frame::*;
 use std::convert::TryFrom;
 
-// 物理層から来た信号フレームをnibble_makerに渡すための仲介関数
+// 物理層から来た信号フレームをbits_to_nibbleに渡すための仲介関数
 pub(crate) fn parse_bits(
     bits: &[u8],
     mode: BitMode,
 ) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
-    nibble_maker(bits, mode)
+    bits_to_nibble(bits, mode)
 }
 
 /// 受け取ったBit列をnibbleに変換
 /// ここで生成するNibbleは msb にして以降はLSB/MSBは意識しないようにする
 /// この関数は bit列 -> nibble で中身の解釈はしない。なので長さチェックは実施するが
 /// そのあとのエラーチェックは行わない (上層のNibble解釈で実施)
-fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
+fn bits_to_nibble(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
     if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
         return Err(FrameParseError::InvalidBitLength {
             expected: (FRAME_LENGTH * FRAME_NIBBLES),
@@ -57,6 +57,17 @@ fn nibble_maker(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameP
             .fold(0, |acc, (&b, s)| acc | ((b & LSB_MASK) << s));
     }
     Ok(out)
+}
+
+/// nibble をビット列に変換  (Simのバイナリモード実装に合わせて追加)
+/// Mode指定でビット並びをMsb/Lsbで生成できる
+pub(crate) fn nibble_to_bits(nibble: u8, mode: BitMode) -> [u8; 4] {
+    let shifts = match mode {
+        BitMode::Msb => [3, 2, 1, 0],
+        BitMode::Lsb => [0, 1, 2, 3],
+    };
+
+    shifts.map(|shift| (nibble >> shift) & 1)
 }
 
 /// nibbles: 52要素(13ニブル×4bit)のスライス
@@ -145,7 +156,7 @@ fn char_to_nibble(c: char) -> Result<u8, FrameParseError> {
 }
 
 // バイナリフレーム → DigimaticFrame
-// 変換と検証は nibble_maker と validator_bitsに任せて結果だけ受け取る
+// 変換と検証は bits_to_nibble と validator_bitsに任せて結果だけ受け取る
 impl TryFrom<&[u8]> for DigimaticFrame {
     type Error = FrameParseError;
 
@@ -470,8 +481,8 @@ mod tests {
                 full_bits[b] = bits[b];
             }
 
-            let res_lsb = nibble_maker(&full_bits, BitMode::Lsb).unwrap()[0];
-            let res_msb = nibble_maker(&full_bits, BitMode::Msb).unwrap()[0];
+            let res_lsb = bits_to_nibble(&full_bits, BitMode::Lsb).unwrap()[0];
+            let res_msb = bits_to_nibble(&full_bits, BitMode::Msb).unwrap()[0];
 
             println!(
                 "  {:?}    |      {:02X} (dec:{:02})   |      {:02X} (dec:{:02})",
