@@ -192,3 +192,12 @@ The system is now:
   - Free of hidden IO dependencies
   - Fully simulation-capable without hardware
   - Ready for future protocol extensions
+
+---
+
+## License
+
+This project is licensed under his choice of either:
+
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
