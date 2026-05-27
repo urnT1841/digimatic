@@ -39,7 +39,7 @@ pub fn handle_received_data(
     let (measurement_result, raw_str_for_log) = decode_raw_data(raw_data, format)?;
 
     // 生ログ保存
-    handle_save_raw_log(&raw_data, format, rx_wtr, None)?;
+    handle_save_raw_log(raw_data, format, rx_wtr, None)?;
 
     // 計測データとGUIへのデータ送信
     match measurement_result {
@@ -54,7 +54,7 @@ pub fn handle_received_data(
             Ok(())
         }
         Err(e) => {
-            handle_save_raw_log(&raw_data, format, rx_wtr, Some(&e))?;
+            handle_save_raw_log(raw_data, format, rx_wtr, Some(&e))?;
             crate::logger::console_error(format!(
                 "[Error] Parse Failed: {} | Raw: {}",
                 e, raw_str_for_log
@@ -140,7 +140,7 @@ fn push_measurement_to_gui(
     tx: &Option<Sender<Measurement>>,
 ) -> Result<(), DigimaticError> {
     if let Some(t) = tx {
-        t.send(m.clone()).map_err(|_| {
+        t.send(*m).map_err(|_| {
             DigimaticError::System(crate::errors::SystemError {
                 code: 99,
                 message: "Channel closed".into(),
