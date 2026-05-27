@@ -55,21 +55,21 @@ jobs:
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
-      # 生成されたバイナリのパスを整理（Windowsだけ.exeがつくので調整）
+      # `pc_tool/target/...` の中にあるので、正しく移動
       - name: Prepare binary path
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv target/${{ matrix.target }}/release/digimatic.exe ./${{ matrix.artifact_name }}
+            mv target/${{ matrix.target }}/release/digimatic.exe ./../${{ matrix.artifact_name }}
           else
-            mv target/${{ matrix.target }}/release/digimatic ./${{ matrix.artifact_name }}
+            mv target/${{ matrix.target }}/release/digimatic ./../${{ matrix.artifact_name }}
           fi
+        # ※ working-directory内(pc_tool)から、1つ上の階層(./../)にバイナリを投げる
 
-      # 生成されたファイルをアタッチ
       - name: Create Draft Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
-          draft: true # trueにすることで「下書き保存」
-          files: ./${{ matrix.artifact_name }}
+          draft: true
+          files: ./${{ matrix.artifact_name }} # 👈 直下に放り投げられたバイナリを回収！
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
