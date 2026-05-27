@@ -259,14 +259,14 @@ mod tests {
 
         // Check valid D5 values (should pass)
         for &valid in &valid_d5 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D5] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D5 values (should fail)
         for &invalid in &invalid_d5 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D5] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -277,14 +277,14 @@ mod tests {
 
         // Check valid D12 values (should pass)
         for &valid in &valid_d12 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D12] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D12 values (should fail)
         for &invalid in &invalid_d12 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D12] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -297,14 +297,14 @@ mod tests {
 
         // Check valid D13 values (should pass)
         for &valid in &valid_d13 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D13] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D13 values (should fail)
         for &invalid in &invalid_d13 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D13] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -477,9 +477,7 @@ mod tests {
 
             // 1ニブル分(4bits)のダミーデータを作成 (13ニブル分必要なので埋める)
             let mut full_bits = vec![0u8; 13 * 4];
-            for b in 0..4 {
-                full_bits[b] = bits[b];
-            }
+            full_bits[0..4].copy_from_slice(&bits);
 
             let res_lsb = bits_to_nibble(&full_bits, BitMode::Lsb).unwrap()[0];
             let res_msb = bits_to_nibble(&full_bits, BitMode::Msb).unwrap()[0];

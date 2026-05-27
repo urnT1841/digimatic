@@ -64,7 +64,7 @@ jobs:
           else
             mv target/${{ matrix.target }}/release/digimatic ./../${{ matrix.artifact_name }}
           fi
-        # ※ working-directory内(pc_tool)から、1つ上の階層(./../)にバイナリを投げる
+        #working-directory内(pc_tool)から、1つ上の階層(./../)にバイナリを投げる
 
       - name: Create Draft Release and Upload Asset
         uses: softprops/action-gh-release@v2
