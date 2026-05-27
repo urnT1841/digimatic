@@ -6,7 +6,7 @@ Raspberry Pi Pico と Rust ベースの PC パイプラインを使用して、�
 
 ---
 
-## ✨ Overview (概要)
+## Overview (概要)
 
 本プロジェクトは、ミツトヨ製ノギスからデジマチック（Digimatic）データを受信し、PC で処理する計測システムです。
 
@@ -24,6 +24,37 @@ Raspberry Pi Pico と Rust ベースの PC パイプラインを使用して、�
 - 🧪 ハードウェアなしで動作する完全なシミュレーションモード
 
 ---
+
+## 起動方法
+
+このアプリは実機との接続とSimulationモードを持っています。
+それそれの起動方法については下記を参照してください。
+
+### Simulationモード  (実機は必要ありません)
+どのように表示されるのかなど確認してみたい場合に使用できます。実機は必要ありません。
+0.7秒ごとに表示が更新されます。
+
+```bash (or cmd/PowerShell)
+# Run with GUI simulator
+cargo run --bin digimatic -- --sim --gui
+
+# Run with CLI simulator (logs to console)
+cargo run --bin digimatic -- --sim --cli
+```
+
+### Actual Hardware Mode (raspberryPy pico が必要です)
+
+```bash (or cmd/PowerShell)
+# Run with GUI
+cargo run --bin digimatic -- --actual --gui 
+
+# Run with CLI (logs to console)
+cargo run --bin digimatic -- --actual --cli
+```
+
+
+---
+
 
 ## 🧭 Architecture (v2) (アーキテクチャ)
 
@@ -45,7 +76,7 @@ v2 における主な変更点：
 ---
 
 
-## 🎯 Who is this for? (対象となるユーザー)
+## Who is this for? (対象となるユーザー)
 
 本プロジェクトは主に個人利用およびホビー用途を想定していますが、以下のような実用的なツールとしても機能します：
 
@@ -58,14 +89,14 @@ v2 における主な変更点：
 
 ---
 
-## 🔧 Tech Stack (技術スタック)
+## Tech Stack (技術スタック)
 
 - **PC 側:** Rust  
 - **ハードウェアインターフェース:** MicroPython (Raspberry Pi Pico / XIAO RP2040)
 
 ---
 
-## 🔁 Data Flow (データフロー)
+##  Data Flow (データフロー)
 
 `Caliper` → `Level Shifter (SN74LXC8T245PWR)` → `XIAO RP2040` → `PC (Linux / Windows)`
 
@@ -73,7 +104,7 @@ v2 における主な変更点：
 
 ---
 
-## 🚀 Features (機能)
+## Features (機能)
 
 - リアルタイム測定データのキャプチャ  
 - デジマチックフレームのデコード（v2 で安定化したパーサー）
@@ -85,7 +116,7 @@ v2 における主な変更点：
 
 ---
 
-## 🧪 Simulation Mode (シミュレーションモード)
+## Simulation Mode (シミュレーションモード)
 
 シミュレーターを使用することで、ハードウェアなしでパイプライン全体を実行できます。
 
@@ -111,7 +142,7 @@ v2 における主な変更点：
 
 ---
 
-## 🧰 Embedded (Pico) Diagnostic Mode (組み込み診断モード)
+## Embedded (Pico) Diagnostic Mode (組み込み診断モード)
 
 GPIO やデバイスの挙動を確認するための、組み込みのインタラクティブな診断ツールです。
 
@@ -126,7 +157,7 @@ GPIO やデバイスの挙動を確認するための、組み込みのインタ
 
 ---
 
-## 🖥 GUI Display (Windows) (GUI 表示)
+## GUI Display (Windows) (GUI 表示)
 
 Rust のデスクトップアプリケーション（egui ベース）を介して GUI を利用できます。
 
@@ -143,7 +174,7 @@ cargo run --bin digimatic -- -gui -sim
 
 ---
 
-## 📦 Legacy System (v2) (レガシーシステム)
+## Legacy System (v2) (レガシーシステム)
 
 以下のコンポーネントは、アクティブなパイプラインの一部ではなくなりました：
 
@@ -161,7 +192,7 @@ cargo run --bin digimatic -- -gui -sim
 ---
 
 
-## 🧭 Design Philosophy (v2) (設計思想)
+## Design Philosophy (v2) (設計思想)
 
 - シミュレーションとコアのパースロジックの明確な分離
 - 安定したドメインモデルとしての Measurement
@@ -174,7 +205,7 @@ cargo run --bin digimatic -- -gui -sim
 
 ---
 
-## 🚀 Future Direction (v3+) (今後の方向性)
+## Future Direction (v3+) (今後の方向性)
 
 - バイナリフレームのサポート
 - トレイトベースのフレームジェネレーター抽象化
@@ -184,7 +215,7 @@ cargo run --bin digimatic -- -gui -sim
 
 ---
 
-## ✅ Status (ステータス)
+## Status (ステータス)
 
 - v2.0.0 は、安定したアーキテクチャの節目を示しています。
 - 現在のシステムは以下の通りです：
