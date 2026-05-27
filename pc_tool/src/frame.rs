@@ -148,7 +148,7 @@ impl Measurement {
 
 /// Measurement構造体の値をf64に変換
 impl Measurement {
-    pub fn to_f64(&self) -> f64 {
+    pub fn to_f64(self) -> f64 {
         let divisor = 10f64.powi(self.point as i32);
         let sign_dir = match self.sign {
             Sign::Plus => 1.0,
