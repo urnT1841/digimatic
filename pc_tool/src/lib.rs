@@ -31,11 +31,11 @@
 //! ```
 //!
 //! ## 📦 Key Modules
-//! - [`config`]: Configuration for application execution modes (GUI/CLI, data sources).
-//! - [`communicator`]: Defines serial port management and the data-reading (`MeasurementRead`) trait.
-//! - [`received_data_handler`]: The core domain engine that validates, parses, and dispatches received raw data.
-//! - [`dispatcher`]: The system entry point that launches the appropriate pipeline loop based on configuration.
-//! - [`frame`]: Data structures defining Digimatic frames and physical quantities (`Measurement`).
+//! - `config`: Configuration for application execution modes (GUI/CLI, data sources).
+//! - `communicator`: Defines serial port management and the data-reading (`MeasurementRead`) trait.
+//! - `received_data_handler`: The core domain engine that validates, parses, and dispatches received raw data.
+//! - `dispatcher`: The system entry point that launches the appropriate pipeline loop based on configuration.
+//! - `frame`: Data structures defining Digimatic frames and physical quantities (`Measurement`).
 //!
 //!
 //!
@@ -69,11 +69,11 @@
 //! ```
 //!
 //! ## 📦 主要モジュール
-//! - [`config`][]: アプリケーションの起動モード（GUI/CLI、データソース）を制御する設定情報。
-//! - [`communicator`][]: シリアルポートの開閉や、データの読み込み（Reader）トレイトを定義。
-//! - [`received_data_handler`][]: 受信した生データの鑑定、パース、および各出力先への配送（本システムのコア）。
-//! - [`dispatcher`][]: 起動モード（GUI/CLI）やソースに応じて、適切なパイプラインループを起動するエントリポイント。
-//! - [`frame`][]: デジマチックフレームおよび物理量（Measurement）のデータ構造の定義。
+//! - `config`: アプリケーションの起動モード（GUI/CLI、データソース）を制御する設定情報。
+//! - `communicator`: シリアルポートの開閉や、データの読み込み（Reader）トレイトを定義。
+//! - `received_data_handler`: 受信した生データの鑑定、パース、および各出力先への配送（本システムのコア）。
+//! - `dispatcher`: 起動モード（GUI/CLI）やソースに応じて、適切なパイプラインループを起動するエントリポイント。
+//! - `frame`: デジマチックフレームおよび物理量（Measurement）のデータ構造の定義。
 //!
 
 pub mod args;
