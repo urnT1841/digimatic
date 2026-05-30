@@ -16,6 +16,7 @@
 //! 常に整合性の取れたデータを提供。
 
 use crate::errors::FrameParseError;
+use crate::received_data_handler::FrameFormat;
 
 // デジマチック データフレームの位置
 // インデックスだとずれるので
@@ -169,10 +170,36 @@ pub enum BitMode {
     Msb,
 }
 
-
 /// 受信フレームを型に押込める
 #[derive(Debug, Clone)]
 pub enum TransportFrame {
     Str(Vec<u8>),
     Bin(Vec<u8>),
+}
+
+impl TransportFrame {
+    //中身のバイト列の長さを返す
+    pub fn len(&self) -> usize {
+        match self {
+            TransportFrame::Str(v) => v.len(),
+            TransportFrame::Bin(v) => v.len(),
+        }
+    }
+
+    // 中身のバイト列のスライスを安全に貸す
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            TransportFrame::Str(v) => v,
+            TransportFrame::Bin(v) => v,
+        }
+    }
+
+    // 受信フレームのフォーマット(bin or Str) を返す
+    pub fn as_format(&self) -> FrameFormat {
+            let format = match self {
+                TransportFrame::Str(_) => FrameFormat::Str,
+                TransportFrame::Bin(_) => FrameFormat::Bin,
+            };
+        format
+    }
 }

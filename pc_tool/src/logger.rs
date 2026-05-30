@@ -8,6 +8,7 @@ use std::io::Write;
 
 use crate::config::ConsoleMode;
 use crate::errors::{DigimaticError, FrameParseError, SystemError};
+use crate::frame::TransportFrame;
 
 /// 通信データ保存用
 #[derive(Serialize, Debug)]
@@ -32,11 +33,11 @@ impl RxDataLog {
     }
 
     /// バイナリデータのコンストラクタ
-    pub fn new_bin(raw: &[u8]) -> Self {
+    pub fn new_bin(raw_frame: &TransportFrame) -> Self {
         Self {
             timestamp: Local::now().to_rfc3339(),
-            raw_len: raw.len(),
-            raw_data: hex::encode(raw),
+            raw_len: raw_frame.len(),
+            raw_data: hex::encode(raw_frame.as_bytes()),
             error_log: None,
         }
     }
