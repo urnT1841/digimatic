@@ -168,3 +168,11 @@ pub enum BitMode {
     Lsb,
     Msb,
 }
+
+
+/// 受信フレームを型に押込める
+#[derive(Debug, Clone)]
+pub enum TransportFrame {
+    Str(Vec<u8>),
+    Bin(Vec<u8>),
+}
