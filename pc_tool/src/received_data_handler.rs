@@ -7,7 +7,6 @@ use std::fs::{File, OpenOptions};
 use std::sync::mpsc::Sender;
 
 use crate::config::ConsoleMode;
-use crate::config::FrameFormat;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement, TransportFrame};
 use crate::logger::*;
@@ -62,18 +61,13 @@ pub fn handle_received_data(
 fn decode_raw_data(
     raw_frame: &TransportFrame,
 ) -> Result<(Result<Measurement, FrameParseError>, String), DigimaticError> {
-    let (raw_data, format) = match raw_frame {
-        TransportFrame::Str(v) => (v.as_slice(), FrameFormat::Str),
-        TransportFrame::Bin(v) => (v.as_slice(), FrameFormat::Bin),
-    };
-
-    let pair = match format {
-        FrameFormat::Str => {
+    let pair = match raw_frame {
+        TransportFrame::Str(frame) => {
             // バリデーション
-            if !raw_data.is_ascii() {
+            if !frame.is_ascii() {
                 return Err(DigimaticError::from(FrameParseError::NonAscii));
             }
-            let s = std::str::from_utf8(raw_data).map_err(|_| FrameParseError::NonAscii)?;
+            let s = std::str::from_utf8(frame).map_err(|_| FrameParseError::NonAscii)?;
             let trimmed = s.trim();
 
             // 文字列解析
@@ -82,12 +76,12 @@ fn decode_raw_data(
                 trimmed.to_string(),
             )
         }
-        FrameFormat::Bin => {
+        TransportFrame::Bin(frame) => {
             // バイナリ版の解析
-            let res = crate::parser::parse_bits(raw_data, crate::frame::BitMode::Lsb)
+            let res = crate::parser::parse_bits(frame, crate::frame::BitMode::Lsb)
                 .and_then(|nibbles| DigimaticFrame::try_from(&nibbles[..]))
                 .and_then(Measurement::try_from);
-            (res, hex::encode(raw_data))
+            (res, hex::encode(frame))
         }
     };
 
