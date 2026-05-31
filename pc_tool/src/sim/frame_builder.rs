@@ -4,9 +4,9 @@
 //!
 //!
 
+use crate::config::FrameFormat;
 use crate::frame::*;
 use crate::parser::nibble_to_bits;
-use crate::received_data_handler::FrameFormat;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
 
@@ -72,8 +72,8 @@ mod tests {
         let frame = build_frame(val);
 
         // 期待される値をチェック
-        assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置 
-        assert_eq!(frame[D13], Unit::Mm as u8); // 単位 
+        assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置
+        assert_eq!(frame[D13], Unit::Mm as u8); // 単位
 
         // 123.456 -> 123.46 (四捨五入) -> [0, 1, 2, 3, 4, 6]
         assert_eq!(frame[D11], 6); // d11 (1の位) [cite: 59-61]

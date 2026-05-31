@@ -6,8 +6,8 @@
 
 use std::sync::mpsc::Sender;
 
+use crate::config::FrameFormat;
 use crate::frame::TransportFrame;
-use crate::received_data_handler::FrameFormat;
 use crate::sim::frame_builder::build_simurator_payload;
 use crate::sim::generator;
 

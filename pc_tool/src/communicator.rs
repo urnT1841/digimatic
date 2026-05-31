@@ -16,9 +16,9 @@ use std::io::{BufRead, BufReader, Read};
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
+use crate::config::FrameFormat;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{FRAME_LENGTH, TransportFrame};
-use crate::received_data_handler::FrameFormat;
 
 // PC側からのコード送出は未実装
 // 一部(timeoutは使用しているが他は未使用)
