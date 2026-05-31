@@ -147,16 +147,13 @@ mod tests {
 
     #[test]
     fn test_parse_success_with_binary_option() {
-        // 🌟 3つ目に `--bin` を指定した3面待ちの組み合わせテスト
+        //`--bin` を指定した3面待ちの組み合わせテスト
         let args = vec!["cli".to_string(), "actual".to_string(), "--bin".to_string()];
         let config = parse_from_tokens(args).unwrap();
 
         assert_eq!(config.source, DataSource::Actual);
         assert_eq!(config.ui, UiMode::Cli);
-        // 🌟 ちゃんと Bin モードが有効になっているか検証！
-        assert!(matches!(
-            config.format,
-            crate::received_data_handler::FrameFormat::Bin
-        ));
+        // ちゃんと Bin モードが有効になっているか検証！
+        assert!(matches!(config.format, crate::config::FrameFormat::Bin));
     }
 }

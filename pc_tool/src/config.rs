@@ -2,7 +2,6 @@
 //! アプリケーション全体の設定と動作ポリシーの管理
 
 use crate::frame::Unit;
-use crate::received_data_handler::FrameFormat;
 
 /// アプリケーションの全般設定
 #[derive(Debug, Clone, Copy)]
@@ -72,4 +71,10 @@ impl Default for GuiConfig {
 pub enum ConsoleMode {
     Silent,
     Verbose,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FrameFormat {
+    Str,
+    Bin,
 }

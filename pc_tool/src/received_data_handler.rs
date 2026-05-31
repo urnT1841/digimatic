@@ -7,16 +7,11 @@ use std::fs::{File, OpenOptions};
 use std::sync::mpsc::Sender;
 
 use crate::config::ConsoleMode;
+use crate::config::FrameFormat;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
 use crate::frame::{DigimaticFrame, Measurement, TransportFrame};
 use crate::logger::*;
 use crate::presentation::format_with_display_unit;
-
-#[derive(Clone, Copy, Debug)]
-pub enum FrameFormat {
-    Str,
-    Bin,
-}
 
 ///
 /// ライター生成
