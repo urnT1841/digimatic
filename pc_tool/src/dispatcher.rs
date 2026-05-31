@@ -23,13 +23,12 @@ use crate::received_data_handler::{create_log_writer, handle_received_data};
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
-    let frame_mode = config.format;
     let input: Box<dyn MeasurementRead> = match config.source {
         DataSource::Sim => {
             // sim用チャンネル作成 -> sim thread生成 → Box詰め
             let (tx_raw, rx_raw) = mpsc::channel();
-            crate::sim::execute_sim::start_generator_thread(tx_raw, frame_mode);
-            Box::new(SimReceiver::new(rx_raw, frame_mode))
+            crate::sim::execute_sim::start_generator_thread(tx_raw, config.format);
+            Box::new(SimReceiver::new(rx_raw))
         }
         DataSource::Actual => {
             let port_path = crate::communicator::wait_until_connection()
@@ -53,7 +52,8 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
                 }
             });
             // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
-            crate::gui_app::launch_display(rx_gui)}
+            crate::gui_app::launch_display(rx_gui)
+        }
         UiMode::Cli => {
             // cliの時はメインスレッドで直接パイプラン実行
             // txは不要 → Noneにしておく
@@ -71,7 +71,6 @@ fn run_pipeline(
     let mut rx_wtr = Some(create_log_writer("rx_log.csv")?);
     let mut m_wtr = Some(create_log_writer("measurement.csv")?);
 
-    let frame_mode = input.get_format();
     loop {
         // data受信
         // read_measurement は measurement構造体を返すので異常値は来ない
@@ -83,7 +82,6 @@ fn run_pipeline(
             &mut rx_wtr,
             &mut m_wtr,
             &tx,
-            frame_mode,
             console_mode,
         )?;
     }
