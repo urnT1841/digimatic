@@ -16,7 +16,6 @@
 //! 常に整合性の取れたデータを提供。
 
 use crate::errors::FrameParseError;
-use crate::received_data_handler::FrameFormat;
 
 // デジマチック データフレームの位置
 // インデックスだとずれるので
@@ -192,14 +191,5 @@ impl TransportFrame {
             TransportFrame::Str(v) => v,
             TransportFrame::Bin(v) => v,
         }
-    }
-
-    // 受信フレームのフォーマット(bin or Str) を返す
-    pub fn as_format(&self) -> FrameFormat {
-            let format = match self {
-                TransportFrame::Str(_) => FrameFormat::Str,
-                TransportFrame::Bin(_) => FrameFormat::Bin,
-            };
-        format
     }
 }

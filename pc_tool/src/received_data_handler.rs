@@ -38,7 +38,7 @@ pub fn handle_received_data(
     let (measurement_result, raw_str_for_log) = decode_raw_data(receive_frame)?;
 
     // 生ログ保存
-    handle_save_raw_log(receive_frame,  rx_wtr, None)?;
+    handle_save_raw_log(receive_frame, rx_wtr, None)?;
 
     // 計測データとGUIへのデータ送信
     match measurement_result {
@@ -53,7 +53,7 @@ pub fn handle_received_data(
             Ok(())
         }
         Err(e) => {
-            handle_save_raw_log(receive_frame,  rx_wtr, Some(&e))?;
+            handle_save_raw_log(receive_frame, rx_wtr, Some(&e))?;
             crate::logger::console_error(format!(
                 "[Error] Parse Failed: {} | Raw: {}",
                 e, raw_str_for_log
@@ -105,14 +105,13 @@ fn handle_save_raw_log(
     rx_wtr: &mut Option<csv::Writer<std::fs::File>>,
     err: Option<&FrameParseError>,
 ) -> Result<(), DigimaticError> {
-
     // 受信した str / bin により適切な構造体を生成
-    let mut rx_log = match raw_frame.as_format() {
-        FrameFormat::Str => {
-            let s = std::str::from_utf8(raw_frame.as_bytes()).unwrap_or("");
+    let mut rx_log = match raw_frame {
+        TransportFrame::Str(bytes) => {
+            let s = std::str::from_utf8(bytes).unwrap_or("");
             RxDataLog::new_str(s.trim())
         }
-        FrameFormat::Bin => RxDataLog::new_bin(raw_frame),
+        TransportFrame::Bin(_) => RxDataLog::new_bin(raw_frame),
     };
 
     if let Some(e) = err {
@@ -187,7 +186,7 @@ mod tests {
 
             // 今回修正した関数を呼び出す（Windowsでも100%確実に通ります）
 
-            handle_save_raw_log(&dummy_frame,  &mut Some(wtr), None).unwrap();
+            handle_save_raw_log(&dummy_frame, &mut Some(wtr), None).unwrap();
         } // ここでファイルが完全にクローズ
 
         // 3. 書き出されたファイルを読み込んで検証
