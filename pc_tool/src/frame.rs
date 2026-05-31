@@ -175,21 +175,3 @@ pub enum TransportFrame {
     Str(Vec<u8>),
     Bin(Vec<u8>),
 }
-
-impl TransportFrame {
-    //中身のバイト列の長さを返す
-    pub fn len(&self) -> usize {
-        match self {
-            TransportFrame::Str(v) => v.len(),
-            TransportFrame::Bin(v) => v.len(),
-        }
-    }
-
-    // 中身のバイト列のスライスを安全に貸す
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            TransportFrame::Str(v) => v,
-            TransportFrame::Bin(v) => v,
-        }
-    }
-}

@@ -111,7 +111,7 @@ fn handle_save_raw_log(
             let s = std::str::from_utf8(bytes).unwrap_or("");
             RxDataLog::new_str(s.trim())
         }
-        TransportFrame::Bin(_) => RxDataLog::new_bin(raw_frame),
+        TransportFrame::Bin(bytes) => RxDataLog::new_bin(bytes),
     };
 
     if let Some(e) = err {
@@ -196,7 +196,10 @@ mod tests {
         let _ = fs::remove_file(test_file_path);
 
         // 🌟 検証：生バイナリがちゃんと「16進数文字列」になってCSVに刻まれているか！
-        let expected_hex = hex::encode(&&dummy_frame.as_bytes());
+        let expected_hex = match &dummy_frame {
+            TransportFrame::Str(v) => hex::encode(v),
+            TransportFrame::Bin(v) => hex::encode(v),
+        };
 
         assert!(
             csv_string.contains(&expected_hex),
