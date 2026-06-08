@@ -16,7 +16,7 @@
 use std::sync::mpsc;
 
 use crate::communicator::{CdcReceiver, MeasurementRead, SimReceiver};
-use crate::config::{AppConfig, ConsoleMode, DataSource, UiMode};
+use crate::config::{AppConfig, ConnectionInfo, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
 use crate::frame::Measurement;
 use crate::received_data_handler::{create_log_writer, handle_received_data};
@@ -52,7 +52,8 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
                 }
             });
             // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
-            crate::gui_app::launch_display(rx_gui)
+            let conn_info = ConnectionInfo::new(config.format);
+            crate::gui_app::launch_display(rx_gui, conn_info)
         }
         UiMode::Cli => {
             // cliの時はメインスレッドで直接パイプラン実行
@@ -77,12 +78,6 @@ fn run_pipeline(
         let data = input.read_measurement()?;
 
         // 共通ハンドラ処理
-        handle_received_data(
-            &data,
-            &mut rx_wtr,
-            &mut m_wtr,
-            &tx,
-            console_mode,
-        )?;
+        handle_received_data(&data, &mut rx_wtr, &mut m_wtr, &tx, console_mode)?;
     }
 }

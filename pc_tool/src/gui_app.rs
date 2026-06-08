@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::config::{ConnectionInfo, GuiConfig};
+use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
 use crate::presentation::format_with_display_unit;
@@ -70,24 +70,22 @@ impl eframe::App for DisplayApp {
                     ui.small("v2.1.0-clean");
                     ui.separator();
 
-                    // Bin モード
-                    let is_str = matches!(self.connection_info, crate::config::FrameFormat::Str);
-                    let bin_color = if !is_str {
-                        egui::Color32::from_rgb(255, 165, 0)
-                    } else {
-                        egui::Color32::DARK_GRAY
+                    // (BINの色, STRの色) のペアを同時に決定
+                    let (bin_color, str_color) = match self.connection_info.mode {
+                        FrameFormat::Bin => (
+                            egui::Color32::from_rgb(255, 165, 0),
+                            egui::Color32::DARK_GRAY,
+                        ), // Binモード: オレンジ / 消灯
+                        FrameFormat::Str => (
+                            egui::Color32::DARK_GRAY,
+                            egui::Color32::from_rgb(0, 150, 255),
+                        ), // Strモード: 消灯 / 青
                     };
+
+                    // それぞれのラベルに渡す
                     ui.colored_label(bin_color, "● BIN");
-
                     ui.separator();
-
-                    // Str モード
-                    let str_color = if is_str {
-                        egui::Color32::from_rgb(0, 150, 255)
-                    } else {
-                        egui::Color32::DARK_GRAY
-                    };
-                    ui.colored_label(egui::Color32::from_rgb(0, 150, 255), "● STR");
+                    ui.colored_label(str_color, "● STR");
                 });
             });
         });

@@ -87,3 +87,9 @@ pub struct ConnectionInfo {
     // 例えば接続ポート とか それか判明するつながっているマイコンとか
     // pub port_name: String, とか
 }
+
+impl ConnectionInfo {
+    pub fn new(mode: FrameFormat) -> Self {
+        Self { mode }
+    }
+}
