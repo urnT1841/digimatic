@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
-use crate::config::GuiConfig;
+use crate::config::{ConnectionInfo, GuiConfig};
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
 use crate::presentation::format_with_display_unit;
@@ -10,6 +10,7 @@ struct DisplayApp {
     measurement_data: Measurement,
     receiver: Receiver<Measurement>, // 受信機を格納
     config: GuiConfig,
+    connection_info: ConnectionInfo,
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
@@ -19,6 +20,7 @@ impl DisplayApp {
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         rx: std::sync::mpsc::Receiver<Measurement>,
+        connection_info: ConnectionInfo,
     ) -> Self {
         Self::setup_custom_fonts(&cc.egui_ctx);
 
@@ -26,6 +28,7 @@ impl DisplayApp {
             measurement_data: Measurement::dummy(), // 将来的にraw_dataの扱いが変わる見込みなので dummy() で
             receiver: rx,
             config: GuiConfig::default(),
+            connection_info,
         }
     }
 
@@ -53,10 +56,54 @@ impl DisplayApp {
 
 impl eframe::App for DisplayApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // 1. 最新のデータを受信（既存の処理）
+        // 最新のデータを受信（既存の処理）
         if let Ok(new_data) = self.receiver.try_recv() {
             self.measurement_data = new_data;
         }
+        // top bar
+        egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.small("Connection Status: ");
+                ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "Connected (Pico)");
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.small("v2.1.0-clean");
+                    ui.separator();
+
+                    // Bin モード
+                    let is_str = matches!(self.connection_info, crate::config::FrameFormat::Str);
+                    let bin_color = if !is_str {
+                        egui::Color32::from_rgb(255, 165, 0)
+                    } else {
+                        egui::Color32::DARK_GRAY
+                    };
+                    ui.colored_label(bin_color, "● BIN");
+
+                    ui.separator();
+
+                    // Str モード
+                    let str_color = if is_str {
+                        egui::Color32::from_rgb(0, 150, 255)
+                    } else {
+                        egui::Color32::DARK_GRAY
+                    };
+                    ui.colored_label(egui::Color32::from_rgb(0, 150, 255), "● STR");
+                });
+            });
+        });
+
+        // bottom bar
+        egui::TopBottomPanel::bottom("bottom_bar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Unit:");
+                ui.selectable_value(&mut self.config.display_unit, Unit::Mm, "mm");
+                ui.selectable_value(&mut self.config.display_unit, Unit::Inch, "inch");
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.small("📄 AutoSave: Enabled");
+                });
+            });
+        });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
@@ -91,17 +138,24 @@ impl eframe::App for DisplayApp {
 }
 
 // dispatcher から呼ばれる公開エントリーポイント
-pub fn launch_display(rx: Receiver<Measurement>) -> Result<(), DigimaticError> {
-    gui_run(rx)?;
+// 計測値 measurement構造体と，接続情報等のConnetcionIfon構造体を渡す
+pub fn launch_display(
+    rx: Receiver<Measurement>,
+    conn_info: ConnectionInfo,
+) -> Result<(), DigimaticError> {
+    gui_run(rx, conn_info)?;
     Ok(())
 }
 
-fn gui_run(rx: std::sync::mpsc::Receiver<Measurement>) -> eframe::Result {
+fn gui_run(
+    rx: std::sync::mpsc::Receiver<Measurement>,
+    conn_info: ConnectionInfo,
+) -> eframe::Result {
     let options = eframe::NativeOptions::default();
 
     eframe::run_native(
         "Digimatic Data Display v0.33",
         options,
-        Box::new(move |cc| Ok(Box::new(DisplayApp::new(cc, rx)))),
+        Box::new(move |cc| Ok(Box::new(DisplayApp::new(cc, rx, conn_info)))),
     )
 }
