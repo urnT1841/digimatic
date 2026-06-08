@@ -73,8 +73,17 @@ pub enum ConsoleMode {
     Verbose,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrameFormat {
     Str,
     Bin,
+}
+
+/// シリアル通信接続情報保持用 (GUIでの表示用情報ハンドリング)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConnectionInfo {
+    pub mode: FrameFormat,
+    // あと必要に応じてフィールドを増やす
+    // 例えば接続ポート とか それか判明するつながっているマイコンとか
+    // pub port_name: String, とか
 }
