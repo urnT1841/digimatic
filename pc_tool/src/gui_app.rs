@@ -4,6 +4,7 @@ use std::sync::mpsc::Receiver;
 use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
+use crate::measurement_history::MeasurementHistory;
 use crate::presentation::format_with_display_unit;
 
 struct DisplayApp {
@@ -11,6 +12,7 @@ struct DisplayApp {
     receiver: Receiver<Measurement>, // 受信機を格納
     config: GuiConfig,
     connection_info: ConnectionInfo,
+    history: MeasurementHistory, // 計測履歴
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
@@ -29,6 +31,7 @@ impl DisplayApp {
             receiver: rx,
             config: GuiConfig::default(),
             connection_info,
+            history: MeasurementHistory::default(),
         }
     }
 
@@ -57,8 +60,9 @@ impl DisplayApp {
 impl eframe::App for DisplayApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // 最新のデータを受信（既存の処理）
-        if let Ok(new_data) = self.receiver.try_recv() {
-            self.measurement_data = new_data;
+        while let Ok(new_data) = self.receiver.try_recv() {
+            self.measurement_data = new_data.clone();
+            self.history.add(new_data); // 履歴へ追加
         }
         // top bar
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
@@ -127,6 +131,37 @@ impl eframe::App for DisplayApp {
 
                 // 単位を添える
                 ui.label(format!("{:?}", self.config.display_unit));
+
+                // 履歴表示部
+                ui.add_space(30.0);
+                ui.separator();
+                ui.label(egui::RichText::new("履歴").strong());
+                ui.add_space(10.0);
+
+                if self.history.is_empty() {
+                    ui.weak("履歴はありません（データ未受信）");
+                } else {
+                    // ボス特製の iter_newest() で、メモリコピーなしの高速ループ描画！
+                    for (idx, meas) in self.history.iter_newest().enumerate() {
+                        // 履歴の数値も、現在の画面の表示単位（mm/inch）に合わせて綺麗にフォーマット
+                        let history_val = format_with_display_unit(meas, self.config.display_unit);
+
+                        ui.horizontal(|ui| {
+                            ui.add_space(20.0); // 左側に少し余白（インデント）を作る
+
+                            if idx == 0 {
+                                // 🌟 1番新しい（直前の）データは、緑色でカッコよく目立たせる！
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(0, 255, 150),
+                                    format!("直前 ➡️  {}", history_val),
+                                );
+                            } else {
+                                // 過去のデータは落ち着いたテキストで
+                                ui.label(format!("過去 [{}] :  {}", idx, history_val));
+                            }
+                        });
+                    }
+                }
             });
         });
 
