@@ -4,6 +4,7 @@ use std::sync::mpsc::Receiver;
 use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
 use crate::errors::DigimaticError;
 use crate::frame::{Measurement, Unit};
+use crate::measurement_history::MeasurementHistory;
 use crate::presentation::format_with_display_unit;
 
 struct DisplayApp {
@@ -11,9 +12,24 @@ struct DisplayApp {
     receiver: Receiver<Measurement>, // 受信機を格納
     config: GuiConfig,
     connection_info: ConnectionInfo,
+    history: MeasurementHistory, // 計測履歴
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
+
+//GUI構成
+//
+// DisplayApp (アプリの親玉：状態の管理)
+//  ├── setup_custom_fonts (起動時に1回だけ：フォントの仕込み)
+//  │
+//  └── update (毎フレーム走る描画の司令)
+//        ├── MPSCデータ受信 (ロジック)
+//        ├── draw_top_bar (接続ステータスやモード表示)
+//        ├── draw_under_bar (下部の単位切り替えやステータス)
+//        └── CentralPanel (メイン画面)
+//              └── vertical_centered
+//                    ├── draw_main_measurement (特大の現在の計測値)
+//                    └── draw_main_history (過去データの履歴リスト)
 
 impl DisplayApp {
     // 初期化実施関数
@@ -29,6 +45,7 @@ impl DisplayApp {
             receiver: rx,
             config: GuiConfig::default(),
             connection_info,
+            history: MeasurementHistory::default(),
         }
     }
 
@@ -52,15 +69,9 @@ impl DisplayApp {
         }
         ctx.set_fonts(fonts);
     }
-}
 
-impl eframe::App for DisplayApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // 最新のデータを受信（既存の処理）
-        if let Ok(new_data) = self.receiver.try_recv() {
-            self.measurement_data = new_data;
-        }
-        // top bar
+    // top bar
+    fn draw_top_bar(&self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.small("Connection Status: ");
@@ -70,27 +81,27 @@ impl eframe::App for DisplayApp {
                     ui.small("v2.1.0-clean");
                     ui.separator();
 
-                    // (BINの色, STRの色) のペアを同時に決定
                     let (bin_color, str_color) = match self.connection_info.mode {
                         FrameFormat::Bin => (
                             egui::Color32::from_rgb(255, 165, 0),
                             egui::Color32::DARK_GRAY,
-                        ), // Binモード: オレンジ / 消灯
+                        ),
                         FrameFormat::Str => (
                             egui::Color32::DARK_GRAY,
                             egui::Color32::from_rgb(0, 150, 255),
-                        ), // Strモード: 消灯 / 青
+                        ),
                     };
 
-                    // それぞれのラベルに渡す
                     ui.colored_label(bin_color, "● BIN");
                     ui.separator();
                     ui.colored_label(str_color, "● STR");
                 });
             });
         });
+    }
 
-        // bottom bar
+    // bottom bar
+    fn draw_under_bar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Unit:");
@@ -102,35 +113,89 @@ impl eframe::App for DisplayApp {
                 });
             });
         });
+    }
 
+    // main (計測データ)
+    fn draw_main_measurement(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(20.0);
+
+        // 単位切り替えボタンの配置
+        ui.horizontal(|ui| {
+            ui.label("Unit:");
+            ui.selectable_value(&mut self.config.display_unit, Unit::Mm, "mm");
+            ui.selectable_value(&mut self.config.display_unit, Unit::Inch, "inch");
+        });
+
+        ui.add_space(10.0);
+
+        // 変換した値の表示
+        let display_val =
+            format_with_display_unit(&self.measurement_data, self.config.display_unit);
+
+        // 特大フォントで数値を表示
+        ui.label(egui::RichText::new(display_val).size(80.0).strong());
+
+        // 単位を添える
+        ui.label(format!("{:?}", self.config.display_unit));
+    }
+
+    // main 履歴
+    fn draw_main_history(&self, ui: &mut egui::Ui) {
+        ui.add_space(30.0);
+        ui.separator();
+        ui.label(egui::RichText::new("📋 履歴 (最大20件)").strong());
+        ui.add_space(10.0);
+
+        if self.history.is_empty() {
+            ui.weak("履歴はありません（データ未受信）");
+        } else {
+            // 🌟 魔法の1行：ここから下の要素を縦方向（vertical）のスクロール領域にする！
+            // max_height を指定して、画面全体のレイアウトが崩れないようにガード
+            egui::ScrollArea::vertical()
+                .max_height(200.0) // 🌟 お好みの高さ（ピクセル）で固定できます
+                .show(ui, |ui| {
+                    // この中身は今までのボスのコードと100%同じでOK！
+                    for (idx, meas) in self.history.iter_newest().enumerate() {
+                        let history_val = format_with_display_unit(meas, self.config.display_unit);
+
+                        ui.horizontal(|ui| {
+                            ui.add_space(20.0);
+
+                            if idx == 0 {
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(0, 255, 150),
+                                    format!("直前 ➡️  {}", history_val),
+                                );
+                            } else {
+                                ui.label(format!("過去 [{}] :  {}", idx, history_val));
+                            }
+                        });
+                    }
+                }); // 🌟 スクロールエリアここまで
+        }
+    }
+}
+
+impl eframe::App for DisplayApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // MPSCキューから最新のデータを全て引っこ抜く（バックエンド通信の消化）
+        while let Ok(new_data) = self.receiver.try_recv() {
+            self.measurement_data = new_data.clone();
+            self.history.add(new_data);
+        }
+
+        // 各コンポーネントを呼び出す
+        self.draw_top_bar(ctx);
+        self.draw_under_bar(ctx);
+
+        // 中央のメインパネル
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.add_space(20.0);
-
-                // 単位切り替えボタンの配置
-                ui.horizontal(|ui| {
-                    ui.label("Unit:");
-                    // セレクトボックス風のラジオボタン。現在の設定と一致するかで判定
-                    ui.selectable_value(&mut self.config.display_unit, Unit::Mm, "mm");
-                    ui.selectable_value(&mut self.config.display_unit, Unit::Inch, "inch");
-                });
-
-                ui.add_space(10.0);
-
-                // 変換した値の表示
-                // 実装した get_display_value を呼び出す
-                let display_val =
-                    format_with_display_unit(&self.measurement_data, self.config.display_unit);
-
-                // 特大フォントで数値を表示
-                ui.label(egui::RichText::new(display_val).size(80.0).strong());
-
-                // 単位を添える
-                ui.label(format!("{:?}", self.config.display_unit));
+                self.draw_main_measurement(ui); // 計測表示
+                self.draw_main_history(ui); // 履歴表示
             });
         });
 
-        // 常に画面を更新（ノギスからのデータを受け取り続けるため）
         ctx.request_repaint();
     }
 }
