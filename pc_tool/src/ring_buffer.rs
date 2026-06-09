@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 //! ring_buffer.rs
 //!
 //! 履歴保持用のリングバッファー実装
@@ -47,6 +46,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
         self.count = 0;
     }
 
+    #[allow(dead_code)]
     /// バッファの長さを返す
     pub fn len(&self) -> usize {
         self.count
@@ -62,11 +62,13 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
         self.count == N // ジェネリクスの最大サイズ N と比較
     }
 
+    #[allow(dead_code)]
     /// iter 古い順をデフォルトに
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.iter_oldest()
     }
 
+    #[allow(dead_code)]
     // 古い順に出力するイテレータ
     pub fn iter_oldest(&self) -> impl Iterator<Item = &T> {
         // 修正：満杯（count == N）なら write_index から、満杯未満なら 0 からスタート
