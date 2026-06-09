@@ -69,25 +69,30 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     // 古い順に出力するイテレータ
     pub fn iter_oldest(&self) -> impl Iterator<Item = &T> {
-        let start = self.write_index;
+        // 修正：満杯（count == N）なら write_index から、満杯未満なら 0 からスタート
+        let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
-        let data = &self.data;
 
         (0..count).map(move |i| {
             let idx = (start + i) % N;
-            data[idx].as_ref().unwrap()
+            //万が一の安全のため、unwrap() ではなく ok() や expect でガード
+            self.data[idx]
+                .as_ref()
+                .expect("RingBuffer: internal item missing")
         })
     }
 
     // 新しい順に出力するイテレータ
     pub fn iter_newest(&self) -> impl Iterator<Item = &T> {
-        let start = self.write_index;
+        //修正：こちらも同様にスタート位置を安全に計算
+        let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
-        let data = &self.data;
 
         (0..count).rev().map(move |i| {
             let idx = (start + i) % N;
-            data[idx].as_ref().unwrap()
+            self.data[idx]
+                .as_ref()
+                .expect("RingBuffer: internal item missing")
         })
     }
 }
@@ -127,5 +132,41 @@ mod tests {
     #[should_panic]
     fn zero_size_buffer_panics() {
         let _ = StaticRingBuffer::<i32, 0>::new();
+    }
+
+    #[test]
+    fn buffer_partially_filled_and_empty() {
+        let mut buf = StaticRingBuffer::<i32, 5>::new();
+
+        // ケース1：完全に空（0件）のとき、イテレータは即座に終了するか？
+        let items_0: Vec<&i32> = buf.iter_newest().collect();
+        assert!(items_0.is_empty(), "0件のときは空のイテレータであるべき");
+
+        // ケース2：1件だけ入っているとき（残り4マスは None の空インデックス）
+        buf.push(100);
+        let items_1: Vec<&i32> = buf.iter_newest().collect();
+        assert_eq!(
+            items_1,
+            vec![&100],
+            "1件のときは [100] が返るべき（None を踏まないこと）"
+        );
+
+        // ケース3：2件入っているとき（残り3マスは None の空インデックス）
+        buf.push(200);
+        let items_2: Vec<&i32> = buf.iter_newest().collect();
+        // 最新順なので [200, 100]
+        assert_eq!(
+            items_2,
+            vec![&200, &100],
+            "2件のときは最新順で取得でき、None を踏まないこと"
+        );
+
+        // 古い順（時系列順）も一応チェック！
+        let items_old: Vec<&i32> = buf.iter_oldest().collect();
+        assert_eq!(
+            items_old,
+            vec![&100, &200],
+            "古い順イテレータも正常に回ること"
+        );
     }
 }
