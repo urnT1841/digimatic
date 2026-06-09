@@ -81,13 +81,14 @@ pub mod config;
 pub mod dispatcher;
 pub mod errors;
 pub mod gui_app;
-pub mod measurement_history;
 
 pub(crate) mod communicator;
 pub(crate) mod frame;
 pub(crate) mod logger;
+pub(crate) mod measurement_history;
 pub(crate) mod parser;
 pub(crate) mod presentation;
 pub(crate) mod received_data_handler;
+pub(crate) mod ring_buffer;
 pub(crate) mod scanner;
 pub(crate) mod sim;
