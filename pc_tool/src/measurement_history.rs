@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 //! measurement_history.rs
 //!
 //! GUIでデータ履歴を表示する機能 を提供する
@@ -6,11 +5,18 @@
 use crate::frame::Measurement;
 use crate::ring_buffer::StaticRingBuffer;
 
-// 公開API
+const HISTORY_SIZE: usize = 50;
 
 pub struct MeasurementHistory {
     // とりあえず20件分で確保
-    inner: StaticRingBuffer<Measurement, 20>,
+    inner: StaticRingBuffer<Measurement, HISTORY_SIZE>,
+}
+
+/// Default
+impl Default for MeasurementHistory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MeasurementHistory {
@@ -25,6 +31,7 @@ impl MeasurementHistory {
         self.inner.push(meas);
     }
 
+    #[allow(dead_code)]
     /// 履歴クリア
     pub fn clear(&mut self) {
         self.inner.clear();
@@ -35,7 +42,8 @@ impl MeasurementHistory {
         self.inner.is_empty()
     }
 
-    /// full ?
+    #[allow(dead_code)]
+    /// full
     pub fn is_full(&self) -> bool {
         self.inner.is_full()
     }
@@ -44,11 +52,10 @@ impl MeasurementHistory {
     pub fn iter_newest(&self) -> impl Iterator<Item = &Measurement> {
         self.inner.iter_newest()
     }
-}
 
-/// Defaultも実装
-impl Default for MeasurementHistory {
-    fn default() -> Self {
-        Self::new()
+    #[allow(dead_code)]
+    /// 古い順に返すIter
+    pub fn iter_oldest(&self) -> impl Iterator<Item = &Measurement> {
+        self.inner.iter_oldest()
     }
 }
