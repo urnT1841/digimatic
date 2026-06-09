@@ -180,7 +180,7 @@ impl eframe::App for DisplayApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // MPSCキューから最新のデータを全て引っこ抜く（バックエンド通信の消化）
         while let Ok(new_data) = self.receiver.try_recv() {
-            self.measurement_data = new_data.clone();
+            self.measurement_data = new_data;
             self.history.add(new_data);
         }
 
