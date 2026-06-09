@@ -68,16 +68,14 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
         self.iter_oldest()
     }
 
-    #[allow(dead_code)]
     // 古い順に出力するイテレータ
     pub fn iter_oldest(&self) -> impl Iterator<Item = &T> {
-        // 修正：満杯（count == N）なら write_index から、満杯未満なら 0 からスタート
         let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
 
         (0..count).map(move |i| {
             let idx = (start + i) % N;
-            //万が一の安全のため、unwrap() ではなく ok() や expect でガード
+            // 内部状態破壊を検知するため expect()
             self.data[idx]
                 .as_ref()
                 .expect("RingBuffer: internal item missing")
@@ -86,7 +84,6 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     // 新しい順に出力するイテレータ
     pub fn iter_newest(&self) -> impl Iterator<Item = &T> {
-        //修正：こちらも同様にスタート位置を安全に計算
         let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
 
@@ -169,6 +166,32 @@ mod tests {
             items_old,
             vec![&100, &200],
             "古い順イテレータも正常に回ること"
+        );
+    }
+
+    #[test]
+    fn oldest_order_after_multiple_wraps() {
+        let mut buf = StaticRingBuffer::<i32, 3>::new();
+
+        for i in 1..=10 {
+            buf.push(i);
+        }
+
+        let items: Vec<_> = buf.iter_oldest().copied().collect();
+        assert_eq!(items, vec![8, 9, 10]);
+    }
+
+    #[test]
+    fn iter_is_alias_of_oldest() {
+        let mut buf = StaticRingBuffer::<i32, 3>::new();
+
+        for i in 1..=10 {
+            buf.push(i);
+        }
+
+        assert_eq!(
+            buf.iter().copied().collect::<Vec<_>>(),
+            buf.iter_oldest().copied().collect::<Vec<_>>()
         );
     }
 }
