@@ -81,6 +81,7 @@ pub mod config;
 pub mod dispatcher;
 pub mod errors;
 pub mod gui_app;
+pub mod measurement_history;
 
 pub(crate) mod communicator;
 pub(crate) mod frame;
