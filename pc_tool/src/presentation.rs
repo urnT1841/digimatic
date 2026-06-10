@@ -1,6 +1,9 @@
 //! presentation.rs
-//! measurement構造体の見せ方定義
-
+//!
+//! # Presentation Layer Module
+//!
+//! This module defines formatting rules and conversion policies for projecting
+//! raw `Measurement` domain structures into human-readable textual representations.
 use crate::frame::{Measurement, Unit};
 
 /// 内部用の共通整形ロジック
