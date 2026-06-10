@@ -1,6 +1,9 @@
+//! `logger.rs`
 //!
-//! Logやデータ保存などファイル書き込み系を扱う
+//! # Logger and Persistence Layer Module
 //!
+//! This module orchestrates file I/O interactions, structured serialization (CSV format via `serde`),
+//! and terminal logging routing policies for the application runtime.
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -113,6 +116,7 @@ mod tests {
     fn test_measurement_log_csv_roundtrip() {
         let mut buf = Vec::new();
         {
+            // Scoped scope block isolates `wtr` execution to lift mutable borrowing bounds on `buf` early.
             let mut wtr = csv::Writer::from_writer(&mut buf);
 
             let log = MeasurementLog::new(1.23);
