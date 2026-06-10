@@ -1,9 +1,24 @@
-//! ring_buffer.rs
+//! `ring_buffer.rs`
 //!
-//! 履歴保持用のリングバッファー実装
-//! 測定値だけではなくcommand履歴での利用も見越して単独モジュールで実装
+//! # Static Fixed-Size Ring Buffer Module
+//!
+//! A high-performance, zero-allocation ring buffer implementation with a fixed capacity
+//! determined at compile time via Rust const generics.
+//! This module is an internal engine component and is not part of the public API surface.
+//!
+//! ## Architectural Intent
+//! This is a core engine component implemented as a fixed-size ring buffer using const generics.
+//! It is not intended for direct external use, as public functionality is provided through a
+//! higher-level wrapper.
+//!
+//! The implementation is fully stack-based and avoids heap allocation entirely.
+//! It is designed for deterministic, small-capacity use cases such as streaming,
+//! logging, and queueing.
+//!
+//! ## Target Performance Profile
+//! Intended for thin stack environments, typically with capacities up to around 50 elements,
+//! where predictable execution time and avoidance of heap allocation are critical.
 
-#[derive(Debug)]
 pub struct StaticRingBuffer<T, const N: usize> {
     data: [Option<T>; N],
     write_index: usize,
@@ -17,7 +32,7 @@ impl<T, const N: usize> Default for StaticRingBuffer<T, N> {
 }
 
 impl<T, const N: usize> StaticRingBuffer<T, N> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         // 0件は意味がない上，panicになるのでガードする
         // 上側チェックはなし。あまり巨大なのはスタックをひっ迫させるが
         // ～50件程度の使用を想定
@@ -31,7 +46,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
     }
 
     /// 要素挿入 お尻に追加。リングなので満杯の場合は古いのから上書き
-    pub fn push(&mut self, item: T) {
+    pub(crate) fn push(&mut self, item: T) {
         self.data[self.write_index] = Some(item);
         self.write_index = (self.write_index + 1) % N;
         if self.count < N {
@@ -40,7 +55,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
     }
 
     /// バッファクリア
-    pub fn clear(&mut self) {
+    pub(crate) fn clear(&mut self) {
         self.data = [const { None }; N];
         self.write_index = 0;
         self.count = 0;
@@ -48,28 +63,28 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     #[allow(dead_code)]
     /// バッファの長さを返す
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.count
     }
 
     /// バッファが空（要素数がゼロ）かどうかを返す
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.count == 0
     }
 
     /// バッファが満杯（最大容量 N に達している）かどうかを返す
-    pub fn is_full(&self) -> bool {
+    pub(crate) fn is_full(&self) -> bool {
         self.count == N // ジェネリクスの最大サイズ N と比較
     }
 
     #[allow(dead_code)]
     /// iter 古い順をデフォルトに
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.iter_oldest()
     }
 
     // 古い順に出力するイテレータ
-    pub fn iter_oldest(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter_oldest(&self) -> impl Iterator<Item = &T> {
         let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
 
@@ -83,7 +98,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
     }
 
     // 新しい順に出力するイテレータ
-    pub fn iter_newest(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter_newest(&self) -> impl Iterator<Item = &T> {
         let start = if self.count == N { self.write_index } else { 0 };
         let count = self.count;
 

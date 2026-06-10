@@ -16,7 +16,7 @@ pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> TransportF
     match mode {
         FrameFormat::Str => {
             // execute_sim でやっていた組立処理をここに持ってくる
-            let hex: String = digi_frame.iter().map(|b| format!("{:x}", b)).collect();
+            let hex: String = digi_frame.iter().map(|b| format!("{b:x}")).collect();
             TransportFrame::Str(hex.into_bytes())
         }
         FrameFormat::Bin => {
@@ -78,7 +78,7 @@ mod tests {
         // 123.456 -> 123.46 (四捨五入) -> [0, 1, 2, 3, 4, 6]
         assert_eq!(frame[D11], 6); // d11 (1の位) [cite: 59-61]
 
-        println!("Test Frame: {:?}", frame);
+        println!("Test Frame: {frame:?}");
     }
 
     #[test]

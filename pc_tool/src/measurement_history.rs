@@ -1,6 +1,9 @@
-//! measurement_history.rs
+//! `measurement_history.rs`
 //!
-//! GUIでデータ履歴を表示する機能 を提供する
+//! # Measurement History Management Module
+//!
+//! This module provides domain-specific history retention services for decoded
+//! `Measurement` packets, designed to feed historical data streams directly into the GUI view matrix.
 
 use crate::frame::Measurement;
 use crate::ring_buffer::StaticRingBuffer;
@@ -8,7 +11,7 @@ use crate::ring_buffer::StaticRingBuffer;
 const HISTORY_SIZE: usize = 50;
 
 pub struct MeasurementHistory {
-    // とりあえず20件分で確保
+    // 50件分で確保 (HISTORY_SIZEで指定)
     inner: StaticRingBuffer<Measurement, HISTORY_SIZE>,
 }
 

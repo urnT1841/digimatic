@@ -8,12 +8,6 @@
 //! raw serial inputs and the presentation layer, holding typed values, units,
 //! and validation metadata to ensure data integrity across the entire pipeline.
 //!
-//! # 計測フレームの構造定義
-//!
-//! アプリケーション内でパースされた計測データを表現する、コアドメインモデルおよび
-//! データ構造を定義する。生のシリアル入力を、型安全な数値・単位・バリデーション
-//! メタデータを持つ構造体に変換し保持することで、下流の表示レイヤー（GUI/CLI）に対して
-//! 常に整合性の取れたデータを提供。
 
 use crate::errors::FrameParseError;
 
@@ -146,7 +140,6 @@ impl Measurement {
     }
 }
 
-/// Measurement構造体の値をf64に変換
 impl Measurement {
     pub fn to_f64(self) -> f64 {
         let divisor = 10f64.powi(self.point as i32);
@@ -159,13 +152,15 @@ impl Measurement {
     }
 }
 
-/// ビット並び順モード
-// Msbが送られてくることはないので，これの実装がない。よって未使用のワーニング
-// リリースに向けて dead_codeつける。次のバージョンでの扱を検討する
-#[allow(dead_code)]
+/// Bit ordering mode.
+///
+/// Note:
+/// MSB is defined for model completeness,
+/// but Digimatic protocol uses LSB-only ordering.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BitMode {
     Lsb,
+    #[allow(dead_code)]
     Msb,
 }
 

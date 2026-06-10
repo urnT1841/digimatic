@@ -1,3 +1,40 @@
+//! # Graphical User Interface (GUI) Application Module
+//!
+//! `gui_app.rs`
+//!
+//! This module builds the immediate-mode visual interface powered by the `egui` / `eframe` ecosystem.
+//! It acts as the final terminal consumer in the data pipeline, polling asynchronously from
+//! the background MPSC channel to drive realtime gauge projection plots and history logs.
+//!
+//! ## UI Hierarchy Matrix
+//! ```text
+//! DisplayApp (Global State Manager)
+//!  ├── setup_custom_fonts (Invoked once at initialization: Injects TTF asset)
+//!  │
+//!  └── update (Invoked every frame: Main rendering tick lifecycle)
+//!        ├── MPSC Stream Ingestion (Drains the receiver queue completely)
+//!        ├── draw_top_bar (Renders attachment link layer status and frame protocols)
+//!        ├── draw_under_bar (Renders quick access options)
+//!        └── CentralPanel (Core body context)
+//!              └── vertical_centered
+//!                    ├── draw_main_measurement (Oversized primary telemetry display)
+//!                    └── draw_main_history (Scroll-protected chronological table logs)
+//! ```
+//! GUI構成
+//! ```text
+//! DisplayApp (アプリの親玉：状態の管理)
+//!  ├── setup_custom_fonts (起動時に1回だけ：フォントの仕込み)
+//!  │
+//!  └── update (毎フレーム走る描画の司令)
+//!        ├── MPSCデータ受信 (ロジック)
+//!        ├── draw_top_bar (接続ステータスやモード表示)
+//!        ├── draw_under_bar (下部の単位切り替えやステータス)
+//!        └── CentralPanel (メイン画面)
+//!              └── vertical_centered
+//!                    ├── draw_main_measurement (特大の現在の計測値)
+//!                    └── draw_main_history (過去データの履歴リスト)
+//! ```
+
 use eframe::egui;
 use std::sync::mpsc::Receiver;
 
@@ -16,20 +53,6 @@ struct DisplayApp {
 }
 
 const FONT_DATA: &[u8] = include_bytes!("../assets/UDEVGothic35LG-Regular.ttf");
-
-//GUI構成
-//
-// DisplayApp (アプリの親玉：状態の管理)
-//  ├── setup_custom_fonts (起動時に1回だけ：フォントの仕込み)
-//  │
-//  └── update (毎フレーム走る描画の司令)
-//        ├── MPSCデータ受信 (ロジック)
-//        ├── draw_top_bar (接続ステータスやモード表示)
-//        ├── draw_under_bar (下部の単位切り替えやステータス)
-//        └── CentralPanel (メイン画面)
-//              └── vertical_centered
-//                    ├── draw_main_measurement (特大の現在の計測値)
-//                    └── draw_main_history (過去データの履歴リスト)
 
 impl DisplayApp {
     // 初期化実施関数
@@ -143,16 +166,16 @@ impl DisplayApp {
     fn draw_main_history(&self, ui: &mut egui::Ui) {
         ui.add_space(30.0);
         ui.separator();
-        ui.label(egui::RichText::new("📋 履歴 (最大20件)").strong());
+        ui.label(egui::RichText::new(" 履歴 (最大50件)").strong());
         ui.add_space(10.0);
 
         if self.history.is_empty() {
             ui.weak("履歴はありません（データ未受信）");
         } else {
-            // 🌟 魔法の1行：ここから下の要素を縦方向（vertical）のスクロール領域にする！
+            // ここから下の要素を縦方向（vertical）のスクロール領域にする！
             // max_height を指定して、画面全体のレイアウトが崩れないようにガード
             egui::ScrollArea::vertical()
-                .max_height(200.0) // 🌟 お好みの高さ（ピクセル）で固定できます
+                .max_height(200.0) // お好みの高さ（ピクセル）で固定
                 .show(ui, |ui| {
                     // この中身は今までのボスのコードと100%同じでOK！
                     for (idx, meas) in self.history.iter_newest().enumerate() {
@@ -164,14 +187,14 @@ impl DisplayApp {
                             if idx == 0 {
                                 ui.colored_label(
                                     egui::Color32::from_rgb(0, 255, 150),
-                                    format!("直前 ➡️  {}", history_val),
+                                    format!("現測定値 ➡️  {history_val}"),
                                 );
                             } else {
-                                ui.label(format!("過去 [{}] :  {}", idx, history_val));
+                                ui.label(format!("過去 [{idx}] :  {history_val}"));
                             }
                         });
                     }
-                }); // 🌟 スクロールエリアここまで
+                }); // スクロールエリアここまで
         }
     }
 }
@@ -180,7 +203,7 @@ impl eframe::App for DisplayApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // MPSCキューから最新のデータを全て引っこ抜く（バックエンド通信の消化）
         while let Ok(new_data) = self.receiver.try_recv() {
-            self.measurement_data = new_data.clone();
+            self.measurement_data = new_data;
             self.history.add(new_data);
         }
 
@@ -202,6 +225,13 @@ impl eframe::App for DisplayApp {
 
 // dispatcher から呼ばれる公開エントリーポイント
 // 計測値 measurement構造体と，接続情報等のConnetcionIfon構造体を渡す
+/// Launches the native display interface window block.
+/// This acts as a blocking terminal call that runs until the window frame is closed by the user.
+///
+/// # Errors
+///
+/// This function bubbles up an underlying [`DigimaticError`] wrapper variant if `eframe` fails
+/// to bind native graphics context resources or hook system OS window loops.
 pub fn launch_display(
     rx: Receiver<Measurement>,
     conn_info: ConnectionInfo,
