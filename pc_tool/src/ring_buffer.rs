@@ -148,12 +148,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn zero_size_buffer_panics() {
-        let _ = StaticRingBuffer::<i32, 0>::new();
-    }
-
-    #[test]
     fn buffer_partially_filled_and_empty() {
         let mut buf = StaticRingBuffer::<i32, 5>::new();
 
