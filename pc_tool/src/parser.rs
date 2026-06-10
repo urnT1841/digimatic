@@ -7,13 +7,6 @@
 //! for the Digimatic protocol. It provides internal validation and parsing engines
 //! that safely transform raw incoming communication data (both ASCII string streams
 //! and raw binary bitframes) into structured data models defined in `frame.rs`.
-//!
-//! # 生データ解析・デコードエンジン
-//!
-//! Digimatic プロトコルにおける、ビット単位およびバイト単位の専門的なデコードロジックを
-//! 担う。受信した生の通信データ（ASCII文字列ストリームおよび生のバイナリビット
-//! フレームの双方）を厳密にバリデーションし、`frame.rs` で定義された構造化データモデルへと
-//! 安全に変換する内部解析エンジンを提供する。
 
 use crate::errors::FrameParseError;
 use crate::frame::*;

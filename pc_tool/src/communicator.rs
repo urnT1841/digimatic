@@ -1,14 +1,10 @@
-//! # USB-CDC 通信接続・レシーバ生成モジュール
-//! communicator.rs
+//! `communicator.rs`
 //!
-//! Raspberry Pi Pico（実機）との物理的なシリアル通信（USB-CDC）を確立し、
-//! データ受信を行うための「接続管理」および「レシーバオブジェクトの生成」する。
-//! Simのデータを受けるレシーバも同様に生成する。
+//! # USB-CDC Communication Link Layer Module
 //!
-//! ## 主な役割
-//! - システムが認識可能な仮想シリアルポートの自動探索・準備
-//! - 実機とのシリアルポート接続（ボーレート等の通信設定）の確立
-//! - 上流のデータ処理レイヤ（`received_data_handler` 等）へ引き渡すための、通信レシーバの初期化と生成
+//! This module establishes and manages the physical USB-CDC serial interface link
+//! with the Raspberry Pi Pico hardware, abstracting raw ingestion readers and channel sinks
+//! behind a unified dynamic runtime trait interface.
 //!
 
 use serialport::SerialPort;
@@ -24,7 +20,7 @@ use crate::frame::{FRAME_LENGTH, TransportFrame};
 // 一部(timeoutは使用しているが他は未使用)
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StopCode {
+pub(crate) enum StopCode {
     Normal,      // 正常
     Stop,        //
     Timeout,     // 既定の時間Picoが見つからなかった
@@ -110,18 +106,21 @@ impl SimReceiver {
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
     fn read_measurement(&mut self) -> Result<TransportFrame, DigimaticError> {
-        // 🌟 チャネルから最初から生バイト列（Vec<u8>）が届くので、
-        //    文字列のパースやトリムは一切不要。そのまま上流へ右から左へ受け流す！
+        // チャネルから最初から生バイト列（Vec<u8>）が届くので、
+        //  文字列のパースやトリムは一切不要。そのまま上流へ受け流す
         let payload = self.rx.recv().map_err(|_| CommError::Timeout)?;
         Ok(payload)
     }
 }
 
+/// Blocks execution until a valid Raspberry Pi Pico USB/CDC hardware
+///    footprint is registered by the OS scanner.
 ///
-/// pico探す
+/// # Errors
 ///
+/// Returns a [`StopCode::Timeout`] variant if scanning loops exceed
+/// the 600-second maximum duration boundary.
 pub const MAX_WAIT_DURATION: Duration = Duration::from_secs(600);
-
 pub fn wait_until_connection() -> Result<String, StopCode> {
     let start_time = std::time::Instant::now();
 
@@ -141,10 +140,12 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
     }
 }
 
+/// Attempts to claim ownership and open a raw system link to the physical file handle location path.
 ///
-/// portのpathを受け取って Open する
+/// # Errors
 ///
-pub const BAUD_RATE: u32 = 115200;
+/// Returns a [`DigimaticError::Comm`] wrapper sequence if the OS layer denies connection initialization.
+pub const BAUD_RATE: u32 = 115_200;
 pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>, DigimaticError> {
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))
