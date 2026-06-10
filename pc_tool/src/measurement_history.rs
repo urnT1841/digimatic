@@ -40,6 +40,11 @@ impl MeasurementHistory {
         self.inner.clear();
     }
 
+    #[allow(dead_code)]
+    pub fn len(&mut self) {
+        self.inner.len();
+    }
+
     /// 空チェック
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
