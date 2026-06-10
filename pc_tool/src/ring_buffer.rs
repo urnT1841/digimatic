@@ -19,6 +19,7 @@
 //! Intended for thin stack environments, typically with capacities up to around 50 elements,
 //! where predictable execution time and avoidance of heap allocation are critical.
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct StaticRingBuffer<T, const N: usize> {
     data: [Option<T>; N],
     write_index: usize,
@@ -39,6 +40,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
         assert!(N > 0, "StaticRingBuffer size N must be greater than 0");
     };
     pub(crate) fn new() -> Self {
+        let _ = Self::_ASSERT_N;
         Self {
             data: [const { None }; N],
             write_index: 0,
@@ -57,12 +59,14 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     /// バッファクリア
     pub(crate) fn clear(&mut self) {
+        for slot in self.data.iter_mut() {
+            *slot = None;
+        }
         self.data = [const { None }; N];
         self.write_index = 0;
         self.count = 0;
     }
 
-    #[allow(dead_code)]
     /// バッファの長さを返す
     pub(crate) fn len(&self) -> usize {
         self.count

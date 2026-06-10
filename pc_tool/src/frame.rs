@@ -25,7 +25,7 @@ pub const D13: usize = 12; // unit  ( mm or inch )
 // このcrate(frame.rs)をlib上で pub(crate)扱いにしたためunusedが顕在化
 // 将来的にパースロジックをより厳格化する際に復帰，あるいは呼び出し先修正を実施
 #[allow(dead_code)]
-pub(crate) mod unused_digimatic_frome {
+pub(crate) mod unused_digimatic_frame {
     pub const D2: usize = 1; // header
     pub const D3: usize = 2; // header
     pub const D7: usize = 6; // data
@@ -36,7 +36,7 @@ pub(crate) mod unused_digimatic_frome {
 
 // 上記と同じ 改めて対応必要
 #[allow(unused_imports)]
-pub(crate) use unused_digimatic_frome::*;
+pub(crate) use unused_digimatic_frame::*;
 
 pub const FRAME_LENGTH: usize = 13; // デジマチックフレームの長さは13固定
 pub const FRAME_NIBBLES: usize = 4; // デジマチックフレームの1つは4Bit (nibble)
