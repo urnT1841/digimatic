@@ -82,7 +82,7 @@ fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
         "--cli" | "-c" => Ok(Token::Ui(UiMode::Cli)),
         "--bin" | "-b" => Ok(Token::FrameMode),
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
-            format!("不正な引数です: {}", arg),
+            format!("不正な引数です: {arg}"),
         ))),
     }
 }

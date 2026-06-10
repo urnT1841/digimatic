@@ -50,7 +50,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
             // inputの所有権をスレッド内に移動させる
             std::thread::spawn(move || {
                 if let Err(e) = run_pipeline(input, Some(tx_gui), config.console_mode) {
-                    eprintln!("[Error] Pipeline failed: {:?}", e);
+                    eprintln!("[Error] Pipeline failed: {e:?}");
                 }
             });
             // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)

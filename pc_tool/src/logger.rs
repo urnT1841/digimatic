@@ -76,12 +76,12 @@ fn write_csv_and_flush<T: Serialize, W: Write>(
 ) -> Result<(), DigimaticError> {
     wtr.serialize(value).map_err(|e| SystemError {
         code: 101,
-        message: format!("CSV serialization failed: {}", e),
+        message: format!("CSV serialization failed: {e}"),
     })?;
 
     wtr.flush().map_err(|e| SystemError {
         code: 102,
-        message: format!("CSV flush failed: {}", e),
+        message: format!("CSV flush failed: {e}"),
     })?;
 
     Ok(())

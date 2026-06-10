@@ -12,7 +12,7 @@ fn format_logic(val: f64, unit: Unit, precision: usize) -> String {
         Unit::Mm => "mm",
         Unit::Inch => "inch",
     };
-    format!("{:.*} {}", precision, val, unit_str)
+    format!("{val:.precision$} {unit_str}")
 }
 
 /// GUI表示用ラッパー

@@ -164,10 +164,10 @@ impl DisplayApp {
                             if idx == 0 {
                                 ui.colored_label(
                                     egui::Color32::from_rgb(0, 255, 150),
-                                    format!("直前 ➡️  {}", history_val),
+                                    format!("現測定値 ➡️  {history_val}"),
                                 );
                             } else {
-                                ui.label(format!("過去 [{}] :  {}", idx, history_val));
+                                ui.label(format!("過去 [{idx}] :  {history_val}"));
                             }
                         });
                     }
