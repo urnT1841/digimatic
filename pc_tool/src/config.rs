@@ -1,6 +1,9 @@
 //! config.rs
-//! アプリケーション全体の設定と動作ポリシーの管理
-
+//!
+//! # Application Configuration Module
+//!
+//! This module manages the global configuration matrix and runtime policies
+//! for the entire Digimatic application suite.
 use crate::frame::Unit;
 
 /// アプリケーションの全般設定
