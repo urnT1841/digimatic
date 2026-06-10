@@ -19,7 +19,8 @@
 //! Intended for thin stack environments, typically with capacities up to around 50 elements,
 //! where predictable execution time and avoidance of heap allocation are critical.
 
-pub struct StaticRingBuffer<T, const N: usize> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct StaticRingBuffer<T, const N: usize> {
     data: [Option<T>; N],
     write_index: usize,
     count: usize,
@@ -32,12 +33,14 @@ impl<T, const N: usize> Default for StaticRingBuffer<T, N> {
 }
 
 impl<T, const N: usize> StaticRingBuffer<T, N> {
-    pub(crate) fn new() -> Self {
-        // 0件は意味がない上，panicになるのでガードする
-        // 上側チェックはなし。あまり巨大なのはスタックをひっ迫させるが
-        // ～50件程度の使用を想定
+    // 0件は意味がない上，panicになるのでガードする
+    // 上側チェックはなし。あまり巨大なのはスタックをひっ迫させるが
+    // ～50件程度の使用を想定
+    const _ASSERT_N: () = {
         assert!(N > 0, "StaticRingBuffer size N must be greater than 0");
-
+    };
+    pub(crate) fn new() -> Self {
+        let _ = Self::_ASSERT_N;
         Self {
             data: [const { None }; N],
             write_index: 0,
@@ -56,12 +59,14 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     /// バッファクリア
     pub(crate) fn clear(&mut self) {
+        for slot in self.data.iter_mut() {
+            *slot = None;
+        }
         self.data = [const { None }; N];
         self.write_index = 0;
         self.count = 0;
     }
 
-    #[allow(dead_code)]
     /// バッファの長さを返す
     pub(crate) fn len(&self) -> usize {
         self.count
@@ -140,12 +145,6 @@ mod tests {
         let items: Vec<&i32> = buf.iter_newest().collect();
 
         assert_eq!(items, vec![&3]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn zero_size_buffer_panics() {
-        let _ = StaticRingBuffer::<i32, 0>::new();
     }
 
     #[test]
