@@ -22,6 +22,7 @@ use crate::config::{AppConfig, ConnectionInfo, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
 use crate::frame::Measurement;
 use crate::received_data_handler::{create_log_writer, handle_received_data};
+use crate::sim::execute_sim::{FrameGenerator, SimMode};
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
@@ -29,7 +30,8 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
         DataSource::Sim => {
             // sim用チャンネル作成 -> sim thread生成 → Box詰め
             let (tx_raw, rx_raw) = mpsc::channel();
-            crate::sim::execute_sim::start_generator_thread(tx_raw, config.format);
+            // TODO ここでの generator呼び出しは見直す必要あり
+            FrameGenerator::new(tx_raw, config.format, SimMode::Random).start_generator_thred();
             Box::new(SimReceiver::new(rx_raw))
         }
         DataSource::Actual => {
