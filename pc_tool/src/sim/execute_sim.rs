@@ -91,7 +91,7 @@ impl FrameGenerator {
                     *step = step.wrapping_add(1);
                 }
 
-                std::thread::sleep(std::time::Duration::from_millis(700));
+                std::thread::sleep(std::time::Duration::from_millis(50));
             }
         });
     }
