@@ -26,6 +26,7 @@ pub(crate) enum SimMode {
         amplitude: f64, // 振幅倍率
         frequency: f64, // 周期
         delta: f64,     // 初期位相ずれ
+        step_count: u32,
     },
     FaultInjection(FrameSim),
 }
@@ -69,12 +70,25 @@ impl FrameGenerator {
 
     pub fn start_generator_thred(self) {
         std::thread::spawn(move || {
+            // SinWave のときだけインクリメントが必要なので最初は None に設定
+            let mut current_step: Option<u32> = match self.mode {
+                SimMode::SinWave { step_count, .. } => Some(step_count),
+                _ => None,
+            };
+
             loop {
-                let val = self.generate_value();
+                //現在のステップ数(あれば)を渡して値を生成
+                let val = self.generate_value(current_step.unwrap_or(0));
+
                 let sim_payload = build_simurator_payload(val, self.format);
 
                 if self.tx.send(sim_payload).is_err() {
                     break;
+                }
+
+                // SinWave モード →  +1 インクリメント
+                if let Some(ref mut step) = current_step {
+                    *step = step.wrapping_add(1);
                 }
 
                 std::thread::sleep(std::time::Duration::from_millis(700));
@@ -82,33 +96,23 @@ impl FrameGenerator {
         });
     }
 
-    /// いろんなタイプの計測値生成
-    /// ランダムだったり固定だったり
-    fn generate_value(&self) -> f64 {
+    fn generate_value(&self, step_count: u32) -> f64 {
         match self.mode {
             SimMode::Random => generator::calc_random(),
-            SimMode::Fixed(v) => {
-                // 指定値を出し続ける
-                v
-            }
-            // 構造体スタイルの enum はそのまま変数名を取り出して関数に渡す
+            SimMode::Fixed(v) => v,
             SimMode::Gaussian { target, std_dev } => generator::calc_gaussian(target, std_dev),
-            // 名前が同じなら、そのまま generator::sine_wave(min, max, step) 的に渡す
+
+            // enum 内の初期設定値（center や amplitude）と、スレッド側で管理している step_count を組み合わせる
             SimMode::SinWave {
-                // $$y = A \sin(\theta + \delta)$$
-                center: f64,    // 振幅のセンター 振幅が 150 (mm) とすると 75mm
-                amplitude: f64, // 振幅倍率
-                frequency: f64, // 周期
-                delta: f64,     // 初期位相ずれ
+                center,
+                amplitude,
+                frequency,
+                delta,
+                .. // enum 内の step_count は無視して、引数の最新の step_count を使う
             } => generator::calc_sin_wave(center, amplitude, frequency, delta, step_count),
-            // // タプルスタイルの enum は丸括弧 `(sim)` で中身（FrameSim）を取り出す
-            SimMode::FaultInjection(sim) => {
-                // 異常系モードの時も、ベースとなる数値自体は
-                // ひとまず完全ランダムや固定値など、好きな関数から引っ張る
-                // （このあと通信フレーム化する段階で、引数の `sim` を使ってビットを壊していく）
-                generator()
-            }
-            SimMode::Seed => 47.67,
+
+            SimMode::FaultInjection(_sim) => generator::calc_random(),
+            SimMode::Seed => generator::calc_seeded_random(),
         }
     }
 }
