@@ -16,14 +16,14 @@
 
 use crate::config::{AppConfig, DataSource, UiMode};
 use crate::errors::{ArgumentError, DigimaticError};
-use crate::sim::execute_sim::SimMode;
+use crate::sim::execute_sim::GenMode;
 
 #[derive(Debug)]
 enum Token {
     Source(DataSource),
     Ui(UiMode),
     FrameMode,
-    SimMode(SimMode),
+    SimMode(GenMode),
 }
 
 /// API窓口：環境から生の引数を集めてコアロジックへ
@@ -78,10 +78,10 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                                 "不正な数値です".into(),
                             ))
                         })?;
-                        sim_mode = Some(SimMode::Fixed(v));
+                        sim_mode = Some(GenMode::Fixed(v));
                     }
                     "--sin" => {
-                        sim_mode = Some(SimMode::SinWave {
+                        sim_mode = Some(GenMode::SinWave {
                             center: 75.0,
                             amplitude: 50.0,
                             frequency: 0.05,
@@ -90,13 +90,13 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                         });
                     }
                     "--gaussian" => {
-                        sim_mode = Some(SimMode::Gaussian {
+                        sim_mode = Some(GenMode::Gaussian {
                             target: 45.0,
                             std_dev: 0.02,
                         });
                     }
                     "--seed" => {
-                        sim_mode = Some(SimMode::Seed);
+                        sim_mode = Some(GenMode::Seed);
                     }
                     _ => {}
                 }
@@ -108,7 +108,7 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
     let ui = ui.ok_or(invalid_usage())?;
 
     // デフォルトは Random
-    let final_sim_mode = sim_mode.unwrap_or(SimMode::Random);
+    let final_sim_mode = sim_mode.unwrap_or(GenMode::Random);
 
     // build に final_sim_mode を渡す
     Ok(crate::config::AppConfig::build(
@@ -128,7 +128,7 @@ fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
         "--gui" | "-g" => Ok(Token::Ui(UiMode::Gui)),
         "--cli" | "-c" => Ok(Token::Ui(UiMode::Cli)),
         "--bin" | "-b" => Ok(Token::FrameMode),
-        "--fixed" | "--sin" | "--gaussian" | "--seed" => Ok(Token::SimMode(SimMode::Random)),
+        "--fixed" | "--sin" | "--gaussian" | "--seed" => Ok(Token::SimMode(GenMode::Random)),
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
             format!("不正な引数です: {arg}"),
         ))),

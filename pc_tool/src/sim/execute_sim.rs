@@ -11,7 +11,7 @@ use crate::sim::generator;
 
 /// Simのモード設定
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum SimMode {
+pub(crate) enum GenMode {
     Random,
     Seed,
     Fixed(f64),
@@ -58,11 +58,11 @@ fn apply_frame_sim(sim: FrameSim, frame: &mut Vec<u8>) {
 pub struct FrameGenerator {
     tx: Sender<TransportFrame>,
     format: FrameFormat,
-    mode: SimMode,
+    mode: GenMode,
 }
 
 impl FrameGenerator {
-    pub fn new(tx: Sender<TransportFrame>, format: FrameFormat, mode: SimMode) -> Self {
+    pub fn new(tx: Sender<TransportFrame>, format: FrameFormat, mode: GenMode) -> Self {
         Self { tx, format, mode }
     }
 
@@ -70,7 +70,7 @@ impl FrameGenerator {
         std::thread::spawn(move || {
             // SinWave のときだけインクリメントが必要なので最初は None に設定
             let mut current_step: Option<u32> = match self.mode {
-                SimMode::SinWave { step_count, .. } => Some(step_count),
+                GenMode::SinWave { step_count, .. } => Some(step_count),
                 _ => None,
             };
 
@@ -96,12 +96,12 @@ impl FrameGenerator {
 
     fn generate_value(&self, step_count: u32) -> f64 {
         match self.mode {
-            SimMode::Random => generator::calc_random(),
-            SimMode::Fixed(v) => v,
-            SimMode::Gaussian { target, std_dev } => generator::calc_gaussian(target, std_dev),
+            GenMode::Random => generator::calc_random(),
+            GenMode::Fixed(v) => v,
+            GenMode::Gaussian { target, std_dev } => generator::calc_gaussian(target, std_dev),
 
             // enum 内の初期設定値（center や amplitude）と、スレッド側で管理している step_count を組み合わせる
-            SimMode::SinWave {
+            GenMode::SinWave {
                 center,
                 amplitude,
                 frequency,
@@ -109,8 +109,8 @@ impl FrameGenerator {
                 .. // enum 内の step_count は無視して、引数の最新の step_count を使う
             } => generator::calc_sin_wave(center, amplitude, frequency, delta, step_count),
 
-            SimMode::FaultInjection(_sim) => generator::calc_random(),
-            SimMode::Seed => generator::calc_seeded_random(),
+            GenMode::FaultInjection(_sim) => generator::calc_random(),
+            GenMode::Seed => generator::calc_seeded_random(),
         }
     }
 }

@@ -22,7 +22,7 @@ use crate::config::{AppConfig, ConnectionInfo, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
 use crate::frame::Measurement;
 use crate::received_data_handler::{create_log_writer, handle_received_data};
-use crate::sim::execute_sim::{FrameGenerator, SimMode};
+use crate::sim::execute_sim::FrameGenerator;
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
