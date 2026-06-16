@@ -6,14 +6,15 @@
 //!
 
 use rand::prelude::*;
+//
+use rand::SeedableRng;
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand_distr::{Distribution, Normal as DistNormal};
 use std::sync::{Mutex, OnceLock};
 
 /// 完全ランダム計算
 pub(crate) fn calc_random() -> f64 {
-    let mut rng = rand::rng();
-    let raw: i32 = rng.random_range(1..=15_000);
+    let raw: i32 = rand::random_range(1..=15_000);
     f64::from(raw) / 100.0
 }
 
@@ -30,30 +31,12 @@ pub(crate) fn calc_sin_wave(
     center + amplitude * (theta + delta).sin()
 }
 
-/// リアルノギス（正規分布）計算
-pub(crate) fn calc_gaussian(target: f64, std_dev: f64) -> f64 {
-    static GAUSSIAN_RNG: OnceLock<Mutex<StdRng>> = OnceLock::new();
+/// ガウシアンによるばらつき
+/// rand_distr を用いた実装
+pub fn calc_gaussian(target: f64, std_dev: f64) -> f64 {
+    let normal = DistNormal::new(target, std_dev).expect("std_dev must be positive");
 
-    let mutex_rng = GAUSSIAN_RNG.get_or_init(|| {
-        // システムの現在時刻（ナノ秒）をシード値にして完全ランダム化
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos() as u64;
-
-        Mutex::new(StdRng::seed_from_u64(now))
-    });
-
-    let mut rng = mutex_rng.lock().unwrap();
-
-    // ボックス＝ミュラー変換
-    let u1: f64 = rng.random();
-    let u2: f64 = rng.random();
-
-    let u1 = if u1 == 0.0 { 1e-10 } else { u1 };
-    let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
-
-    target + z0 * std_dev
+    normal.sample(&mut rand::rng())
 }
 
 /// シード固定再現乱数計算
@@ -65,12 +48,13 @@ pub(crate) fn calc_seeded_random() -> f64 {
         Mutex::new(StdRng::seed_from_u64(seed))
     });
 
-    // ロックを確保して、2発目、3発目の乱数を順番に引いていく
-    let mut rng = mutex_rng.lock().unwrap();
+    let mut guard = mutex_rng.lock().unwrap();
+    let rng = &mut *guard;
     let raw: i32 = rng.random_range(1..=15_000);
 
     f64::from(raw) / 100.0
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

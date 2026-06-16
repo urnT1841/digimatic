@@ -1,8 +1,6 @@
 //!
 //!  Sim実行
-//!  generatar -> frame Build -> send -> revice -> display を
-//! すべてRustで実装したもの
-//!
+//!  generatar -> frame Build -> send -> revice -> display 
 
 use std::sync::mpsc::Sender;
 
