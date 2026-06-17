@@ -31,7 +31,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
             // sim用チャンネル作成 -> sim thread生成 → Box詰め
             let (tx_raw, rx_raw) = mpsc::channel();
             // TODO ここでの generator呼び出しは見直す必要あり
-            FrameGenerator::new(tx_raw, config.format, config.sim_mode).start_generator_thred();
+            FrameGenerator::new(tx_raw, config.format, config.sim_mode).start_generator_thread();
             Box::new(SimReceiver::new(rx_raw))
         }
         DataSource::Actual => {

@@ -6,15 +6,11 @@
 //!
 
 use rand::prelude::*;
-//
-use rand::SeedableRng;
-use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal as DistNormal};
-use std::sync::{Mutex, OnceLock};
 
-/// 完全ランダム計算
-pub(crate) fn calc_random() -> f64 {
-    let raw: i32 = rand::random_range(1..=15_000);
+/// 完全ランダム計算 seed付きにも対応
+pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
+    let raw: i32 = rng.random_range(1..=15_000);
     f64::from(raw) / 100.0
 }
 
@@ -33,40 +29,44 @@ pub(crate) fn calc_sin_wave(
 
 /// ガウシアンによるばらつき
 /// rand_distr を用いた実装
-pub fn calc_gaussian(target: f64, std_dev: f64) -> f64 {
-    let normal = DistNormal::new(target, std_dev).expect("std_dev must be positive");
-
-    normal.sample(&mut rand::rng())
+pub(crate) fn calc_gaussian(target: f64, std_dev: f64, rng: &mut StdRng) -> f64 {
+    if let Ok(normal) = DistNormal::new(target, std_dev) {
+        normal.sample(rng)
+    } else {
+        target
+    }
 }
-
-/// シード固定再現乱数計算
-pub(crate) fn calc_seeded_random() -> f64 {
-    static RNG_INSTANCE: OnceLock<Mutex<StdRng>> = OnceLock::new();
-
-    let mutex_rng = RNG_INSTANCE.get_or_init(|| {
-        let seed: u64 = 2026;
-        Mutex::new(StdRng::seed_from_u64(seed))
-    });
-
-    let mut guard = mutex_rng.lock().unwrap();
-    let rng = &mut *guard;
-    let raw: i32 = rng.random_range(1..=15_000);
-
-    f64::from(raw) / 100.0
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn generator_test() {
+        // テスト用に適当なシード（例: 1234）で乱数器を1個用意する
+        let mut test_rng = rand::rngs::StdRng::seed_from_u64(1234);
+
         for _ in 0..1000 {
-            let v = calc_random();
+            // 作成した乱数器の参照（&mut test_rng）を渡す
+            let v = calc_random(&mut test_rng);
 
             assert!(v >= 0.01);
             assert!(v <= 150.0);
             assert!(v.is_finite());
+        }
+    }
+
+    // 種つき乱数（calc_seeded_random）の再現性テスト
+    #[test]
+    fn test_calc_seeded_random_reproducibility() {
+        // 同じシード値で2つの独立した乱数器を作る
+        let mut rng1 = rand::rngs::StdRng::seed_from_u64(2026);
+        let mut rng2 = rand::rngs::StdRng::seed_from_u64(2026);
+
+        // 1発目、2発目、3発目……と引いていく数列が「完全に一致」するか検証
+        for _ in 0..10 {
+            let val1 = calc_random(&mut rng1);
+            let val2 = calc_random(&mut rng2);
+            assert_eq!(val1, val2, "同じシードなのに値がズレました！");
         }
     }
 
