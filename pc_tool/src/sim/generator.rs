@@ -6,13 +6,10 @@
 //!
 
 use rand::prelude::*;
-use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
-use std::sync::{Mutex, OnceLock};
+use rand_distr::{Distribution, Normal as DistNormal};
 
-/// 完全ランダム計算
-pub(crate) fn calc_random() -> f64 {
-    let mut rng = rand::rng();
+/// 完全ランダム計算 seed付きにも対応
+pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
     let raw: i32 = rng.random_range(1..=15_000);
     f64::from(raw) / 100.0
 }
@@ -30,46 +27,14 @@ pub(crate) fn calc_sin_wave(
     center + amplitude * (theta + delta).sin()
 }
 
-/// リアルノギス（正規分布）計算
-pub(crate) fn calc_gaussian(target: f64, std_dev: f64) -> f64 {
-    static GAUSSIAN_RNG: OnceLock<Mutex<StdRng>> = OnceLock::new();
-
-    let mutex_rng = GAUSSIAN_RNG.get_or_init(|| {
-        // システムの現在時刻（ナノ秒）をシード値にして完全ランダム化
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos() as u64;
-
-        Mutex::new(StdRng::seed_from_u64(now))
-    });
-
-    let mut rng = mutex_rng.lock().unwrap();
-
-    // ボックス＝ミュラー変換
-    let u1: f64 = rng.random();
-    let u2: f64 = rng.random();
-
-    let u1 = if u1 == 0.0 { 1e-10 } else { u1 };
-    let z0 = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
-
-    target + z0 * std_dev
-}
-
-/// シード固定再現乱数計算
-pub(crate) fn calc_seeded_random() -> f64 {
-    static RNG_INSTANCE: OnceLock<Mutex<StdRng>> = OnceLock::new();
-
-    let mutex_rng = RNG_INSTANCE.get_or_init(|| {
-        let seed: u64 = 2026;
-        Mutex::new(StdRng::seed_from_u64(seed))
-    });
-
-    // ロックを確保して、2発目、3発目の乱数を順番に引いていく
-    let mut rng = mutex_rng.lock().unwrap();
-    let raw: i32 = rng.random_range(1..=15_000);
-
-    f64::from(raw) / 100.0
+/// ガウシアンによるばらつき
+/// rand_distr を用いた実装
+pub(crate) fn calc_gaussian(target: f64, std_dev: f64, rng: &mut StdRng) -> f64 {
+    if let Ok(normal) = DistNormal::new(target, std_dev) {
+        normal.sample(rng)
+    } else {
+        target
+    }
 }
 #[cfg(test)]
 mod tests {
@@ -77,12 +42,31 @@ mod tests {
 
     #[test]
     fn generator_test() {
+        // テスト用に適当なシード（例: 1234）で乱数器を1個用意する
+        let mut test_rng = rand::rngs::StdRng::seed_from_u64(1234);
+
         for _ in 0..1000 {
-            let v = calc_random();
+            // 作成した乱数器の参照（&mut test_rng）を渡す
+            let v = calc_random(&mut test_rng);
 
             assert!(v >= 0.01);
             assert!(v <= 150.0);
             assert!(v.is_finite());
+        }
+    }
+
+    // 種つき乱数（calc_seeded_random）の再現性テスト
+    #[test]
+    fn test_calc_seeded_random_reproducibility() {
+        // 同じシード値で2つの独立した乱数器を作る
+        let mut rng1 = rand::rngs::StdRng::seed_from_u64(2026);
+        let mut rng2 = rand::rngs::StdRng::seed_from_u64(2026);
+
+        // 1発目、2発目、3発目……と引いていく数列が「完全に一致」するか検証
+        for _ in 0..10 {
+            let val1 = calc_random(&mut rng1);
+            let val2 = calc_random(&mut rng2);
+            assert_eq!(val1, val2, "同じシードなのに値がズレました！");
         }
     }
 

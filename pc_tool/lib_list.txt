@@ -1,0 +1,1035 @@
+Name                                               Project              Compat              Latest               Kind         Platform
+----                                               -------              ------              ------               ----         --------
+ab_glyph->ab_glyph_rasterizer                      0.1.10               ---                 Removed              Normal       ---
+ab_glyph->owned_ttf_parser                         0.25.1               ---                 Removed              Normal       ---
+accesskit_atspi_common->accesskit                  0.21.1               ---                 0.24.1               Normal       ---
+accesskit_atspi_common->accesskit_consumer         0.31.0               ---                 0.36.0               Normal       ---
+accesskit_atspi_common->atspi-common               0.9.0                ---                 0.13.0               Normal       ---
+accesskit_atspi_common->thiserror                  1.0.69               ---                 Removed              Normal       ---
+accesskit_atspi_common->zvariant                   5.10.0               5.12.0              5.12.0               Normal       ---
+accesskit_consumer->accesskit                      0.21.1               ---                 0.24.1               Normal       ---
+accesskit_consumer->hashbrown                      0.15.5               ---                 0.16.1               Normal       ---
+accesskit_macos->accesskit                         0.21.1               ---                 0.24.1               Normal       ---
+accesskit_macos->accesskit_consumer                0.31.0               ---                 0.37.0               Normal       ---
+accesskit_macos->hashbrown                         0.15.5               ---                 0.16.1               Normal       ---
+accesskit_unix->accesskit                          0.21.1               ---                 0.24.1               Normal       ---
+accesskit_unix->accesskit_atspi_common             0.14.2               ---                 0.18.1               Normal       ---
+accesskit_unix->atspi                              0.25.0               ---                 0.29.0               Normal       ---
+accesskit_unix->zbus                               5.14.0               5.16.0              5.16.0               Normal       ---
+accesskit_windows->accesskit                       0.21.1               ---                 0.24.1               Normal       ---
+accesskit_windows->accesskit_consumer              0.31.0               ---                 0.35.0               Normal       ---
+accesskit_windows->hashbrown                       0.15.5               ---                 0.16.1               Normal       ---
+accesskit_windows->windows                         0.61.3               ---                 0.62.2               Normal       ---
+accesskit_windows->windows-core                    0.61.2               ---                 0.62.2               Normal       ---
+accesskit_winit->accesskit                         0.21.1               ---                 0.24.1               Normal       ---
+accesskit_winit->accesskit_macos                   0.22.2               ---                 0.26.2               Normal       cfg(target_os = "macos")
+accesskit_winit->accesskit_unix                    0.17.2               ---                 0.21.1               Normal       cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))
+accesskit_winit->accesskit_windows                 0.29.2               ---                 0.32.1               Normal       cfg(target_os = "windows")
+ahash->once_cell                                   1.21.3               1.21.4              1.21.4               Normal       cfg(not(all(target_arch = "arm", target_os = "none")))
+ahash->zerocopy                                    0.8.36               0.8.52              0.8.52               Normal       ---
+android-activity->bitflags                         2.10.0               2.13.0              2.13.0               Normal       ---
+android-activity->cc                               1.2.56               1.2.64              1.2.64               Build        ---
+android-activity->cesu8                            1.1.0                Removed             Removed              Normal       ---
+android-activity->jni                              0.21.1               0.22.4              0.22.4               Normal       ---
+android-activity->jni-sys                          0.3.0                Removed             Removed              Normal       ---
+android-activity->libc                             0.2.183              0.2.186             0.2.186              Normal       ---
+android-activity->log                              0.4.29               0.4.32              0.4.32               Normal       ---
+android-activity->thiserror                        1.0.69               2.0.18              2.0.18               Normal       ---
+android_system_properties->libc                    0.2.183              0.2.186             0.2.186              Normal       ---
+arboard->log                                       0.4.29               0.4.32              0.4.32               Normal       cfg(all(unix, not(any(target_os = "macos", target_os = "android", target_os = "emscripten"))))
+arboard->windows-sys                               0.52.0               0.60.2              0.60.2               Normal       cfg(windows)
+async-broadcast->event-listener                    5.4.1                ---                 Removed              Normal       ---
+async-broadcast->event-listener-strategy           0.5.4                ---                 Removed              Normal       ---
+async-broadcast->futures-core                      0.3.32               ---                 Removed              Normal       ---
+async-broadcast->pin-project-lite                  0.2.17               ---                 Removed              Normal       ---
+async-channel->concurrent-queue                    2.5.0                ---                 Removed              Normal       ---
+async-channel->event-listener-strategy             0.5.4                ---                 Removed              Normal       ---
+async-channel->futures-core                        0.3.32               ---                 Removed              Normal       ---
+async-channel->pin-project-lite                    0.2.17               ---                 Removed              Normal       ---
+async-executor->async-task                         4.7.1                ---                 Removed              Normal       ---
+async-executor->concurrent-queue                   2.5.0                ---                 Removed              Normal       ---
+async-executor->fastrand                           2.3.0                2.4.1               2.4.1                Normal       ---
+async-executor->fastrand                           2.3.0                2.4.1               Removed              Normal       ---
+async-executor->futures-lite                       2.6.1                ---                 Removed              Normal       ---
+async-executor->pin-project-lite                   0.2.17               ---                 Removed              Normal       ---
+async-executor->slab                               0.4.12               ---                 Removed              Normal       ---
+async-io->autocfg                                  1.5.0                1.5.1               1.5.1                Build        ---
+async-io->autocfg                                  1.5.0                1.5.1               Removed              Build        ---
+async-io->cfg-if                                   1.0.4                ---                 Removed              Normal       ---
+async-io->concurrent-queue                         2.5.0                ---                 Removed              Normal       ---
+async-io->futures-io                               0.3.32               ---                 Removed              Normal       ---
+async-io->futures-lite                             2.6.1                ---                 Removed              Normal       ---
+async-io->parking                                  2.2.1                ---                 Removed              Normal       ---
+async-io->polling                                  3.11.0               ---                 Removed              Normal       ---
+async-io->rustix                                   1.1.4                ---                 Removed              Normal       ---
+async-io->slab                                     0.4.12               ---                 Removed              Normal       ---
+async-io->windows-sys                              0.61.2               ---                 Removed              Normal       cfg(windows)
+async-lock->event-listener                         5.4.1                ---                 Removed              Normal       ---
+async-lock->event-listener-strategy                0.5.4                ---                 Removed              Normal       ---
+async-lock->pin-project-lite                       0.2.17               ---                 Removed              Normal       ---
+async-process->async-channel                       2.5.0                ---                 Removed              Normal       cfg(any(windows, target_os = "linux"))
+async-process->async-io                            2.6.0                ---                 Removed              Normal       ---
+async-process->async-lock                          3.4.2                ---                 Removed              Normal       cfg(unix)
+async-process->async-signal                        0.2.13               0.2.14              0.2.14               Normal       cfg(unix)
+async-process->async-signal                        0.2.13               0.2.14              Removed              Normal       cfg(unix)
+async-process->async-task                          4.7.1                ---                 Removed              Normal       cfg(any(windows, target_os = "linux"))
+async-process->blocking                            1.6.2                ---                 Removed              Normal       cfg(windows)
+async-process->cfg-if                              1.0.4                ---                 Removed              Normal       ---
+async-process->event-listener                      5.4.1                ---                 Removed              Normal       ---
+async-process->futures-lite                        2.6.1                ---                 Removed              Normal       ---
+async-process->rustix                              1.1.4                ---                 Removed              Normal       cfg(unix)
+async-recursion->proc-macro2                       1.0.106              ---                 Removed              Normal       ---
+async-recursion->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+async-recursion->quote                             1.0.40               1.0.45              Removed              Normal       ---
+async-recursion->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+async-recursion->syn                               2.0.114              2.0.117             Removed              Normal       ---
+async-signal->async-io                             2.6.0                ---                 Removed              Development  ---
+async-signal->async-lock                           3.4.2                ---                 Removed              Normal       cfg(windows)
+async-signal->atomic-waker                         1.1.2                ---                 Removed              Normal       cfg(windows)
+async-signal->cfg-if                               1.0.4                ---                 Removed              Normal       ---
+async-signal->futures-core                         0.3.32               ---                 Removed              Normal       ---
+async-signal->futures-io                           0.3.32               ---                 Removed              Normal       cfg(unix)
+async-signal->rustix                               1.1.4                ---                 Removed              Normal       cfg(unix)
+async-signal->signal-hook-registry                 1.4.8                ---                 Removed              Normal       cfg(unix)
+async-signal->slab                                 0.4.12               ---                 Removed              Normal       cfg(windows)
+async-signal->windows-sys                          0.61.2               ---                 Removed              Normal       cfg(windows)
+async-trait->proc-macro2                           1.0.106              ---                 Removed              Normal       ---
+async-trait->quote                                 1.0.40               1.0.45              1.0.45               Normal       ---
+async-trait->quote                                 1.0.40               1.0.45              Removed              Normal       ---
+async-trait->syn                                   2.0.114              2.0.117             2.0.117              Normal       ---
+async-trait->syn                                   2.0.114              2.0.117             Removed              Normal       ---
+atspi->atspi-common                                0.9.0                ---                 0.13.0               Normal       ---
+atspi->atspi-connection                            0.9.0                ---                 Removed              Normal       ---
+atspi->atspi-proxies                               0.9.0                ---                 0.13.0               Normal       ---
+atspi-common->enumflags2                           0.7.12               ---                 Removed              Normal       ---
+atspi-common->serde                                1.0.228              ---                 Removed              Normal       ---
+atspi-common->static_assertions                    1.1.0                ---                 Removed              Normal       ---
+atspi-common->zbus                                 5.14.0               5.16.0              5.16.0               Normal       ---
+atspi-common->zbus                                 5.14.0               5.16.0              Removed              Normal       ---
+atspi-common->zbus-lockstep                        0.5.2                ---                 Removed              Normal       ---
+atspi-common->zbus-lockstep-macros                 0.5.2                ---                 Removed              Normal       ---
+atspi-common->zbus_names                           4.3.1                4.3.2               4.3.2                Normal       ---
+atspi-common->zbus_names                           4.3.1                4.3.2               Removed              Normal       ---
+atspi-common->zvariant                             5.10.0               5.12.0              5.12.0               Normal       ---
+atspi-common->zvariant                             5.10.0               5.12.0              Removed              Normal       ---
+atspi-connection->atspi-common                     0.9.0                ---                 Removed              Normal       ---
+atspi-connection->atspi-proxies                    0.9.0                ---                 Removed              Normal       ---
+atspi-connection->futures-lite                     2.6.1                ---                 Removed              Normal       ---
+atspi-connection->zbus                             5.14.0               5.16.0              Removed              Normal       ---
+atspi-proxies->atspi-common                        0.9.0                ---                 0.13.0               Normal       ---
+atspi-proxies->atspi-common                        0.9.0                ---                 Removed              Normal       ---
+atspi-proxies->serde                               1.0.228              ---                 Removed              Normal       ---
+atspi-proxies->zbus                                5.14.0               5.16.0              5.16.0               Normal       ---
+atspi-proxies->zbus                                5.14.0               5.16.0              Removed              Normal       ---
+bit-set->bit-vec                                   0.8.0                ---                 0.9.1                Normal       ---
+block2->objc2                                      0.5.2                ---                 0.6.4                Normal       ---
+block2->objc2                                      0.5.2                ---                 Removed              Normal       ---
+blocking->async-channel                            2.5.0                ---                 Removed              Normal       ---
+blocking->async-task                               4.7.1                ---                 Removed              Normal       ---
+blocking->futures-io                               0.3.32               ---                 Removed              Normal       ---
+blocking->futures-lite                             2.6.1                ---                 Removed              Normal       ---
+blocking->piper                                    0.2.5                ---                 Removed              Normal       ---
+bytemuck_derive->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+bytemuck_derive->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+calloop->bitflags                                  2.10.0               2.13.0              2.13.0               Normal       ---
+calloop->log                                       0.4.29               0.4.32              0.4.32               Normal       ---
+calloop-wayland-source->wayland-backend            0.3.14               0.3.15              0.3.15               Normal       ---
+calloop-wayland-source->wayland-client             0.31.13              0.31.14             0.31.14              Normal       ---
+cc->libc                                           0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+cc->shlex                                          1.3.0                2.0.1               2.0.1                Normal       ---
+cgl->libc                                          0.2.183              0.2.186             0.2.186              Normal       ---
+chrono                                             0.4.43               0.4.45              0.4.45               Normal       ---
+chrono->js-sys                                     0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", not(any(target_os = "emscripten", target_os = "wasi"))))
+chrono->wasm-bindgen                               0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_arch = "wasm32", not(any(target_os = "emscripten", target_os = "wasi"))))
+combine->memchr                                    2.8.0                2.8.2               2.8.2                Normal       ---
+concurrent-queue->crossbeam-utils                  0.8.21               ---                 Removed              Normal       ---
+core-foundation->core-foundation-sys               0.8.7                ---                 Removed              Normal       ---
+core-foundation->libc                              0.2.183              0.2.186             0.2.186              Normal       ---
+core-foundation->libc                              0.2.183              0.2.186             Removed              Normal       ---
+core-graphics->libc                                0.2.183              0.2.186             0.2.186              Normal       ---
+core-graphics-types->bitflags                      2.10.0               2.13.0              Removed              Normal       ---
+core-graphics-types->core-foundation               0.10.0               0.10.1              Removed              Normal       ---
+core-graphics-types->libc                          0.2.183              0.2.186             0.2.186              Normal       ---
+core-graphics-types->libc                          0.2.183              0.2.186             Removed              Normal       ---
+cpufeatures->libc                                  0.2.183              0.2.186             0.2.186              Normal       cfg(all(target_arch = "aarch64", target_os = "android"))
+csv->itoa                                          1.0.17               1.0.18              1.0.18               Normal       ---
+csv-core->memchr                                   2.8.0                2.8.2               2.8.2                Normal       ---
+dispatch2->bitflags                                2.10.0               2.13.0              2.13.0               Normal       ---
+displaydoc->quote                                  1.0.40               1.0.45              1.0.45               Normal       ---
+displaydoc->syn                                    2.0.114              2.0.117             2.0.117              Normal       ---
+ecolor->emath                                      0.33.3               ---                 0.34.3               Normal       ---
+eframe                                             0.33.3               ---                 0.34.3               Normal       ---
+eframe->egui                                       0.33.3               ---                 0.34.3               Normal       ---
+eframe->egui-wgpu                                  0.33.3               ---                 0.34.3               Normal       cfg(not(target_arch = "wasm32"))
+eframe->egui-winit                                 0.33.3               ---                 0.34.3               Normal       cfg(not(target_arch = "wasm32"))
+eframe->egui_glow                                  0.33.3               ---                 0.34.3               Normal       ---
+eframe->glow                                       0.16.0               ---                 Removed              Normal       ---
+eframe->js-sys                                     0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+eframe->log                                        0.4.29               0.4.32              0.4.32               Normal       ---
+eframe->objc2                                      0.5.2                ---                 0.6.4                Normal       cfg(any(target_os = "macos"))
+eframe->objc2-app-kit                              0.2.2                ---                 0.3.2                Normal       cfg(any(target_os = "macos"))
+eframe->objc2-foundation                           0.2.2                ---                 0.3.2                Normal       cfg(any(target_os = "macos"))
+eframe->profiling                                  1.0.17               1.0.18              1.0.18               Normal       ---
+eframe->wasm-bindgen                               0.2.108              0.2.125             0.2.125              Normal       cfg(target_arch = "wasm32")
+eframe->wasm-bindgen-futures                       0.4.58               0.4.75              0.4.75               Normal       cfg(target_arch = "wasm32")
+eframe->web-sys                                    0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+egui->accesskit                                    0.21.1               ---                 0.24.1               Normal       ---
+egui->bitflags                                     2.10.0               2.13.0              2.13.0               Normal       ---
+egui->emath                                        0.33.3               ---                 0.34.3               Normal       ---
+egui->epaint                                       0.33.3               ---                 0.34.3               Normal       ---
+egui->log                                          0.4.29               0.4.32              0.4.32               Normal       ---
+egui->profiling                                    1.0.17               1.0.18              1.0.18               Normal       ---
+egui->smallvec                                     1.15.1               1.15.2              1.15.2               Normal       ---
+egui->unicode-segmentation                         1.12.0               1.13.3              1.13.3               Normal       ---
+egui-wgpu->egui                                    0.33.3               ---                 0.34.3               Normal       ---
+egui-wgpu->epaint                                  0.33.3               ---                 0.34.3               Normal       ---
+egui-wgpu->log                                     0.4.29               0.4.32              0.4.32               Normal       ---
+egui-wgpu->profiling                               1.0.17               1.0.18              1.0.18               Normal       ---
+egui-wgpu->wgpu                                    27.0.1               ---                 29.0.3               Normal       ---
+egui-winit->accesskit_winit                        0.29.2               ---                 0.32.2               Normal       ---
+egui-winit->egui                                   0.33.3               ---                 0.34.3               Normal       ---
+egui-winit->log                                    0.4.29               0.4.32              0.4.32               Normal       ---
+egui-winit->objc2                                  0.5.2                ---                 0.6.4                Normal       cfg(target_os = "ios")
+egui-winit->objc2-foundation                       0.2.2                ---                 0.3.2                Normal       cfg(target_os = "ios")
+egui-winit->objc2-ui-kit                           0.2.2                ---                 0.3.2                Normal       cfg(target_os = "ios")
+egui-winit->profiling                              1.0.17               1.0.18              1.0.18               Normal       ---
+egui-winit->webbrowser                             1.2.0                1.2.1               1.2.1                Normal       ---
+egui_glow->egui                                    0.33.3               ---                 0.34.3               Normal       ---
+egui_glow->glow                                    0.16.0               ---                 0.17.0               Normal       ---
+egui_glow->log                                     0.4.29               0.4.32              0.4.32               Normal       ---
+egui_glow->profiling                               1.0.17               1.0.18              1.0.18               Normal       ---
+egui_glow->wasm-bindgen                            0.2.108              0.2.125             0.2.125              Normal       cfg(target_arch = "wasm32")
+egui_glow->web-sys                                 0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+enumflags2->enumflags2_derive                      0.7.12               ---                 Removed              Normal       ---
+enumflags2->serde                                  1.0.228              ---                 Removed              Normal       ---
+enumflags2_derive->proc-macro2                     1.0.106              ---                 Removed              Normal       ---
+enumflags2_derive->quote                           1.0.40               1.0.45              1.0.45               Normal       ---
+enumflags2_derive->quote                           1.0.40               1.0.45              Removed              Normal       ---
+enumflags2_derive->syn                             2.0.114              2.0.117             2.0.117              Normal       ---
+enumflags2_derive->syn                             2.0.114              2.0.117             Removed              Normal       ---
+epaint->ab_glyph                                   0.2.32               ---                 Removed              Normal       ---
+epaint->ecolor                                     0.33.3               ---                 0.34.3               Normal       ---
+epaint->emath                                      0.33.3               ---                 0.34.3               Normal       ---
+epaint->epaint_default_fonts                       0.33.3               ---                 0.34.3               Normal       ---
+epaint->log                                        0.4.29               0.4.32              0.4.32               Normal       ---
+epaint->profiling                                  1.0.17               1.0.18              1.0.18               Normal       ---
+errno->libc                                        0.2.183              0.2.186             0.2.186              Normal       cfg(target_os = "hermit")
+errno->libc                                        0.2.183              0.2.186             Removed              Normal       cfg(target_os = "hermit")
+errno->windows-sys                                 0.61.2               ---                 Removed              Normal       cfg(windows)
+event-listener->concurrent-queue                   2.5.0                ---                 Removed              Normal       ---
+event-listener->parking                            2.2.1                ---                 Removed              Normal       cfg(not(target_family = "wasm"))
+event-listener->pin-project-lite                   0.2.17               ---                 Removed              Normal       ---
+event-listener-strategy->event-listener            5.4.1                ---                 Removed              Normal       ---
+event-listener-strategy->pin-project-lite          0.2.17               ---                 Removed              Normal       ---
+fax->fax_derive                                    0.2.0                Removed             Removed              Normal       ---
+fax_derive->proc-macro2                            1.0.106              Removed             Removed              Normal       ---
+fax_derive->quote                                  1.0.40               Removed             Removed              Normal       ---
+fax_derive->syn                                    2.0.114              Removed             Removed              Normal       ---
+fdeflate->simd-adler32                             0.3.8                0.3.9               0.3.9                Normal       ---
+foreign-types->foreign-types-macros                0.2.3                ---                 Removed              Normal       ---
+foreign-types->foreign-types-shared                0.3.1                ---                 Removed              Normal       ---
+foreign-types-macros->proc-macro2                  1.0.106              ---                 Removed              Normal       ---
+foreign-types-macros->quote                        1.0.40               1.0.45              1.0.45               Normal       ---
+foreign-types-macros->quote                        1.0.40               1.0.45              Removed              Normal       ---
+foreign-types-macros->syn                          2.0.114              2.0.117             2.0.117              Normal       ---
+foreign-types-macros->syn                          2.0.114              2.0.117             Removed              Normal       ---
+futures-lite->fastrand                             2.3.0                2.4.1               2.4.1                Normal       ---
+futures-lite->fastrand                             2.3.0                2.4.1               Removed              Normal       ---
+futures-lite->futures-core                         0.3.32               ---                 Removed              Normal       ---
+futures-lite->futures-io                           0.3.32               ---                 Removed              Normal       ---
+futures-lite->parking                              2.2.1                ---                 Removed              Normal       ---
+futures-lite->pin-project-lite                     0.2.17               ---                 Removed              Normal       ---
+futures-macro->proc-macro2                         1.0.106              Removed             Removed              Normal       ---
+futures-macro->quote                               1.0.40               1.0.45              1.0.45               Normal       ---
+futures-macro->quote                               1.0.40               Removed             Removed              Normal       ---
+futures-macro->syn                                 2.0.114              2.0.117             2.0.117              Normal       ---
+futures-macro->syn                                 2.0.114              Removed             Removed              Normal       ---
+futures-util->futures-core                         0.3.32               Removed             Removed              Normal       ---
+futures-util->futures-macro                        0.3.32               Removed             Removed              Normal       ---
+futures-util->futures-task                         0.3.32               Removed             Removed              Normal       ---
+futures-util->pin-project-lite                     0.2.17               Removed             Removed              Normal       ---
+futures-util->slab                                 0.4.12               Removed             Removed              Normal       ---
+getrandom->cfg-if                                  1.0.4                ---                 Removed              Normal       ---
+getrandom->libc                                    0.2.183              0.2.186             0.2.186              Normal       cfg(all(any(target_os = "linux", target_os = "android"), not(any(all(target_os = "linux", target_env = ""), getrandom_backend = "custom", getrandom_backend = "linux_raw", getrandom_backend = "rdrand", getrandom_backend = "rndr"))))
+getrandom->libc                                    0.2.183              0.2.186             Removed              Normal       cfg(all(any(target_os = "linux", target_os = "android"), not(any(all(target_os = "linux", target_env = ""), getrandom_backend = "custom", getrandom_backend = "linux_raw", getrandom_backend = "rdrand", getrandom_backend = "rndr"))))
+getrandom->r-efi                                   5.3.0                6.0.0               6.0.0                Normal       cfg(all(target_os = "uefi", getrandom_backend = "efi_rng"))
+getrandom->r-efi                                   5.3.0                6.0.0               Removed              Normal       cfg(all(target_os = "uefi", getrandom_backend = "efi_rng"))
+getrandom->wasip2                                  1.0.2+wasi-0.2.9     1.0.4+wasi-0.2.12   1.0.4+wasi-0.2.12    Normal       cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))
+getrandom->wasip2                                  1.0.2+wasi-0.2.9     1.0.4+wasi-0.2.12   Removed              Normal       cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))
+gl_generator->log                                  0.4.29               0.4.32              0.4.32               Normal       ---
+glow->js-sys                                       0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+glow->js-sys                                       0.3.85               0.3.102             Removed              Normal       cfg(target_arch = "wasm32")
+glow->slotmap                                      1.1.1                ---                 Removed              Normal       cfg(target_arch = "wasm32")
+glow->wasm-bindgen                                 0.2.108              0.2.125             0.2.125              Normal       cfg(target_arch = "wasm32")
+glow->wasm-bindgen                                 0.2.108              0.2.125             Removed              Normal       cfg(target_arch = "wasm32")
+glow->web-sys                                      0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+glow->web-sys                                      0.3.85               0.3.102             Removed              Normal       cfg(target_arch = "wasm32")
+glutin->bitflags                                   2.10.0               2.13.0              2.13.0               Normal       ---
+glutin->once_cell                                  1.21.3               1.21.4              1.21.4               Normal       ---
+glutin->wayland-sys                                0.31.10              0.31.11             0.31.11              Normal       cfg(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd"))
+gpu-alloc->bitflags                                2.10.0               2.13.0              Removed              Normal       ---
+gpu-alloc->gpu-alloc-types                         0.3.0                ---                 Removed              Normal       ---
+gpu-alloc-types->bitflags                          2.10.0               2.13.0              Removed              Normal       ---
+gpu-allocator->log                                 0.4.29               0.4.32              0.4.32               Normal       ---
+gpu-allocator->thiserror                           1.0.69               ---                 2.0.18               Normal       ---
+gpu-allocator->windows                             0.58.0               ---                 0.62.2               Normal       cfg(windows)
+gpu-descriptor->bitflags                           2.10.0               2.13.0              2.13.0               Normal       ---
+gpu-descriptor-types->bitflags                     2.10.0               2.13.0              2.13.0               Normal       ---
+half->zerocopy                                     0.8.36               0.8.52              0.8.52               Normal       ---
+hashbrown->foldhash                                0.1.5                ---                 0.2.0                Normal       ---
+hashbrown->foldhash                                0.1.5                Removed             Removed              Normal       ---
+hashbrown->foldhash                                0.2.0                Removed             Removed              Normal       ---
+iana-time-zone->js-sys                             0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", target_os = "unknown"))
+iana-time-zone->log                                0.4.29               0.4.32              0.4.32               Normal       cfg(all(target_arch = "wasm32", target_os = "unknown"))
+iana-time-zone->wasm-bindgen                       0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_arch = "wasm32", target_os = "unknown"))
+iana-time-zone-haiku->cc                           1.2.56               1.2.64              1.2.64               Build        ---
+icu_collections->displaydoc                        0.2.5                0.2.6               0.2.6                Normal       ---
+icu_collections->potential_utf                     0.1.4                0.1.5               0.1.5                Normal       ---
+icu_collections->yoke                              0.8.1                0.8.3               0.8.3                Normal       ---
+icu_collections->zerofrom                          0.1.6                0.1.8               0.1.8                Normal       ---
+icu_collections->zerovec                           0.11.5               0.11.6              0.11.6               Normal       ---
+icu_locale_core->displaydoc                        0.2.5                0.2.6               0.2.6                Normal       ---
+icu_locale_core->litemap                           0.8.1                0.8.2               0.8.2                Normal       ---
+icu_locale_core->tinystr                           0.8.2                0.8.3               0.8.3                Normal       ---
+icu_locale_core->writeable                         0.6.2                0.6.3               0.6.3                Normal       ---
+icu_locale_core->zerovec                           0.11.5               0.11.6              0.11.6               Normal       ---
+icu_normalizer->icu_collections                    2.1.1                2.2.0               2.2.0                Normal       ---
+icu_normalizer->icu_normalizer_data                2.1.1                2.2.0               2.2.0                Normal       ---
+icu_normalizer->icu_properties                     2.1.2                2.2.0               2.2.0                Normal       ---
+icu_normalizer->icu_provider                       2.1.1                2.2.0               2.2.0                Normal       ---
+icu_normalizer->smallvec                           1.15.1               1.15.2              1.15.2               Normal       ---
+icu_normalizer->zerovec                            0.11.5               0.11.6              0.11.6               Normal       ---
+icu_properties->icu_collections                    2.1.1                2.2.0               2.2.0                Normal       ---
+icu_properties->icu_locale_core                    2.1.1                2.2.0               2.2.0                Normal       ---
+icu_properties->icu_properties_data                2.1.2                2.2.0               2.2.0                Normal       ---
+icu_properties->icu_provider                       2.1.1                2.2.0               2.2.0                Normal       ---
+icu_properties->zerotrie                           0.2.3                0.2.4               0.2.4                Normal       ---
+icu_properties->zerovec                            0.11.5               0.11.6              0.11.6               Normal       ---
+icu_provider->displaydoc                           0.2.5                0.2.6               0.2.6                Normal       ---
+icu_provider->icu_locale_core                      2.1.1                2.2.0               2.2.0                Normal       ---
+icu_provider->writeable                            0.6.2                0.6.3               0.6.3                Normal       ---
+icu_provider->yoke                                 0.8.1                0.8.3               0.8.3                Normal       ---
+icu_provider->zerofrom                             0.1.6                0.1.8               0.1.8                Normal       ---
+icu_provider->zerotrie                             0.2.3                0.2.4               0.2.4                Normal       ---
+icu_provider->zerovec                              0.11.5               0.11.6              0.11.6               Normal       ---
+idna->idna_adapter                                 1.2.1                1.2.2               1.2.2                Normal       ---
+idna->smallvec                                     1.15.1               1.15.2              1.15.2               Normal       ---
+idna_adapter->icu_normalizer                       2.1.1                2.2.0               2.2.0                Normal       ---
+idna_adapter->icu_properties                       2.1.2                2.2.0               2.2.0                Normal       ---
+indexmap->equivalent                               1.0.2                ---                 Removed              Normal       ---
+indexmap->equivalent                               1.0.2                Removed             Removed              Normal       ---
+indexmap->hashbrown                                0.16.1               0.17.1              0.17.1               Normal       ---
+indexmap->hashbrown                                0.16.1               0.17.1              Removed              Normal       ---
+indexmap->hashbrown                                0.16.1               Removed             Removed              Normal       ---
+indexmap->serde                                    1.0.228              ---                 Removed              Development  ---
+indexmap->serde                                    1.0.228              Removed             Removed              Development  ---
+indexmap->serde_core                               1.0.228              ---                 Removed              Normal       ---
+indexmap->serde_core                               1.0.228              Removed             Removed              Normal       ---
+jni->cesu8                                         1.1.0                Removed             Removed              Normal       ---
+jni->jni-macros                                    0.22.2               0.22.4              0.22.4               Normal       ---
+jni->jni-sys                                       0.3.0                0.4.1               0.4.1                Normal       ---
+jni->log                                           0.4.29               0.4.32              0.4.32               Normal       ---
+jni->thiserror                                     1.0.69               2.0.18              2.0.18               Normal       ---
+jni->windows-sys                                   0.45.0               Removed             Removed              Normal       cfg(windows)
+jni-macros->quote                                  1.0.40               1.0.45              1.0.45               Normal       ---
+jni-macros->syn                                    2.0.114              2.0.117             2.0.117              Normal       ---
+jni-sys-macros->quote                              1.0.40               1.0.45              1.0.45               Normal       ---
+jni-sys-macros->syn                                2.0.114              2.0.117             2.0.117              Normal       ---
+jobserver->libc                                    0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+js-sys->once_cell                                  1.21.3               Removed             Removed              Normal       ---
+js-sys->wasm-bindgen                               0.2.108              0.2.125             0.2.125              Normal       ---
+js-sys->wasm-bindgen                               0.2.108              0.2.125             Removed              Normal       ---
+js-sys->wasm-bindgen                               0.2.108              Removed             Removed              Normal       ---
+khronos-egl->libc                                  0.2.183              0.2.186             0.2.186              Normal       ---
+khronos-egl->pkg-config                            0.3.32               0.3.33              0.3.33               Build        ---
+libredox->bitflags                                 2.10.0               2.13.0              2.13.0               Normal       ---
+libredox->libc                                     0.2.183              0.2.186             0.2.186              Normal       ---
+libredox->redox_syscall                            0.7.3                0.8.1               0.8.1                Normal       ---
+libudev->libc                                      0.2.183              0.2.186             0.2.186              Normal       ---
+libudev-sys->libc                                  0.2.183              0.2.186             0.2.186              Normal       ---
+libudev-sys->pkg-config                            0.3.32               0.3.33              0.3.33               Build        ---
+mach2->libc                                        0.2.183              0.2.186             0.2.186              Normal       cfg(any(target_os = "macos", target_os = "ios"))
+malloc_buf->libc                                   0.2.183              0.2.186             Removed              Normal       ---
+memmap2->libc                                      0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+memoffset->autocfg                                 1.5.0                1.5.1               1.5.1                Build        ---
+memoffset->autocfg                                 1.5.0                1.5.1               Removed              Build        ---
+metal->bitflags                                    2.10.0               2.13.0              Removed              Normal       ---
+metal->block                                       0.1.6                ---                 Removed              Normal       ---
+metal->core-graphics-types                         0.2.0                ---                 Removed              Normal       ---
+metal->foreign-types                               0.5.0                ---                 Removed              Normal       ---
+metal->log                                         0.4.29               0.4.32              Removed              Normal       ---
+metal->objc                                        0.2.7                ---                 Removed              Normal       ---
+metal->paste                                       1.0.15               ---                 Removed              Normal       ---
+miniz_oxide->simd-adler32                          0.3.8                0.3.9               0.3.9                Normal       ---
+moxcms->pxfm                                       0.1.28               0.1.29              0.1.29               Normal       ---
+naga->bit-set                                      0.8.0                ---                 0.9.1                Normal       ---
+naga->bitflags                                     2.10.0               2.13.0              2.13.0               Normal       ---
+naga->codespan-reporting                           0.12.0               ---                 0.13.1               Normal       ---
+naga->indexmap                                     2.13.0               2.14.0              2.14.0               Normal       ---
+naga->log                                          0.4.29               0.4.32              0.4.32               Normal       ---
+naga->once_cell                                    1.21.3               1.21.4              1.21.4               Normal       ---
+naga->spirv                                        0.3.0+sdk-1.3.268.0  ---                 0.4.0+sdk-1.4.341.0  Normal       ---
+naga->unicode-ident                                1.0.22               1.0.24              1.0.24               Normal       ---
+ndk->bitflags                                      2.10.0               2.13.0              2.13.0               Normal       ---
+ndk->jni-sys                                       0.3.0                0.3.1               0.3.1                Normal       ---
+ndk->log                                           0.4.29               0.4.32              0.4.32               Normal       ---
+ndk-sys->jni-sys                                   0.3.0                0.3.1               0.3.1                Normal       ---
+nix->libc                                          0.2.183              0.2.186             0.2.186              Normal       ---
+num-traits->autocfg                                1.5.0                1.5.1               1.5.1                Build        ---
+num_enum_derive->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+num_enum_derive->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+objc->malloc_buf                                   0.0.6                ---                 Removed              Normal       ---
+objc2->objc-sys                                    0.3.5                ---                 Removed              Normal       ---
+objc2->objc2-encode                                4.1.0                ---                 Removed              Normal       ---
+objc2-app-kit->bitflags                            2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-app-kit->bitflags                            2.10.0               2.13.0              Removed              Normal       ---
+objc2-app-kit->block2                              0.5.1                ---                 Removed              Normal       ---
+objc2-app-kit->libc                                0.2.183              0.2.186             0.2.186              Normal       ---
+objc2-app-kit->libc                                0.2.183              0.2.186             Removed              Normal       ---
+objc2-app-kit->objc2                               0.5.2                ---                 0.6.4                Normal       ---
+objc2-app-kit->objc2                               0.5.2                ---                 Removed              Normal       ---
+objc2-app-kit->objc2-core-data                     0.2.2                ---                 Removed              Normal       cfg(target_vendor = "apple")
+objc2-app-kit->objc2-core-image                    0.2.2                ---                 Removed              Normal       cfg(target_vendor = "apple")
+objc2-app-kit->objc2-foundation                    0.2.2                ---                 0.3.2                Normal       ---
+objc2-app-kit->objc2-foundation                    0.2.2                ---                 Removed              Normal       ---
+objc2-app-kit->objc2-quartz-core                   0.2.2                ---                 Removed              Normal       cfg(target_vendor = "apple")
+objc2-cloud-kit->bitflags                          2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-cloud-kit->bitflags                          2.10.0               2.13.0              Removed              Normal       ---
+objc2-cloud-kit->block2                            0.5.1                ---                 Removed              Normal       ---
+objc2-cloud-kit->objc2                             0.5.2                ---                 Removed              Normal       ---
+objc2-cloud-kit->objc2-core-location               0.2.2                ---                 Removed              Normal       ---
+objc2-cloud-kit->objc2-foundation                  0.2.2                ---                 Removed              Normal       ---
+objc2-contacts->block2                             0.5.1                ---                 Removed              Normal       ---
+objc2-contacts->objc2                              0.5.2                ---                 Removed              Normal       ---
+objc2-contacts->objc2-foundation                   0.2.2                ---                 Removed              Normal       ---
+objc2-core-data->bitflags                          2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-core-data->bitflags                          2.10.0               2.13.0              Removed              Normal       ---
+objc2-core-data->block2                            0.5.1                ---                 Removed              Normal       ---
+objc2-core-data->objc2                             0.5.2                ---                 Removed              Normal       ---
+objc2-core-data->objc2-foundation                  0.2.2                ---                 Removed              Normal       ---
+objc2-core-foundation->bitflags                    2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-core-graphics->bitflags                      2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-core-image->block2                           0.5.1                ---                 Removed              Normal       ---
+objc2-core-image->objc2                            0.5.2                ---                 Removed              Normal       ---
+objc2-core-image->objc2-foundation                 0.2.2                ---                 Removed              Normal       ---
+objc2-core-image->objc2-metal                      0.2.2                ---                 Removed              Normal       ---
+objc2-core-location->block2                        0.5.1                ---                 Removed              Normal       ---
+objc2-core-location->objc2                         0.5.2                ---                 Removed              Normal       ---
+objc2-core-location->objc2-contacts                0.2.2                ---                 Removed              Normal       cfg(not(target_os = "tvos"))
+objc2-core-location->objc2-foundation              0.2.2                ---                 Removed              Normal       ---
+objc2-foundation->bitflags                         2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-foundation->bitflags                         2.10.0               2.13.0              Removed              Normal       ---
+objc2-foundation->block2                           0.5.1                ---                 0.6.2                Normal       ---
+objc2-foundation->block2                           0.5.1                ---                 Removed              Normal       ---
+objc2-foundation->dispatch                         0.2.0                ---                 Removed              Normal       ---
+objc2-foundation->libc                             0.2.183              0.2.186             0.2.186              Normal       ---
+objc2-foundation->libc                             0.2.183              0.2.186             Removed              Normal       ---
+objc2-foundation->objc2                            0.5.2                ---                 0.6.4                Normal       ---
+objc2-foundation->objc2                            0.5.2                ---                 Removed              Normal       ---
+objc2-io-surface->bitflags                         2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-link-presentation->block2                    0.5.1                ---                 Removed              Normal       ---
+objc2-link-presentation->objc2                     0.5.2                ---                 Removed              Normal       ---
+objc2-link-presentation->objc2-app-kit             0.2.2                ---                 Removed              Normal       cfg(target_os = "macos")
+objc2-link-presentation->objc2-foundation          0.2.2                ---                 Removed              Normal       ---
+objc2-metal->bitflags                              2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-metal->bitflags                              2.10.0               2.13.0              Removed              Normal       ---
+objc2-metal->block2                                0.5.1                ---                 Removed              Normal       ---
+objc2-metal->objc2                                 0.5.2                ---                 Removed              Normal       ---
+objc2-metal->objc2-foundation                      0.2.2                ---                 Removed              Normal       ---
+objc2-quartz-core->bitflags                        2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-quartz-core->bitflags                        2.10.0               2.13.0              Removed              Normal       ---
+objc2-quartz-core->block2                          0.5.1                ---                 Removed              Normal       ---
+objc2-quartz-core->objc2                           0.5.2                ---                 Removed              Normal       ---
+objc2-quartz-core->objc2-foundation                0.2.2                ---                 Removed              Normal       ---
+objc2-quartz-core->objc2-metal                     0.2.2                ---                 Removed              Normal       ---
+objc2-symbols->objc2                               0.5.2                ---                 Removed              Normal       ---
+objc2-symbols->objc2-foundation                    0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->bitflags                             2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-ui-kit->block2                               0.5.1                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2                                0.5.2                ---                 0.6.4                Normal       ---
+objc2-ui-kit->objc2-cloud-kit                      0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2-core-data                      0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2-core-image                     0.2.2                ---                 Removed              Normal       cfg(not(target_os = "watchos"))
+objc2-ui-kit->objc2-core-location                  0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2-foundation                     0.2.2                ---                 0.3.2                Normal       ---
+objc2-ui-kit->objc2-link-presentation              0.2.2                ---                 Removed              Normal       cfg(not(target_os = "watchos"))
+objc2-ui-kit->objc2-quartz-core                    0.2.2                ---                 Removed              Normal       cfg(not(target_os = "watchos"))
+objc2-ui-kit->objc2-symbols                        0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2-uniform-type-identifiers       0.2.2                ---                 Removed              Normal       ---
+objc2-ui-kit->objc2-user-notifications             0.2.2                ---                 Removed              Normal       ---
+objc2-uniform-type-identifiers->block2             0.5.1                ---                 Removed              Normal       ---
+objc2-uniform-type-identifiers->objc2              0.5.2                ---                 Removed              Normal       ---
+objc2-uniform-type-identifiers->objc2-foundation   0.2.2                ---                 Removed              Normal       ---
+objc2-user-notifications->bitflags                 2.10.0               2.13.0              2.13.0               Normal       ---
+objc2-user-notifications->bitflags                 2.10.0               2.13.0              Removed              Normal       ---
+objc2-user-notifications->block2                   0.5.1                ---                 Removed              Normal       ---
+objc2-user-notifications->objc2                    0.5.2                ---                 Removed              Normal       ---
+objc2-user-notifications->objc2-core-location      0.2.2                ---                 Removed              Normal       ---
+objc2-user-notifications->objc2-foundation         0.2.2                ---                 Removed              Normal       ---
+orbclient->libc                                    0.2.183              0.2.186             0.2.186              Normal       cfg(target_os = "redox")
+orbclient->libredox                                0.1.14               0.1.17              0.1.17               Normal       cfg(target_os = "redox")
+ordered-stream->futures-core                       0.3.32               ---                 Removed              Normal       ---
+ordered-stream->pin-project-lite                   0.2.17               ---                 Removed              Normal       ---
+owned_ttf_parser->ttf-parser                       0.25.1               ---                 Removed              Normal       ---
+parking_lot_core->libc                             0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+parking_lot_core->smallvec                         1.15.1               1.15.2              1.15.2               Normal       ---
+pin-project->pin-project-internal                  1.1.11               1.1.13              1.1.13               Normal       ---
+pin-project-internal->quote                        1.0.40               1.0.45              1.0.45               Normal       ---
+pin-project-internal->syn                          2.0.114              2.0.117             2.0.117              Normal       ---
+piper->atomic-waker                                1.1.2                ---                 Removed              Normal       ---
+piper->fastrand                                    2.3.0                2.4.1               2.4.1                Normal       ---
+piper->fastrand                                    2.3.0                2.4.1               Removed              Normal       ---
+piper->futures-io                                  0.3.32               ---                 Removed              Normal       ---
+png->bitflags                                      2.10.0               2.13.0              2.13.0               Normal       ---
+polling->cfg-if                                    1.0.4                ---                 Removed              Normal       ---
+polling->concurrent-queue                          2.5.0                ---                 Removed              Normal       cfg(windows)
+polling->hermit-abi                                0.5.2                ---                 Removed              Normal       cfg(target_os = "hermit")
+polling->pin-project-lite                          0.2.17               ---                 Removed              Normal       cfg(windows)
+polling->rustix                                    1.1.4                ---                 Removed              Normal       cfg(any(unix, target_os = "fuchsia", target_os = "vxworks"))
+polling->windows-sys                               0.61.2               ---                 Removed              Normal       cfg(windows)
+potential_utf->zerovec                             0.11.5               0.11.6              0.11.6               Normal       ---
+prettyplease->proc-macro2                          1.0.106              Removed             Removed              Normal       ---
+prettyplease->syn                                  2.0.114              2.0.117             2.0.117              Normal       ---
+prettyplease->syn                                  2.0.114              Removed             Removed              Normal       ---
+proc-macro-crate->toml_edit                        0.25.4+spec-1.1.0    0.25.12+spec-1.1.0  0.25.12+spec-1.1.0   Normal       ---
+proc-macro-crate->toml_edit                        0.25.4+spec-1.1.0    0.25.12+spec-1.1.0  Removed              Normal       ---
+proc-macro2->unicode-ident                         1.0.22               1.0.24              1.0.24               Normal       ---
+proc-macro2->unicode-ident                         1.0.22               1.0.24              Removed              Normal       ---
+proc-macro2->unicode-ident                         1.0.22               Removed             Removed              Normal       ---
+quick-xml->memchr                                  2.8.0                2.8.2               2.8.2                Normal       ---
+quick-xml->memchr                                  2.8.0                2.8.2               Removed              Normal       ---
+quick-xml->serde                                   1.0.228              ---                 Removed              Normal       ---
+quote->proc-macro2                                 1.0.106              ---                 Removed              Normal       ---
+quote->proc-macro2                                 1.0.106              Removed             Removed              Normal       ---
+redox_syscall->bitflags                            2.10.0               2.13.0              2.13.0               Normal       ---
+rustc_version->semver                              1.0.27               1.0.28              1.0.28               Normal       ---
+rustix->bitflags                                   2.10.0               2.13.0              2.13.0               Normal       ---
+rustix->bitflags                                   2.10.0               2.13.0              Removed              Normal       ---
+rustix->errno                                      0.3.14               ---                 Removed              Development  ---
+rustix->libc                                       0.2.183              0.2.186             0.2.186              Development  ---
+rustix->libc                                       0.2.183              0.2.186             Removed              Development  ---
+rustix->linux-raw-sys                              0.12.1               ---                 Removed              Normal       cfg(all(any(target_os = "linux", target_os = "android"), any(rustix_use_libc, miri, not(all(target_os = "linux", any(target_endian = "little", any(target_arch = "s390x", target_arch = "powerpc")), any(target_arch = "arm", all(target_arch = "aarch64", target_pointer_width = "64"), target_arch = "riscv64", all(rustix_use_experimental_asm, target_arch = "powerpc"), all(rustix_use_experimental_asm, target_arch = "powerpc64"), all(rustix_use_experimental_asm, target_arch = "s390x"), all(rustix_use_experimental_asm, target_arch = "mips"), all(rustix_use_experimental_asm, target_arch = "mips32r6"), all(rustix_use_experimental_asm, target_arch = "mips64"), all(rustix_use_experimental_asm, target_arch = "mips64r6"), target_arch = "x86", all(target_arch = "x86_64", target_pointer_width = "64")))))))
+rustix->windows-sys                                0.52.0               0.59.0              0.59.0               Normal       cfg(windows)
+rustix->windows-sys                                0.61.2               ---                 Removed              Normal       cfg(windows)
+sctk-adwaita->log                                  0.4.29               0.4.32              0.4.32               Normal       ---
+serde->serde_core                                  1.0.228              ---                 Removed              Normal       ---
+serde->serde_core                                  1.0.228              Removed             Removed              Normal       ---
+serde->serde_derive                                1.0.228              ---                 Removed              Normal       ---
+serde->serde_derive                                1.0.228              Removed             Removed              Normal       ---
+serde_core->serde_derive                           1.0.228              ---                 Removed              Development  ---
+serde_core->serde_derive                           1.0.228              Removed             Removed              Development  ---
+serde_derive->proc-macro2                          1.0.106              ---                 Removed              Normal       ---
+serde_derive->proc-macro2                          1.0.106              Removed             Removed              Normal       ---
+serde_derive->quote                                1.0.40               1.0.45              1.0.45               Normal       ---
+serde_derive->quote                                1.0.40               1.0.45              Removed              Normal       ---
+serde_derive->quote                                1.0.40               Removed             Removed              Normal       ---
+serde_derive->syn                                  2.0.114              2.0.117             2.0.117              Normal       ---
+serde_derive->syn                                  2.0.114              2.0.117             Removed              Normal       ---
+serde_derive->syn                                  2.0.114              Removed             Removed              Normal       ---
+serde_json->itoa                                   1.0.17               1.0.18              1.0.18               Normal       ---
+serde_json->itoa                                   1.0.17               Removed             Removed              Normal       ---
+serde_json->memchr                                 2.8.0                2.8.2               2.8.2                Normal       ---
+serde_json->memchr                                 2.8.0                Removed             Removed              Normal       ---
+serde_json->serde                                  1.0.228              Removed             Removed              Development  ---
+serde_json->serde_core                             1.0.228              Removed             Removed              Normal       ---
+serde_json->zmij                                   1.0.21               Removed             Removed              Normal       ---
+serde_repr->proc-macro2                            1.0.106              ---                 Removed              Normal       ---
+serde_repr->quote                                  1.0.40               1.0.45              1.0.45               Normal       ---
+serde_repr->quote                                  1.0.40               1.0.45              Removed              Normal       ---
+serde_repr->syn                                    2.0.114              2.0.117             2.0.117              Normal       ---
+serde_repr->syn                                    2.0.114              2.0.117             Removed              Normal       ---
+serialport                                         4.8.1                4.9.0               4.9.0                Normal       ---
+serialport->bitflags                               2.10.0               2.13.0              2.13.0               Normal       cfg(unix)
+serialport->core-foundation                        0.10.0               0.10.1              0.10.1               Normal       cfg(any(target_os = "ios", target_os = "macos"))
+serialport->quote                                  1.0.40               Removed             Removed              Normal       ---
+signal-hook-registry->errno                        0.3.14               ---                 Removed              Normal       ---
+signal-hook-registry->libc                         0.2.183              0.2.186             0.2.186              Normal       ---
+signal-hook-registry->libc                         0.2.183              0.2.186             Removed              Normal       ---
+slotmap->version_check                             0.9.5                ---                 Removed              Build        ---
+smithay-client-toolkit->bitflags                   2.10.0               2.13.0              2.13.0               Normal       ---
+smithay-client-toolkit->libc                       0.2.183              0.2.186             0.2.186              Normal       ---
+smithay-client-toolkit->log                        0.4.29               0.4.32              0.4.32               Normal       ---
+smithay-client-toolkit->wayland-backend            0.3.14               0.3.15              0.3.15               Normal       ---
+smithay-client-toolkit->wayland-client             0.31.13              0.31.14             0.31.14              Normal       ---
+smithay-client-toolkit->wayland-cursor             0.31.13              0.31.14             0.31.14              Normal       ---
+smithay-client-toolkit->wayland-protocols          0.32.11              0.32.12             0.32.12              Normal       ---
+smithay-client-toolkit->wayland-protocols-misc     0.3.11               0.3.12              0.3.12               Normal       ---
+smithay-client-toolkit->wayland-protocols-wlr      0.3.11               0.3.12              0.3.12               Normal       ---
+smithay-client-toolkit->wayland-scanner            0.31.9               0.31.10             0.31.10              Normal       ---
+smithay-clipboard->libc                            0.2.183              0.2.186             0.2.186              Normal       ---
+smithay-clipboard->wayland-backend                 0.3.14               0.3.15              0.3.15               Normal       ---
+spirv->bitflags                                    2.10.0               2.13.0              2.13.0               Normal       ---
+syn->proc-macro2                                   1.0.106              ---                 Removed              Normal       ---
+syn->proc-macro2                                   1.0.106              Removed             Removed              Normal       ---
+syn->quote                                         1.0.40               1.0.45              1.0.45               Normal       ---
+syn->quote                                         1.0.40               1.0.45              Removed              Normal       ---
+syn->quote                                         1.0.40               Removed             Removed              Normal       ---
+syn->unicode-ident                                 1.0.22               1.0.24              1.0.24               Normal       ---
+syn->unicode-ident                                 1.0.22               1.0.24              Removed              Normal       ---
+syn->unicode-ident                                 1.0.22               Removed             Removed              Normal       ---
+synstructure->quote                                1.0.40               1.0.45              1.0.45               Normal       ---
+synstructure->syn                                  2.0.114              2.0.117             2.0.117              Normal       ---
+tempfile->fastrand                                 2.3.0                2.4.1               2.4.1                Normal       ---
+tempfile->fastrand                                 2.3.0                2.4.1               Removed              Normal       ---
+tempfile->getrandom                                0.3.4                0.4.2               0.4.2                Normal       cfg(any(unix, windows, target_os = "wasi"))
+tempfile->getrandom                                0.3.4                0.4.2               Removed              Normal       cfg(any(unix, windows, target_os = "wasi"))
+tempfile->once_cell                                1.21.3               1.21.4              1.21.4               Normal       ---
+tempfile->once_cell                                1.21.3               1.21.4              Removed              Normal       ---
+tempfile->rustix                                   1.1.4                ---                 Removed              Normal       cfg(any(unix, target_os = "wasi"))
+tempfile->windows-sys                              0.61.2               ---                 Removed              Normal       cfg(windows)
+thiserror->thiserror-impl                          1.0.69               ---                 2.0.18               Normal       ---
+thiserror->thiserror-impl                          1.0.69               ---                 Removed              Normal       ---
+thiserror->thiserror-impl                          1.0.69               2.0.18              2.0.18               Normal       ---
+thiserror->thiserror-impl                          2.0.18               ---                 Removed              Normal       ---
+thiserror-impl->proc-macro2                        1.0.106              ---                 Removed              Normal       ---
+thiserror-impl->quote                              1.0.40               1.0.45              1.0.45               Normal       ---
+thiserror-impl->quote                              1.0.40               1.0.45              Removed              Normal       ---
+thiserror-impl->syn                                2.0.114              2.0.117             2.0.117              Normal       ---
+thiserror-impl->syn                                2.0.114              2.0.117             Removed              Normal       ---
+tiff->fax                                          0.2.6                0.2.7               0.2.7                Normal       ---
+tiff->zune-jpeg                                    0.5.13               0.5.15              0.5.15               Normal       ---
+tiny-skia->log                                     0.4.29               0.4.32              0.4.32               Normal       ---
+tinystr->displaydoc                                0.2.5                0.2.6               0.2.6                Normal       ---
+tinystr->zerovec                                   0.11.5               0.11.6              0.11.6               Normal       ---
+toml_datetime->serde_core                          1.0.228              ---                 Removed              Normal       ---
+toml_edit->indexmap                                2.13.0               2.14.0              2.14.0               Normal       ---
+toml_edit->indexmap                                2.13.0               2.14.0              Removed              Normal       ---
+toml_edit->toml_datetime                           1.0.0+spec-1.1.0     1.1.1+spec-1.1.0    1.1.1+spec-1.1.0     Normal       ---
+toml_edit->toml_datetime                           1.0.0+spec-1.1.0     1.1.1+spec-1.1.0    Removed              Normal       ---
+toml_edit->toml_parser                             1.0.9+spec-1.1.0     1.1.2+spec-1.1.0    1.1.2+spec-1.1.0     Normal       ---
+toml_edit->toml_parser                             1.0.9+spec-1.1.0     1.1.2+spec-1.1.0    Removed              Normal       ---
+toml_edit->winnow                                  0.7.15               1.0.3               1.0.3                Normal       ---
+toml_edit->winnow                                  0.7.15               1.0.3               Removed              Normal       ---
+toml_parser->winnow                                0.7.15               1.0.3               1.0.3                Normal       ---
+toml_parser->winnow                                0.7.15               1.0.3               Removed              Normal       ---
+tracing->log                                       0.4.29               0.4.32              0.4.32               Normal       ---
+tracing->log                                       0.4.29               0.4.32              Removed              Normal       ---
+tracing->pin-project-lite                          0.2.17               ---                 Removed              Normal       ---
+tracing->tracing-attributes                        0.1.31               ---                 Removed              Normal       ---
+tracing->tracing-core                              0.1.36               ---                 Removed              Normal       ---
+tracing-attributes->proc-macro2                    1.0.106              ---                 Removed              Normal       ---
+tracing-attributes->quote                          1.0.40               1.0.45              1.0.45               Normal       ---
+tracing-attributes->quote                          1.0.40               1.0.45              Removed              Normal       ---
+tracing-attributes->syn                            2.0.114              2.0.117             2.0.117              Normal       ---
+tracing-attributes->syn                            2.0.114              2.0.117             Removed              Normal       ---
+tracing-core->once_cell                            1.21.3               1.21.4              1.21.4               Normal       ---
+tracing-core->once_cell                            1.21.3               1.21.4              Removed              Normal       ---
+type-map->rustc-hash                               2.1.1                2.1.2               2.1.2                Normal       ---
+uds_windows->memoffset                             0.9.1                ---                 Removed              Normal       ---
+uds_windows->tempfile                              3.27.0               ---                 Removed              Normal       cfg(windows)
+uds_windows->windows-sys                           0.61.2               ---                 Removed              Normal       cfg(windows)
+uuid->js-sys                                       0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "none"), target_feature = "atomics"))
+uuid->js-sys                                       0.3.85               0.3.102             Removed              Normal       cfg(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "none"), target_feature = "atomics"))
+uuid->serde_core                                   1.0.228              ---                 Removed              Normal       ---
+uuid->wasm-bindgen                                 0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "none")))
+uuid->wasm-bindgen                                 0.2.108              0.2.125             Removed              Normal       cfg(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "none")))
+wasip2->wit-bindgen                                0.51.0               0.57.1              0.57.1               Normal       ---
+wasip2->wit-bindgen                                0.51.0               0.57.1              Removed              Normal       ---
+wasm-bindgen->cfg-if                               1.0.4                ---                 Removed              Normal       ---
+wasm-bindgen->cfg-if                               1.0.4                Removed             Removed              Normal       ---
+wasm-bindgen->once_cell                            1.21.3               1.21.4              1.21.4               Normal       ---
+wasm-bindgen->once_cell                            1.21.3               1.21.4              Removed              Normal       ---
+wasm-bindgen->once_cell                            1.21.3               Removed             Removed              Normal       ---
+wasm-bindgen->rustversion                          1.0.22               ---                 Removed              Build        ---
+wasm-bindgen->rustversion                          1.0.22               Removed             Removed              Build        ---
+wasm-bindgen->wasm-bindgen-macro                   0.2.108              0.2.125             0.2.125              Normal       ---
+wasm-bindgen->wasm-bindgen-macro                   0.2.108              0.2.125             Removed              Normal       ---
+wasm-bindgen->wasm-bindgen-macro                   0.2.108              Removed             Removed              Normal       ---
+wasm-bindgen->wasm-bindgen-shared                  0.2.108              0.2.125             0.2.125              Normal       ---
+wasm-bindgen->wasm-bindgen-shared                  0.2.108              0.2.125             Removed              Normal       ---
+wasm-bindgen->wasm-bindgen-shared                  0.2.108              Removed             Removed              Normal       ---
+wasm-bindgen-futures->cfg-if                       1.0.4                Removed             Removed              Normal       ---
+wasm-bindgen-futures->futures-util                 0.3.32               Removed             Removed              Normal       ---
+wasm-bindgen-futures->js-sys                       0.3.85               0.3.102             0.3.102              Normal       ---
+wasm-bindgen-futures->once_cell                    1.21.3               Removed             Removed              Normal       ---
+wasm-bindgen-futures->wasm-bindgen                 0.2.108              0.2.125             0.2.125              Normal       ---
+wasm-bindgen-futures->web-sys                      0.3.85               Removed             Removed              Normal       cfg(target_feature = "atomics")
+wasm-bindgen-macro->quote                          1.0.40               1.0.45              1.0.45               Normal       ---
+wasm-bindgen-macro->quote                          1.0.40               1.0.45              Removed              Normal       ---
+wasm-bindgen-macro->quote                          1.0.40               Removed             Removed              Normal       ---
+wasm-bindgen-macro->wasm-bindgen-macro-support     0.2.108              0.2.125             0.2.125              Normal       ---
+wasm-bindgen-macro->wasm-bindgen-macro-support     0.2.108              0.2.125             Removed              Normal       ---
+wasm-bindgen-macro->wasm-bindgen-macro-support     0.2.108              Removed             Removed              Normal       ---
+wasm-bindgen-macro-support->bumpalo                3.19.1               3.20.3              3.20.3               Normal       ---
+wasm-bindgen-macro-support->bumpalo                3.19.1               3.20.3              Removed              Normal       ---
+wasm-bindgen-macro-support->bumpalo                3.19.1               Removed             Removed              Normal       ---
+wasm-bindgen-macro-support->proc-macro2            1.0.106              ---                 Removed              Normal       ---
+wasm-bindgen-macro-support->proc-macro2            1.0.106              Removed             Removed              Normal       ---
+wasm-bindgen-macro-support->quote                  1.0.40               1.0.45              1.0.45               Normal       ---
+wasm-bindgen-macro-support->quote                  1.0.40               1.0.45              Removed              Normal       ---
+wasm-bindgen-macro-support->quote                  1.0.40               Removed             Removed              Normal       ---
+wasm-bindgen-macro-support->syn                    2.0.114              2.0.117             2.0.117              Normal       ---
+wasm-bindgen-macro-support->syn                    2.0.114              2.0.117             Removed              Normal       ---
+wasm-bindgen-macro-support->syn                    2.0.114              Removed             Removed              Normal       ---
+wasm-bindgen-macro-support->wasm-bindgen-shared    0.2.108              0.2.125             0.2.125              Normal       ---
+wasm-bindgen-macro-support->wasm-bindgen-shared    0.2.108              0.2.125             Removed              Normal       ---
+wasm-bindgen-macro-support->wasm-bindgen-shared    0.2.108              Removed             Removed              Normal       ---
+wasm-bindgen-shared->unicode-ident                 1.0.22               1.0.24              1.0.24               Normal       ---
+wasm-bindgen-shared->unicode-ident                 1.0.22               1.0.24              Removed              Normal       ---
+wasm-bindgen-shared->unicode-ident                 1.0.22               Removed             Removed              Normal       ---
+wasm-encoder->leb128fmt                            0.1.0                Removed             Removed              Normal       ---
+wasm-encoder->wasmparser                           0.244.0              Removed             Removed              Normal       ---
+wasm-metadata->anyhow                              1.0.102              Removed             Removed              Normal       ---
+wasm-metadata->indexmap                            2.13.0               2.14.0              2.14.0               Normal       ---
+wasm-metadata->indexmap                            2.13.0               Removed             Removed              Normal       ---
+wasm-metadata->wasm-encoder                        0.244.0              Removed             Removed              Normal       ---
+wasm-metadata->wasmparser                          0.244.0              Removed             Removed              Normal       ---
+wasmparser->bitflags                               2.10.0               2.13.0              2.13.0               Normal       ---
+wasmparser->bitflags                               2.10.0               Removed             Removed              Normal       ---
+wasmparser->hashbrown                              0.15.5               Removed             Removed              Normal       ---
+wasmparser->indexmap                               2.13.0               2.14.0              2.14.0               Normal       ---
+wasmparser->indexmap                               2.13.0               Removed             Removed              Normal       ---
+wasmparser->semver                                 1.0.27               1.0.28              1.0.28               Normal       ---
+wasmparser->semver                                 1.0.27               Removed             Removed              Normal       ---
+wayland-backend->cc                                1.2.56               1.2.64              1.2.64               Build        ---
+wayland-backend->smallvec                          1.15.1               1.15.2              1.15.2               Normal       ---
+wayland-backend->wayland-sys                       0.31.10              0.31.11             0.31.11              Normal       ---
+wayland-client->bitflags                           2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-client->wayland-backend                    0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-client->wayland-scanner                    0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-csd-frame->bitflags                        2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-csd-frame->wayland-backend                 0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-cursor->wayland-client                     0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols->bitflags                        2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-protocols->wayland-backend                 0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-protocols->wayland-client                  0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols->wayland-scanner                 0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-protocols-experimental->bitflags           2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-protocols-experimental->wayland-backend    0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-protocols-experimental->wayland-client     0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols-experimental->wayland-protocols  0.32.11              0.32.12             0.32.12              Normal       ---
+wayland-protocols-experimental->wayland-scanner    0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-protocols-misc->bitflags                   2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-protocols-misc->wayland-backend            0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-protocols-misc->wayland-client             0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols-misc->wayland-protocols          0.32.11              0.32.12             0.32.12              Normal       ---
+wayland-protocols-misc->wayland-scanner            0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-protocols-plasma->bitflags                 2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-protocols-plasma->wayland-backend          0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-protocols-plasma->wayland-client           0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols-plasma->wayland-protocols        0.32.11              0.32.12             0.32.12              Normal       ---
+wayland-protocols-plasma->wayland-scanner          0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-protocols-wlr->bitflags                    2.10.0               2.13.0              2.13.0               Normal       ---
+wayland-protocols-wlr->wayland-backend             0.3.14               0.3.15              0.3.15               Normal       ---
+wayland-protocols-wlr->wayland-client              0.31.13              0.31.14             0.31.14              Normal       ---
+wayland-protocols-wlr->wayland-protocols           0.32.11              0.32.12             0.32.12              Normal       ---
+wayland-protocols-wlr->wayland-scanner             0.31.9               0.31.10             0.31.10              Normal       ---
+wayland-scanner->quick-xml                         0.39.2               0.39.4              0.39.4               Normal       ---
+wayland-scanner->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+wayland-sys->log                                   0.4.29               0.4.32              0.4.32               Normal       ---
+wayland-sys->once_cell                             1.21.3               1.21.4              1.21.4               Normal       ---
+wayland-sys->pkg-config                            0.3.32               0.3.33              0.3.33               Build        ---
+web-sys->js-sys                                    0.3.85               0.3.102             0.3.102              Normal       ---
+web-sys->js-sys                                    0.3.85               0.3.102             Removed              Normal       ---
+web-sys->js-sys                                    0.3.85               Removed             Removed              Normal       ---
+web-sys->wasm-bindgen                              0.2.108              0.2.125             0.2.125              Normal       ---
+web-sys->wasm-bindgen                              0.2.108              0.2.125             Removed              Normal       ---
+web-sys->wasm-bindgen                              0.2.108              Removed             Removed              Normal       ---
+web-time->js-sys                                   0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_family = "wasm", target_os = "unknown"))
+web-time->wasm-bindgen                             0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_family = "wasm", target_os = "unknown"))
+webbrowser->core-foundation                        0.10.0               0.10.1              0.10.1               Normal       cfg(target_os = "macos")
+webbrowser->jni                                    0.22.3               0.22.4              0.22.4               Normal       cfg(target_os = "android")
+webbrowser->log                                    0.4.29               0.4.32              0.4.32               Normal       ---
+webbrowser->web-sys                                0.3.85               0.3.102             0.3.102              Normal       cfg(target_family = "wasm")
+wgpu->bitflags                                     2.10.0               2.13.0              2.13.0               Normal       ---
+wgpu->js-sys                                       0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->log                                          0.4.29               0.4.32              0.4.32               Normal       ---
+wgpu->naga                                         27.0.3               ---                 29.0.3               Normal       ---
+wgpu->profiling                                    1.0.17               1.0.18              1.0.18               Normal       ---
+wgpu->smallvec                                     1.15.1               1.15.2              1.15.2               Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->wasm-bindgen                                 0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->wasm-bindgen-futures                         0.4.58               0.4.75              0.4.75               Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->web-sys                                      0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->wgpu-core                                    27.0.3               ---                 29.0.3               Normal       ---
+wgpu->wgpu-hal                                     27.0.4               ---                 29.0.3               Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu->wgpu-types                                   27.0.1               ---                 29.0.3               Normal       ---
+wgpu-core->bit-set                                 0.8.0                ---                 0.9.1                Normal       ---
+wgpu-core->bit-vec                                 0.8.0                ---                 0.9.1                Normal       ---
+wgpu-core->bitflags                                2.10.0               2.13.0              2.13.0               Normal       ---
+wgpu-core->indexmap                                2.13.0               2.14.0              2.14.0               Normal       ---
+wgpu-core->log                                     0.4.29               0.4.32              0.4.32               Normal       ---
+wgpu-core->naga                                    27.0.3               ---                 29.0.3               Normal       ---
+wgpu-core->once_cell                               1.21.3               1.21.4              1.21.4               Normal       ---
+wgpu-core->profiling                               1.0.17               1.0.18              1.0.18               Normal       ---
+wgpu-core->smallvec                                1.15.1               1.15.2              1.15.2               Normal       ---
+wgpu-core->wgpu-core-deps-apple                    27.0.0               ---                 29.0.3               Normal       cfg(target_vendor = "apple")
+wgpu-core->wgpu-core-deps-emscripten               27.0.0               ---                 29.0.3               Normal       cfg(target_os = "emscripten")
+wgpu-core->wgpu-core-deps-windows-linux-android    27.0.0               ---                 29.0.3               Normal       cfg(any(windows, target_os = "linux", target_os = "android", target_os = "freebsd"))
+wgpu-core->wgpu-hal                                27.0.4               ---                 29.0.3               Normal       ---
+wgpu-core->wgpu-types                              27.0.1               ---                 29.0.3               Normal       ---
+wgpu-core-deps-apple->wgpu-hal                     27.0.4               ---                 29.0.3               Normal       cfg(target_vendor = "apple")
+wgpu-core-deps-emscripten->wgpu-hal                27.0.4               ---                 29.0.3               Normal       cfg(target_os = "emscripten")
+wgpu-core-deps-windows-linux-android->wgpu-hal     27.0.4               ---                 29.0.3               Normal       cfg(any(windows, target_os = "linux", target_os = "android", target_os = "freebsd"))
+wgpu-hal->bit-set                                  0.8.0                ---                 0.9.1                Normal       cfg(windows)
+wgpu-hal->bitflags                                 2.10.0               2.13.0              2.13.0               Normal       ---
+wgpu-hal->block                                    0.1.6                ---                 Removed              Normal       cfg(target_vendor = "apple")
+wgpu-hal->core-graphics-types                      0.2.0                ---                 Removed              Normal       cfg(target_vendor = "apple")
+wgpu-hal->glow                                     0.16.0               ---                 0.17.0               Normal       ---
+wgpu-hal->gpu-alloc                                0.6.0                ---                 Removed              Normal       cfg(not(target_arch = "wasm32"))
+wgpu-hal->gpu-allocator                            0.27.0               ---                 0.28.0               Normal       cfg(windows)
+wgpu-hal->js-sys                                   0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu-hal->libc                                     0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+wgpu-hal->log                                      0.4.29               0.4.32              0.4.32               Normal       ---
+wgpu-hal->metal                                    0.32.0               ---                 Removed              Normal       cfg(target_vendor = "apple")
+wgpu-hal->naga                                     27.0.3               ---                 29.0.3               Normal       ---
+wgpu-hal->objc                                     0.2.7                ---                 Removed              Normal       cfg(target_vendor = "apple")
+wgpu-hal->once_cell                                1.21.3               1.21.4              1.21.4               Normal       cfg(windows)
+wgpu-hal->ordered-float                            5.1.0                5.3.0               5.3.0                Normal       ---
+wgpu-hal->portable-atomic-util                     0.2.6                0.2.7               0.2.7                Normal       cfg(not(target_has_atomic = "ptr"))
+wgpu-hal->profiling                                1.0.17               1.0.18              1.0.18               Normal       ---
+wgpu-hal->smallvec                                 1.15.1               1.15.2              1.15.2               Normal       cfg(not(target_arch = "wasm32"))
+wgpu-hal->wasm-bindgen                             0.2.108              0.2.125             0.2.125              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu-hal->web-sys                                  0.3.85               0.3.102             0.3.102              Normal       cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))
+wgpu-hal->wgpu-types                               27.0.1               ---                 29.0.3               Normal       ---
+wgpu-hal->windows                                  0.58.0               ---                 0.62.2               Normal       cfg(windows)
+wgpu-hal->windows-core                             0.58.0               ---                 0.62.2               Normal       cfg(windows)
+wgpu-types->bitflags                               2.10.0               2.13.0              2.13.0               Normal       ---
+wgpu-types->js-sys                                 0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+wgpu-types->log                                    0.4.29               0.4.32              0.4.32               Normal       ---
+wgpu-types->thiserror                              2.0.18               ---                 Removed              Normal       ---
+wgpu-types->web-sys                                0.3.85               0.3.102             0.3.102              Normal       cfg(target_arch = "wasm32")
+windows->windows-collections                       0.2.0                ---                 0.3.2                Normal       ---
+windows->windows-core                              0.58.0               ---                 0.62.2               Normal       ---
+windows->windows-core                              0.61.2               ---                 0.62.2               Normal       ---
+windows->windows-future                            0.2.1                ---                 0.3.2                Normal       ---
+windows->windows-link                              0.1.3                ---                 Removed              Normal       ---
+windows->windows-numerics                          0.2.0                ---                 0.3.1                Normal       ---
+windows->windows-targets                           0.52.6               ---                 Removed              Normal       ---
+windows-collections->windows-core                  0.61.2               ---                 0.62.2               Normal       ---
+windows-core->windows-implement                    0.58.0               ---                 0.60.2               Normal       ---
+windows-core->windows-interface                    0.58.0               ---                 0.59.3               Normal       ---
+windows-core->windows-link                         0.1.3                ---                 0.2.1                Normal       ---
+windows-core->windows-result                       0.2.0                ---                 0.4.1                Normal       ---
+windows-core->windows-result                       0.3.4                ---                 0.4.1                Normal       ---
+windows-core->windows-strings                      0.1.0                ---                 0.5.1                Normal       ---
+windows-core->windows-strings                      0.4.2                ---                 0.5.1                Normal       ---
+windows-core->windows-targets                      0.52.6               ---                 Removed              Normal       ---
+windows-future->windows-core                       0.61.2               ---                 0.62.2               Normal       ---
+windows-future->windows-link                       0.1.3                ---                 0.2.1                Normal       ---
+windows-future->windows-threading                  0.1.0                ---                 0.2.1                Normal       ---
+windows-implement->quote                           1.0.40               1.0.45              1.0.45               Normal       ---
+windows-implement->syn                             2.0.114              2.0.117             2.0.117              Normal       ---
+windows-interface->quote                           1.0.40               1.0.45              1.0.45               Normal       ---
+windows-interface->syn                             2.0.114              2.0.117             2.0.117              Normal       ---
+windows-numerics->windows-core                     0.61.2               ---                 0.62.2               Normal       ---
+windows-numerics->windows-link                     0.1.3                ---                 0.2.1                Normal       ---
+windows-result->windows-link                       0.1.3                ---                 0.2.1                Normal       ---
+windows-result->windows-targets                    0.52.6               ---                 Removed              Normal       ---
+windows-strings->windows-link                      0.1.3                ---                 0.2.1                Normal       ---
+windows-strings->windows-result                    0.2.0                ---                 Removed              Normal       ---
+windows-strings->windows-targets                   0.52.6               ---                 Removed              Normal       ---
+windows-sys->windows-link                          0.2.1                ---                 Removed              Normal       ---
+windows-sys->windows-targets                       0.42.2               Removed             Removed              Normal       cfg(not(windows_raw_dylib))
+windows-sys->windows-targets                       0.52.6               0.53.5              0.53.5               Normal       ---
+windows-targets->windows_aarch64_gnullvm           0.42.2               Removed             Removed              Normal       aarch64-pc-windows-gnullvm
+windows-targets->windows_aarch64_gnullvm           0.52.6               ---                 Removed              Normal       aarch64-pc-windows-gnullvm
+windows-targets->windows_aarch64_gnullvm           0.52.6               0.53.1              0.53.1               Normal       aarch64-pc-windows-gnullvm
+windows-targets->windows_aarch64_msvc              0.42.2               Removed             Removed              Normal       aarch64-pc-windows-msvc
+windows-targets->windows_aarch64_msvc              0.52.6               ---                 Removed              Normal       cfg(all(target_arch = "aarch64", target_env = "msvc", not(windows_raw_dylib)))
+windows-targets->windows_aarch64_msvc              0.52.6               0.53.1              0.53.1               Normal       cfg(all(target_arch = "aarch64", target_env = "msvc", not(windows_raw_dylib)))
+windows-targets->windows_i686_gnu                  0.42.2               Removed             Removed              Normal       i686-pc-windows-gnu
+windows-targets->windows_i686_gnu                  0.52.6               ---                 Removed              Normal       cfg(all(target_arch = "x86", target_env = "gnu", not(target_abi = "llvm"), not(windows_raw_dylib)))
+windows-targets->windows_i686_gnu                  0.52.6               0.53.1              0.53.1               Normal       cfg(all(target_arch = "x86", target_env = "gnu", not(target_abi = "llvm"), not(windows_raw_dylib)))
+windows-targets->windows_i686_gnullvm              0.52.6               ---                 Removed              Normal       i686-pc-windows-gnullvm
+windows-targets->windows_i686_gnullvm              0.52.6               0.53.1              0.53.1               Normal       i686-pc-windows-gnullvm
+windows-targets->windows_i686_msvc                 0.42.2               Removed             Removed              Normal       i686-pc-windows-msvc
+windows-targets->windows_i686_msvc                 0.52.6               ---                 Removed              Normal       cfg(all(target_arch = "x86", target_env = "msvc", not(windows_raw_dylib)))
+windows-targets->windows_i686_msvc                 0.52.6               0.53.1              0.53.1               Normal       cfg(all(target_arch = "x86", target_env = "msvc", not(windows_raw_dylib)))
+windows-targets->windows_x86_64_gnu                0.42.2               Removed             Removed              Normal       x86_64-pc-windows-gnu
+windows-targets->windows_x86_64_gnu                0.52.6               ---                 Removed              Normal       cfg(all(target_arch = "x86_64", target_env = "gnu", not(target_abi = "llvm"), not(windows_raw_dylib)))
+windows-targets->windows_x86_64_gnu                0.52.6               0.53.1              0.53.1               Normal       cfg(all(target_arch = "x86_64", target_env = "gnu", not(target_abi = "llvm"), not(windows_raw_dylib)))
+windows-targets->windows_x86_64_gnullvm            0.42.2               Removed             Removed              Normal       x86_64-pc-windows-gnullvm
+windows-targets->windows_x86_64_gnullvm            0.52.6               ---                 Removed              Normal       x86_64-pc-windows-gnullvm
+windows-targets->windows_x86_64_gnullvm            0.52.6               0.53.1              0.53.1               Normal       x86_64-pc-windows-gnullvm
+windows-targets->windows_x86_64_msvc               0.42.2               Removed             Removed              Normal       x86_64-pc-windows-msvc
+windows-targets->windows_x86_64_msvc               0.52.6               ---                 Removed              Normal       cfg(all(any(target_arch = "x86_64", target_arch = "arm64ec"), target_env = "msvc", not(windows_raw_dylib)))
+windows-targets->windows_x86_64_msvc               0.52.6               0.53.1              0.53.1               Normal       cfg(all(any(target_arch = "x86_64", target_arch = "arm64ec"), target_env = "msvc", not(windows_raw_dylib)))
+windows-threading->windows-link                    0.1.3                ---                 0.2.1                Normal       ---
+winit->android-activity                            0.6.0                0.6.1               0.6.1                Normal       cfg(target_os = "android")
+winit->bitflags                                    2.10.0               2.13.0              2.13.0               Normal       ---
+winit->js-sys                                      0.3.85               0.3.102             0.3.102              Normal       cfg(target_family = "wasm")
+winit->libc                                        0.2.183              0.2.186             0.2.186              Normal       cfg(all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos"))))
+winit->orbclient                                   0.3.51               0.3.55              0.3.55               Normal       cfg(target_os = "redox")
+winit->pin-project                                 1.1.11               1.1.13              1.1.13               Normal       cfg(target_family = "wasm")
+winit->unicode-segmentation                        1.12.0               1.13.3              1.13.3               Normal       cfg(target_os = "windows")
+winit->wasm-bindgen                                0.2.108              0.2.125             0.2.125              Normal       cfg(target_family = "wasm")
+winit->wasm-bindgen-futures                        0.4.58               0.4.75              0.4.75               Normal       cfg(target_family = "wasm")
+winit->wayland-backend                             0.3.14               0.3.15              0.3.15               Normal       cfg(all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos"))))
+winit->wayland-client                              0.31.13              0.31.14             0.31.14              Normal       cfg(all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos"))))
+winit->wayland-protocols                           0.32.11              0.32.12             0.32.12              Normal       cfg(all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos"))))
+winit->wayland-protocols-plasma                    0.3.11               0.3.12              0.3.12               Normal       cfg(all(unix, not(any(target_os = "redox", target_family = "wasm", target_os = "android", target_os = "ios", target_os = "macos"))))
+winit->web-sys                                     0.3.85               0.3.102             0.3.102              Normal       cfg(target_family = "wasm")
+winnow->memchr                                     2.8.0                2.8.2               2.8.2                Normal       ---
+winnow->memchr                                     2.8.0                2.8.2               Removed              Normal       ---
+wit-bindgen->wit-bindgen-rust-macro                0.51.0               Removed             Removed              Normal       ---
+wit-bindgen-core->anyhow                           1.0.102              Removed             Removed              Normal       ---
+wit-bindgen-core->heck                             0.5.0                Removed             Removed              Normal       ---
+wit-bindgen-core->wit-parser                       0.244.0              Removed             Removed              Normal       ---
+wit-bindgen-rust->anyhow                           1.0.102              Removed             Removed              Normal       ---
+wit-bindgen-rust->heck                             0.5.0                Removed             Removed              Normal       ---
+wit-bindgen-rust->indexmap                         2.13.0               2.14.0              2.14.0               Normal       ---
+wit-bindgen-rust->indexmap                         2.13.0               Removed             Removed              Normal       ---
+wit-bindgen-rust->prettyplease                     0.2.37               Removed             Removed              Normal       ---
+wit-bindgen-rust->syn                              2.0.114              2.0.117             2.0.117              Normal       ---
+wit-bindgen-rust->syn                              2.0.114              Removed             Removed              Normal       ---
+wit-bindgen-rust->wasm-metadata                    0.244.0              Removed             Removed              Normal       ---
+wit-bindgen-rust->wit-bindgen-core                 0.51.0               Removed             Removed              Normal       ---
+wit-bindgen-rust->wit-component                    0.244.0              Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->anyhow                     1.0.102              Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->prettyplease               0.2.37               Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->proc-macro2                1.0.106              Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->quote                      1.0.40               1.0.45              1.0.45               Normal       ---
+wit-bindgen-rust-macro->quote                      1.0.40               Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->syn                        2.0.114              2.0.117             2.0.117              Normal       ---
+wit-bindgen-rust-macro->syn                        2.0.114              Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->wit-bindgen-core           0.51.0               Removed             Removed              Normal       ---
+wit-bindgen-rust-macro->wit-bindgen-rust           0.51.0               Removed             Removed              Normal       ---
+wit-component->anyhow                              1.0.102              Removed             Removed              Normal       ---
+wit-component->bitflags                            2.10.0               2.13.0              2.13.0               Normal       ---
+wit-component->bitflags                            2.10.0               Removed             Removed              Normal       ---
+wit-component->indexmap                            2.13.0               2.14.0              2.14.0               Normal       ---
+wit-component->indexmap                            2.13.0               Removed             Removed              Normal       ---
+wit-component->log                                 0.4.29               0.4.32              0.4.32               Normal       ---
+wit-component->log                                 0.4.29               Removed             Removed              Normal       ---
+wit-component->serde                               1.0.228              Removed             Removed              Normal       ---
+wit-component->serde_derive                        1.0.228              Removed             Removed              Normal       ---
+wit-component->serde_json                          1.0.150              Removed             Removed              Normal       ---
+wit-component->wasm-encoder                        0.244.0              Removed             Removed              Normal       ---
+wit-component->wasm-metadata                       0.244.0              Removed             Removed              Normal       ---
+wit-component->wasmparser                          0.244.0              Removed             Removed              Normal       ---
+wit-component->wit-parser                          0.244.0              Removed             Removed              Normal       ---
+wit-parser->anyhow                                 1.0.102              Removed             Removed              Normal       ---
+wit-parser->id-arena                               2.3.0                Removed             Removed              Normal       ---
+wit-parser->indexmap                               2.13.0               2.14.0              2.14.0               Normal       ---
+wit-parser->indexmap                               2.13.0               Removed             Removed              Normal       ---
+wit-parser->log                                    0.4.29               0.4.32              0.4.32               Normal       ---
+wit-parser->log                                    0.4.29               Removed             Removed              Normal       ---
+wit-parser->semver                                 1.0.27               1.0.28              1.0.28               Normal       ---
+wit-parser->semver                                 1.0.27               Removed             Removed              Normal       ---
+wit-parser->serde                                  1.0.228              Removed             Removed              Normal       ---
+wit-parser->serde_derive                           1.0.228              Removed             Removed              Normal       ---
+wit-parser->serde_json                             1.0.150              Removed             Removed              Normal       ---
+wit-parser->unicode-xid                            0.2.6                Removed             Removed              Normal       ---
+wit-parser->wasmparser                             0.244.0              Removed             Removed              Normal       ---
+x11-dl->libc                                       0.2.183              0.2.186             0.2.186              Normal       ---
+x11-dl->once_cell                                  1.21.3               1.21.4              1.21.4               Normal       ---
+x11-dl->pkg-config                                 0.3.32               0.3.33              0.3.33               Build        ---
+x11rb->libc                                        0.2.183              0.2.186             0.2.186              Normal       ---
+x11rb->once_cell                                   1.21.3               1.21.4              1.21.4               Normal       ---
+xkbcommon-dl->bitflags                             2.10.0               2.13.0              2.13.0               Normal       ---
+xkbcommon-dl->log                                  0.4.29               0.4.32              0.4.32               Normal       ---
+xkbcommon-dl->once_cell                            1.21.3               1.21.4              1.21.4               Normal       ---
+yoke->yoke-derive                                  0.8.1                0.8.2               0.8.2                Normal       ---
+yoke->zerofrom                                     0.1.6                0.1.8               0.1.8                Normal       ---
+yoke-derive->quote                                 1.0.40               1.0.45              1.0.45               Normal       ---
+yoke-derive->syn                                   2.0.114              2.0.117             2.0.117              Normal       ---
+zbus->async-broadcast                              0.7.2                ---                 Removed              Normal       ---
+zbus->async-executor                               1.14.0               ---                 Removed              Normal       ---
+zbus->async-io                                     2.6.0                ---                 Removed              Normal       ---
+zbus->async-lock                                   3.4.2                ---                 Removed              Normal       ---
+zbus->async-process                                2.5.0                ---                 Removed              Normal       ---
+zbus->async-recursion                              1.1.1                ---                 Removed              Normal       cfg(unix)
+zbus->async-task                                   4.7.1                ---                 Removed              Normal       ---
+zbus->async-trait                                  0.1.89               ---                 Removed              Normal       ---
+zbus->blocking                                     1.6.2                ---                 Removed              Normal       ---
+zbus->enumflags2                                   0.7.12               ---                 Removed              Normal       ---
+zbus->event-listener                               5.4.1                ---                 Removed              Normal       ---
+zbus->futures-core                                 0.3.32               ---                 Removed              Normal       ---
+zbus->futures-lite                                 2.6.1                ---                 Removed              Normal       ---
+zbus->hex                                          0.4.3                ---                 Removed              Normal       ---
+zbus->libc                                         0.2.183              0.2.186             0.2.186              Normal       cfg(unix)
+zbus->libc                                         0.2.183              0.2.186             Removed              Normal       cfg(unix)
+zbus->ordered-stream                               0.2.0                ---                 Removed              Normal       ---
+zbus->rustix                                       1.1.4                ---                 Removed              Normal       cfg(unix)
+zbus->serde                                        1.0.228              ---                 Removed              Normal       ---
+zbus->serde_repr                                   0.1.20               ---                 Removed              Normal       ---
+zbus->tracing                                      0.1.44               ---                 Removed              Normal       ---
+zbus->uds_windows                                  1.2.1                ---                 Removed              Normal       cfg(windows)
+zbus->uuid                                         1.22.0               1.23.3              1.23.3               Normal       ---
+zbus->uuid                                         1.22.0               1.23.3              Removed              Normal       ---
+zbus->windows-sys                                  0.61.2               ---                 Removed              Normal       cfg(windows)
+zbus->winnow                                       0.7.15               1.0.3               1.0.3                Normal       ---
+zbus->winnow                                       0.7.15               1.0.3               Removed              Normal       ---
+zbus->zbus_macros                                  5.14.0               5.16.0              5.16.0               Normal       ---
+zbus->zbus_macros                                  5.14.0               5.16.0              Removed              Normal       ---
+zbus->zbus_names                                   4.3.1                4.3.2               4.3.2                Normal       ---
+zbus->zbus_names                                   4.3.1                4.3.2               Removed              Normal       ---
+zbus->zvariant                                     5.10.0               5.12.0              5.12.0               Normal       ---
+zbus->zvariant                                     5.10.0               5.12.0              Removed              Normal       ---
+zbus-lockstep->zbus_xml                            5.1.0                5.1.1               5.1.1                Normal       ---
+zbus-lockstep->zbus_xml                            5.1.0                5.1.1               Removed              Normal       ---
+zbus-lockstep->zvariant                            5.10.0               5.12.0              5.12.0               Normal       ---
+zbus-lockstep->zvariant                            5.10.0               5.12.0              Removed              Normal       ---
+zbus-lockstep-macros->proc-macro2                  1.0.106              ---                 Removed              Normal       ---
+zbus-lockstep-macros->quote                        1.0.40               1.0.45              1.0.45               Normal       ---
+zbus-lockstep-macros->quote                        1.0.40               1.0.45              Removed              Normal       ---
+zbus-lockstep-macros->syn                          2.0.114              2.0.117             2.0.117              Normal       ---
+zbus-lockstep-macros->syn                          2.0.114              2.0.117             Removed              Normal       ---
+zbus-lockstep-macros->zbus-lockstep                0.5.2                ---                 Removed              Normal       ---
+zbus-lockstep-macros->zbus_xml                     5.1.0                5.1.1               5.1.1                Normal       ---
+zbus-lockstep-macros->zbus_xml                     5.1.0                5.1.1               Removed              Normal       ---
+zbus-lockstep-macros->zvariant                     5.10.0               5.12.0              5.12.0               Normal       ---
+zbus-lockstep-macros->zvariant                     5.10.0               5.12.0              Removed              Normal       ---
+zbus_macros->proc-macro-crate                      3.5.0                ---                 Removed              Normal       ---
+zbus_macros->proc-macro2                           1.0.106              ---                 Removed              Normal       ---
+zbus_macros->quote                                 1.0.40               1.0.45              1.0.45               Normal       ---
+zbus_macros->quote                                 1.0.40               1.0.45              Removed              Normal       ---
+zbus_macros->syn                                   2.0.114              2.0.117             2.0.117              Normal       ---
+zbus_macros->syn                                   2.0.114              2.0.117             Removed              Normal       ---
+zbus_macros->zbus_names                            4.3.1                4.3.2               4.3.2                Normal       ---
+zbus_macros->zbus_names                            4.3.1                4.3.2               Removed              Normal       ---
+zbus_macros->zvariant                              5.10.0               5.12.0              5.12.0               Normal       ---
+zbus_macros->zvariant                              5.10.0               5.12.0              Removed              Normal       ---
+zbus_macros->zvariant_utils                        3.3.0                3.4.0               3.4.0                Normal       ---
+zbus_macros->zvariant_utils                        3.3.0                3.4.0               Removed              Normal       ---
+zbus_names->serde                                  1.0.228              ---                 Removed              Normal       ---
+zbus_names->winnow                                 0.7.15               1.0.3               1.0.3                Normal       ---
+zbus_names->winnow                                 0.7.15               1.0.3               Removed              Normal       ---
+zbus_names->zvariant                               5.10.0               5.12.0              5.12.0               Normal       ---
+zbus_names->zvariant                               5.10.0               5.12.0              Removed              Normal       ---
+zbus_xml->quick-xml                                0.38.4               0.39.4              0.39.4               Normal       ---
+zbus_xml->quick-xml                                0.38.4               0.39.4              Removed              Normal       ---
+zbus_xml->serde                                    1.0.228              ---                 Removed              Normal       ---
+zbus_xml->zbus_names                               4.3.1                4.3.2               4.3.2                Normal       ---
+zbus_xml->zbus_names                               4.3.1                4.3.2               Removed              Normal       ---
+zbus_xml->zvariant                                 5.10.0               5.12.0              5.12.0               Normal       ---
+zbus_xml->zvariant                                 5.10.0               5.12.0              Removed              Normal       ---
+zerocopy->zerocopy-derive                          0.8.36               0.8.52              0.8.52               Normal       ---
+zerocopy-derive->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+zerocopy-derive->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+zerofrom->zerofrom-derive                          0.1.6                0.1.7               0.1.7                Normal       ---
+zerofrom-derive->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+zerofrom-derive->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+zerotrie->displaydoc                               0.2.5                0.2.6               0.2.6                Normal       ---
+zerotrie->yoke                                     0.8.1                0.8.3               0.8.3                Normal       ---
+zerotrie->zerofrom                                 0.1.6                0.1.8               0.1.8                Normal       ---
+zerovec->yoke                                      0.8.1                0.8.3               0.8.3                Normal       ---
+zerovec->zerofrom                                  0.1.6                0.1.8               0.1.8                Normal       ---
+zerovec->zerovec-derive                            0.11.2               0.11.3              0.11.3               Normal       ---
+zerovec-derive->quote                              1.0.40               1.0.45              1.0.45               Normal       ---
+zerovec-derive->syn                                2.0.114              2.0.117             2.0.117              Normal       ---
+zvariant->endi                                     1.1.1                ---                 Removed              Normal       ---
+zvariant->enumflags2                               0.7.12               ---                 Removed              Normal       ---
+zvariant->serde                                    1.0.228              ---                 Removed              Normal       ---
+zvariant->winnow                                   0.7.15               1.0.3               1.0.3                Normal       ---
+zvariant->winnow                                   0.7.15               1.0.3               Removed              Normal       ---
+zvariant->zvariant_derive                          5.10.0               5.12.0              5.12.0               Normal       ---
+zvariant->zvariant_derive                          5.10.0               5.12.0              Removed              Normal       ---
+zvariant->zvariant_utils                           3.3.0                3.4.0               3.4.0                Normal       ---
+zvariant->zvariant_utils                           3.3.0                3.4.0               Removed              Normal       ---
+zvariant_derive->proc-macro-crate                  3.5.0                ---                 Removed              Normal       ---
+zvariant_derive->proc-macro2                       1.0.106              ---                 Removed              Normal       ---
+zvariant_derive->quote                             1.0.40               1.0.45              1.0.45               Normal       ---
+zvariant_derive->quote                             1.0.40               1.0.45              Removed              Normal       ---
+zvariant_derive->syn                               2.0.114              2.0.117             2.0.117              Normal       ---
+zvariant_derive->syn                               2.0.114              2.0.117             Removed              Normal       ---
+zvariant_derive->zvariant_utils                    3.3.0                3.4.0               3.4.0                Normal       ---
+zvariant_derive->zvariant_utils                    3.3.0                3.4.0               Removed              Normal       ---
+zvariant_utils->proc-macro2                        1.0.106              ---                 Removed              Normal       ---
+zvariant_utils->quote                              1.0.40               1.0.45              1.0.45               Normal       ---
+zvariant_utils->quote                              1.0.40               1.0.45              Removed              Normal       ---
+zvariant_utils->serde                              1.0.228              ---                 Removed              Normal       ---
+zvariant_utils->syn                                2.0.114              2.0.117             2.0.117              Normal       ---
+zvariant_utils->syn                                2.0.114              2.0.117             Removed              Normal       ---
+zvariant_utils->winnow                             0.7.15               1.0.3               1.0.3                Normal       ---
+zvariant_utils->winnow                             0.7.15               1.0.3               Removed              Normal       ---

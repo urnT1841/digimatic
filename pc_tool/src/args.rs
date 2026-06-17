@@ -16,14 +16,14 @@
 
 use crate::config::{AppConfig, DataSource, UiMode};
 use crate::errors::{ArgumentError, DigimaticError};
-use crate::sim::execute_sim::SimMode;
+use crate::sim::execute_sim::GenMode;
 
 #[derive(Debug)]
 enum Token {
     Source(DataSource),
     Ui(UiMode),
     FrameMode,
-    SimMode(SimMode),
+    SimMode,
 }
 
 /// API窓口：環境から生の引数を集めてコアロジックへ
@@ -41,7 +41,7 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
     let mut source = None;
     let mut ui = None;
     let mut is_bin = false;
-    let mut sim_mode = None;
+    let mut sim_mode: Option<GenMode> = None;
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
@@ -62,7 +62,7 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                 is_bin = true;
             }
             // 文字列のパース段階で mode 判定された場合
-            Token::SimMode(_) => {
+            Token::SimMode => {
                 let mode_str = arg.to_lowercase();
                 match mode_str.as_str() {
                     "--fixed" => {
@@ -78,25 +78,28 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                                 "不正な数値です".into(),
                             ))
                         })?;
-                        sim_mode = Some(SimMode::Fixed(v));
+                        sim_mode = Some(GenMode::Fixed(v));
                     }
                     "--sin" => {
-                        sim_mode = Some(SimMode::SinWave {
+                        sim_mode = Some(GenMode::SinWave {
                             center: 75.0,
                             amplitude: 50.0,
                             frequency: 0.05,
                             delta: 0.0,
-                            step_count: 0,
-                        });
-                    }
-                    "--gaussian" => {
-                        sim_mode = Some(SimMode::Gaussian {
-                            target: 45.0,
-                            std_dev: 0.02,
                         });
                     }
                     "--seed" => {
-                        sim_mode = Some(SimMode::Seed);
+                        let seed_str = iter.next().ok_or_else(|| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "シード値が指定されていません".into(),
+                            ))
+                        })?;
+                        let s: u64 = seed_str.parse().map_err(|_| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "不正なシード値（整数）です".into(),
+                            ))
+                        })?;
+                        sim_mode = Some(GenMode::Seed(s)); // 🌟 抽出したシード値を enum に包む！
                     }
                     _ => {}
                 }
@@ -108,7 +111,7 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
     let ui = ui.ok_or(invalid_usage())?;
 
     // デフォルトは Random
-    let final_sim_mode = sim_mode.unwrap_or(SimMode::Random);
+    let final_sim_mode = sim_mode.unwrap_or(GenMode::Random);
 
     // build に final_sim_mode を渡す
     Ok(crate::config::AppConfig::build(
@@ -128,7 +131,7 @@ fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
         "--gui" | "-g" => Ok(Token::Ui(UiMode::Gui)),
         "--cli" | "-c" => Ok(Token::Ui(UiMode::Cli)),
         "--bin" | "-b" => Ok(Token::FrameMode),
-        "--fixed" | "--sin" | "--gaussian" | "--seed" => Ok(Token::SimMode(SimMode::Random)),
+        "--fixed" | "--sin" | "--gaussian" | "--seed" => Ok(Token::SimMode),
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
             format!("不正な引数です: {arg}"),
         ))),
