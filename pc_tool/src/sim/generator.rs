@@ -36,6 +36,7 @@ pub(crate) fn calc_gaussian(target: f64, std_dev: f64, rng: &mut StdRng) -> f64 
         target
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
