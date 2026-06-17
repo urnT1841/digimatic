@@ -10,7 +10,7 @@ use crate::parser::nibble_to_bits;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
 
-pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> TransportFrame {
+pub(crate) fn build_simulator_payload(val: f64, mode: FrameFormat) -> TransportFrame {
     let digi_frame = build_frame(val);
 
     match mode {

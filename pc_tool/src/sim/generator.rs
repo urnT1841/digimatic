@@ -2,13 +2,13 @@
 //! ノギス測定データっぽい値の出力器
 //!
 //!  生成範囲：0.01mm ~ 150.00mm
-//!  備考：乱数で生成。実際に送られてくるような近い値が来る的な機能はなし
+//!  いろいろなバリエーション対応
 //!
 
 use rand::prelude::*;
 use rand_distr::{Distribution, Normal as DistNormal};
 
-/// 完全ランダム計算 seed付きにも対応
+/// seed付きにも対応した完全ランダム値生成
 pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
     let raw: i32 = rng.random_range(1..=15_000);
     f64::from(raw) / 100.0
@@ -19,7 +19,7 @@ pub(crate) fn calc_sin_wave(
     // AxSin(Θ+δ) を表現。Step_countは外から与える増分
     center: f64,
     amplitude: f64,
-    frequency: f64,
+    frequency: f64, // 周波数にしてるけどステップあたりの増分角。用語だと角周波数 相当
     delta: f64,
     step_count: u32,
 ) -> f64 {

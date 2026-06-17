@@ -1,6 +1,6 @@
 //!
 //!  Sim実行
-//!  generatar -> frame Build -> send -> revice -> display
+//!  generator -> frame Build -> send -> revice -> display
 
 use std::sync::mpsc::Sender;
 
@@ -9,11 +9,11 @@ use rand::rngs::StdRng;
 
 use crate::config::FrameFormat;
 use crate::frame::TransportFrame;
-use crate::sim::frame_builder::build_simurator_payload;
+use crate::sim::frame_builder::build_simulator_payload;
 use crate::sim::generator;
 
 /// Simのモード設定
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum GenMode {
     Random,
     Seed(u64),
@@ -25,7 +25,7 @@ pub(crate) enum GenMode {
     SinWave {
         center: f64,    // 振幅のセンター 振幅が 150 (mm) とすると 75mm
         amplitude: f64, // 振幅倍率
-        frequency: f64, // 周期
+        frequency: f64, // 周期 (実装的には角周波数(1ステップあたりの増分角)
         delta: f64,     // 初期位相ずれ
     },
     FaultInjection(FrameSim),
@@ -44,12 +44,11 @@ pub(crate) enum FrameSim {
 }
 
 /// TODO:Generator側の実装が終わってから対応、FrameSim を適用するためのひな形関数
-//#[allow(dead_code, unused_variables)] // 未使用の関数と引数の警告を完全に黙らせます
 #[allow(dead_code)]
 fn apply_frame_sim(sim: FrameSim, frame: &mut Vec<u8>) {
     match sim {
         FrameSim::Normal => {}
-        FrameSim::BitFlip { rate } => { /* bit反転 */ }
+        FrameSim::BitFlip { rate: _ } => { /* bit反転 */ }
         FrameSim::DropBit => { /* ビット欠落 */ }
         FrameSim::ShortPacket => { /* truncate */ }
         FrameSim::InvalidCharacter => { /* 文字破壊 */ }
@@ -68,6 +67,8 @@ impl FrameGenerator {
         Self { tx, format, mode }
     }
 
+    /// JoinHandleを持っていないのでスレッドないPanicに対応できない
+    /// 用途的には気にしすぎ系だが留意するためコメントを残す
     pub fn start_generator_thread(self) {
         std::thread::spawn(move || {
             let mut step: u32 = 0;
@@ -85,7 +86,7 @@ impl FrameGenerator {
 
             loop {
                 let val = self.generate_value(step, &mut rng);
-                let payload = build_simurator_payload(val, self.format);
+                let payload = build_simulator_payload(val, self.format);
 
                 if self.tx.send(payload).is_err() {
                     break;
