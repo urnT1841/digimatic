@@ -14,7 +14,7 @@ use crate::sim::generator;
 
 /// Simのモード設定
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum GenMode {
+pub enum GenMode {
     Random,
     Seed(u64),
     Fixed(f64),
