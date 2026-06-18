@@ -6,6 +6,7 @@
 //!
 
 use rand::prelude::*;
+use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal as DistNormal};
 
 /// seed付きにも対応した完全ランダム値生成
@@ -49,7 +50,7 @@ mod tests {
     #[test]
     fn generator_test() {
         // テスト用に適当なシード（例: 1234）で乱数器を1個用意する
-        let mut test_rng = rand::rngs::StdRng::seed_from_u64(1234);
+        let mut test_rng = StdRng::seed_from_u64(1234);
 
         for _ in 0..1000 {
             // 作成した乱数器の参照（&mut test_rng）を渡す
@@ -65,8 +66,8 @@ mod tests {
     #[test]
     fn test_calc_seeded_random_reproducibility() {
         // 同じシード値で2つの独立した乱数器を作る
-        let mut rng1 = rand::rngs::StdRng::seed_from_u64(2026);
-        let mut rng2 = rand::rngs::StdRng::seed_from_u64(2026);
+        let mut rng1 = StdRng::seed_from_u64(2026);
+        let mut rng2 = StdRng::seed_from_u64(2026);
 
         // 1発目、2発目、3発目……と引いていく数列が「完全に一致」するか検証
         for _ in 0..10 {
@@ -91,7 +92,7 @@ mod tests {
         // 何回かループを回して、計算結果がちゃんと 40.0 から 60.0 の範囲に収まっているか検証
         for step in 0..100 {
             let val = calc_sin_wave(center, amplitude, frequency, delta, step);
-            assert!(val >= 40.0 && val <= 60.0, "値が範囲外です: {}", val);
+            assert!(val >= 40.0 && val <= 60.0, "値が範囲外です: {val}");
         }
     }
 }

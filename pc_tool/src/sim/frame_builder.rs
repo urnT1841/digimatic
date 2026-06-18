@@ -67,8 +67,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_build_frame() {
-        let val = 123.456;
+    fn build_frame_works() {
+        let val = 123.456_f64;
         let frame = build_frame(val);
 
         // 期待される値をチェック

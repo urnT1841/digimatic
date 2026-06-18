@@ -1,2 +1,3 @@
 [workspace]
 members = ["pc_tool"]
+resolver = "3"

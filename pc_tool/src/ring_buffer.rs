@@ -40,7 +40,7 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
         assert!(N > 0, "StaticRingBuffer size N must be greater than 0");
     };
     pub(crate) fn new() -> Self {
-        let _ = Self::_ASSERT_N;
+        const { Self::_ASSERT_N };
         Self {
             data: [const { None }; N],
             write_index: 0,
