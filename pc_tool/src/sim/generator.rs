@@ -36,6 +36,12 @@ pub(crate) fn calc_gaussian(target: f64, std_dev: f64, rng: &mut StdRng) -> f64 
         target
     }
 }
+
+/// ノギス測定最小値 量子化モデル
+pub(crate) fn calc_quantize(value: f64, step: f64) -> f64 {
+    (value / step).round() * step
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
