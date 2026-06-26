@@ -25,9 +25,9 @@ pub(crate) fn parse_bits(
 /// この関数は bit列 -> nibble で中身の解釈はしない。なので長さチェックは実施するが
 /// そのあとのエラーチェックは行わない (上層のNibble解釈で実施)
 fn bits_to_nibble(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
-    if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
+    if bits.len() != FRAME_LENGTH * BITS_PER_NIBBLE {
         return Err(FrameParseError::InvalidBitLength {
-            expected: (FRAME_LENGTH * FRAME_NIBBLES),
+            expected: (FRAME_LENGTH * BITS_PER_NIBBLE),
             found: (bits.len()),
         });
     }
@@ -114,7 +114,7 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
 /// ニブル列 → 文字列フレーム生成
 /// DigimaticFrame化により本体用途では不要
 /// デバッグ時のbin→文字列確認用
-#[cfg(debug_assertions)]
+#[cfg(any(test, debug_assertions))]
 #[allow(dead_code)]
 fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {

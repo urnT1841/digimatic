@@ -14,32 +14,21 @@ use crate::errors::FrameParseError;
 // デジマチック データフレームの位置
 // インデックスだとずれるので
 pub const D1: usize = 0; // header
+pub const D2: usize = 1; // header
+pub const D3: usize = 2; // header
 pub const D4: usize = 3; // header
 pub const D5: usize = 4; // sign ( + or - )
 pub const D6: usize = 5; // data
+pub const D7: usize = 6; // data
+pub const D8: usize = 7; // data
+pub const D9: usize = 8; // data
+pub const D10: usize = 9; // data
 pub const D11: usize = 10; // data
 pub const D12: usize = 11; // point position
 pub const D13: usize = 12; // unit  ( mm or inch )
 
-// 以下のフレーム定義はコード上は未使用 (範囲指定等でスキップされている)
-// このcrate(frame.rs)をlib上で pub(crate)扱いにしたためunusedが顕在化
-// 将来的にパースロジックをより厳格化する際に復帰，あるいは呼び出し先修正を実施
-#[allow(dead_code)]
-pub(crate) mod unused_digimatic_frame {
-    pub const D2: usize = 1; // header
-    pub const D3: usize = 2; // header
-    pub const D7: usize = 6; // data
-    pub const D8: usize = 7; // data
-    pub const D9: usize = 8; // data
-    pub const D10: usize = 9; // data
-}
-
-// 上記と同じ 改めて対応必要
-#[allow(unused_imports)]
-pub(crate) use unused_digimatic_frame::*;
-
 pub const FRAME_LENGTH: usize = 13; // デジマチックフレームの長さは13固定
-pub const FRAME_NIBBLES: usize = 4; // デジマチックフレームの1つは4Bit (nibble)
+pub const BITS_PER_NIBBLE: usize = 4; // デジマチックフレームの1つは4Bit (nibble)
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -117,9 +106,9 @@ pub struct DigimaticFrame {
     pub unit: Unit,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Measurement {
-    pub val: u32,             // デジマチックフレームの D4-D11
+    pub val: u32,             // デジマチックフレームの D6-D11
     pub sign: Sign,           // 符号
     pub point: PointPosition, // 小数点位置
     pub unit: Unit,           // 測定値単位 mm ,inch (ただmmしか使わない)

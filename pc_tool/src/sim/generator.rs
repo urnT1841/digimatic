@@ -1,14 +1,15 @@
 //!
 //! ノギス測定データっぽい値の出力器
 //!
-//!  生成範囲：0.01mm ~ 150.00mm
-//!  備考：乱数で生成。実際に送られてくるような近い値が来る的な機能はなし
+//!  生成範囲：0.01mm ~ 150.00mm (cal_random SinやGaussianはtargetによってはマイナスになりうる)
+//!  いろいろなバリエーション対応
 //!
 
 use rand::prelude::*;
+use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal as DistNormal};
 
-/// 完全ランダム計算 seed付きにも対応
+/// seed付きにも対応した完全ランダム値生成
 pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
     let raw: i32 = rng.random_range(1..=15_000);
     f64::from(raw) / 100.0
@@ -19,7 +20,7 @@ pub(crate) fn calc_sin_wave(
     // AxSin(Θ+δ) を表現。Step_countは外から与える増分
     center: f64,
     amplitude: f64,
-    frequency: f64,
+    frequency: f64, // 周波数にしてるけどステップあたりの増分角。用語だと角周波数 相当
     delta: f64,
     step_count: u32,
 ) -> f64 {
@@ -49,7 +50,7 @@ mod tests {
     #[test]
     fn generator_test() {
         // テスト用に適当なシード（例: 1234）で乱数器を1個用意する
-        let mut test_rng = rand::rngs::StdRng::seed_from_u64(1234);
+        let mut test_rng = StdRng::seed_from_u64(1234);
 
         for _ in 0..1000 {
             // 作成した乱数器の参照（&mut test_rng）を渡す
@@ -65,8 +66,8 @@ mod tests {
     #[test]
     fn test_calc_seeded_random_reproducibility() {
         // 同じシード値で2つの独立した乱数器を作る
-        let mut rng1 = rand::rngs::StdRng::seed_from_u64(2026);
-        let mut rng2 = rand::rngs::StdRng::seed_from_u64(2026);
+        let mut rng1 = StdRng::seed_from_u64(2026);
+        let mut rng2 = StdRng::seed_from_u64(2026);
 
         // 1発目、2発目、3発目……と引いていく数列が「完全に一致」するか検証
         for _ in 0..10 {
@@ -91,7 +92,7 @@ mod tests {
         // 何回かループを回して、計算結果がちゃんと 40.0 から 60.0 の範囲に収まっているか検証
         for step in 0..100 {
             let val = calc_sin_wave(center, amplitude, frequency, delta, step);
-            assert!(val >= 40.0 && val <= 60.0, "値が範囲外です: {}", val);
+            assert!(val >= 40.0 && val <= 60.0, "値が範囲外です: {val}");
         }
     }
 }
