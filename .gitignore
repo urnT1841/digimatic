@@ -7,7 +7,12 @@
 
 # --- Rust ---
 /pc_tool/target/
+Cargo.lock
 **/*.rs.bk
+/target
+Cargo.lock
+**/*.rs.bk
+
 
 * --- Micro Pico --
 .micropyco/

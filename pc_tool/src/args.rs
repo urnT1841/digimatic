@@ -16,12 +16,14 @@
 
 use crate::config::{AppConfig, DataSource, UiMode};
 use crate::errors::{ArgumentError, DigimaticError};
+use crate::sim::execute_sim::GenMode;
 
 #[derive(Debug)]
 enum Token {
     Source(DataSource),
     Ui(UiMode),
     FrameMode,
+    SimMode,
 }
 
 /// API窓口：環境から生の引数を集めてコアロジックへ
@@ -31,16 +33,18 @@ pub fn parse_args() -> Result<AppConfig, DigimaticError> {
 }
 
 fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
-    // 受信FrameがStr/Binかの指定も追加。なければStr. なので引数は2つか3つとする。
-    if args.len() < 2 || args.len() > 3 {
+    // 最低2つは必要 gui or cli, actuar or sim
+    if args.len() < 2 {
         return Err(invalid_usage());
     }
 
     let mut source = None;
     let mut ui = None;
-    let mut is_bin = false; // FrameFormat のモード判別用
+    let mut is_bin = false;
+    let mut sim_mode: Option<GenMode> = None;
 
-    for arg in args {
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
         match normalize_arg(&arg)? {
             Token::Source(s) => {
                 if source.is_some() {
@@ -48,7 +52,6 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
                 }
                 source = Some(s);
             }
-
             Token::Ui(u) => {
                 if ui.is_some() {
                     return Err(duplicate_error("ui"));
@@ -58,29 +61,77 @@ fn parse_from_tokens(args: Vec<String>) -> Result<AppConfig, DigimaticError> {
             Token::FrameMode => {
                 is_bin = true;
             }
+            // 文字列のパース段階で mode 判定された場合
+            Token::SimMode => {
+                let mode_str = arg.to_lowercase();
+                match mode_str.as_str() {
+                    "--fixed" => {
+                        // 次の引数から確実に数値文字列（123.45 など）を取得
+                        let val_str = iter.next().ok_or_else(|| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "値が指定されていません".into(),
+                            ))
+                        })?;
+                        // 数値への変換。失敗したら不正な引数エラーへ綺麗に落とす
+                        let v: f64 = val_str.parse().map_err(|_| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "不正な数値です".into(),
+                            ))
+                        })?;
+                        sim_mode = Some(GenMode::Fixed(v));
+                    }
+                    "--sin" => {
+                        sim_mode = Some(GenMode::SinWave {
+                            center: 75.0,
+                            amplitude: 50.0,
+                            frequency: 0.05,
+                            delta: 0.0,
+                        });
+                    }
+                    "--seed" => {
+                        let seed_str = iter.next().ok_or_else(|| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "シード値が指定されていません".into(),
+                            ))
+                        })?;
+                        let s: u64 = seed_str.parse().map_err(|_| {
+                            DigimaticError::Argument(ArgumentError::InvalidArgs(
+                                "不正なシード値（整数）です".into(),
+                            ))
+                        })?;
+                        sim_mode = Some(GenMode::Seed(s)); // 🌟 抽出したシード値を enum に包む！
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 
-    // シャドーイング 中身を確定させる -> unwrap() 対策
-    // これをしないでOk(AppConfig) を組み立てようとしても uiがOptionのままでConsole_modeが確定できない
     let source = source.ok_or(invalid_usage())?;
     let ui = ui.ok_or(invalid_usage())?;
 
-    // config.rs の builder 呼び出し
-    Ok(crate::config::AppConfig::build(source, ui, is_bin))
+    // デフォルトは Random
+    let final_sim_mode = sim_mode.unwrap_or(GenMode::Random);
+
+    // build に final_sim_mode を渡す
+    Ok(crate::config::AppConfig::build(
+        source,
+        ui,
+        is_bin,
+        final_sim_mode,
+    ))
 }
 
 fn normalize_arg(arg: &str) -> Result<Token, DigimaticError> {
     let normalized = arg.to_lowercase();
-    //let normalized = normalized.trim_start_matches('-');
 
-    //TODO 一般的なハイフンありの形にもっていく
     match normalized.as_str() {
         "--sim" | "-s" => Ok(Token::Source(DataSource::Sim)),
         "--actual" | "-a" => Ok(Token::Source(DataSource::Actual)),
         "--gui" | "-g" => Ok(Token::Ui(UiMode::Gui)),
         "--cli" | "-c" => Ok(Token::Ui(UiMode::Cli)),
         "--bin" | "-b" => Ok(Token::FrameMode),
+        "--fixed" | "--sin" | "--gaussian" | "--seed" => Ok(Token::SimMode),
         _ => Err(DigimaticError::Argument(ArgumentError::InvalidArgs(
             format!("不正な引数です: {arg}"),
         ))),
