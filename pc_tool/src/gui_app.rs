@@ -36,6 +36,8 @@
 //! ```
 
 use eframe::egui;
+use egui::Color32;
+use egui_plot::{Line, Plot, PlotPoints};
 use std::sync::mpsc::Receiver;
 
 use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
@@ -197,6 +199,48 @@ impl DisplayApp {
                 }); // スクロールエリアここまで
         }
     }
+
+    // 履歴グラフ
+    fn draw_main_plot(&self, ui: &mut egui::Ui) {
+        ui.add_space(20.0);
+        ui.separator();
+        ui.label(egui::RichText::new("リアルタイムトレンドグラフ").strong());
+        ui.add_space(10.0);
+
+        if self.history.is_empty() {
+            ui.weak("グラフデータなし");
+            return;
+        }
+
+        // 履歴を古い順に並び変えてプロット用データへ
+        //   x axis: index(old -> new)  ,  y axis: mes data
+        let points: PlotPoints = self
+            .history
+            .iter_newest()
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(|(idx, meas)| {
+                let val = meas.to_f64();
+                [idx as f64, val]
+            })
+            .collect();
+
+        let line = Line::new(points)
+            .name("Measurement value")
+            .color(Color32::from_rgb(0, 255, 150))
+            .width(2.0);
+
+        Plot::new("measurement_trend")
+            .view_aspect(3.0)
+            .show_grid(true)
+            .allow_zoom(false)
+            .allow_drag(false)
+            .show(ui, |plot_ui| {
+                plot_ui.line(line);
+            });
+    }
 }
 
 impl eframe::App for DisplayApp {
@@ -215,6 +259,7 @@ impl eframe::App for DisplayApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 self.draw_main_measurement(ui); // 計測表示
+                self.draw_main_plot(ui);
                 self.draw_main_history(ui); // 履歴表示
             });
         });
