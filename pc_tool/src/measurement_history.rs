@@ -41,8 +41,8 @@ impl MeasurementHistory {
     }
 
     #[allow(dead_code)]
-    pub fn len(&mut self) {
-        self.inner.len();
+    pub fn len(&mut self) -> usize {
+        self.inner.len()
     }
 
     /// 空チェック
