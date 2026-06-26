@@ -35,7 +35,9 @@
 //!                    └── draw_main_history (過去データの履歴リスト)
 //! ```
 
-use eframe::egui;
+use eframe::egui::{self, style};
+use egui::Color32;
+use egui_plot::{Line, MarkerShape, Plot, PlotPoints, Points};
 use std::sync::mpsc::Receiver;
 
 use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
@@ -197,6 +199,55 @@ impl DisplayApp {
                 }); // スクロールエリアここまで
         }
     }
+
+    // 履歴グラフ
+    fn draw_main_plot(&self, ui: &mut egui::Ui) {
+        ui.add_space(20.0);
+        ui.separator();
+        ui.label(egui::RichText::new("Realtime Trend Graph").strong());
+        ui.add_space(10.0);
+
+        if self.history.is_empty() {
+            ui.weak("No DATA");
+            return;
+        }
+        // plotデータをVec として収集
+        let points_vec: Vec<[f64; 2]> = self
+            .history
+            .iter_newest()
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(|(idx, meas)| {
+                let val = meas.to_f64();
+                [idx as f64, val]
+            })
+            .collect();
+
+        // Lineオブジェクト
+        let line = Line::new(points_vec.clone())
+            .name("Measurement Value")
+            .color(Color32::from_rgb(0, 255, 150))
+            .width(1.2);
+
+        // マーカーブジェクト
+        // 先頭の `use egui_plot::{Line, Plot};` に `Points` と `MarkerShape` を追加
+        let points = egui_plot::Points::new(points_vec)
+            .color(Color32::from_rgb(0, 255, 150))
+            .shape(egui_plot::MarkerShape::Circle) // 丸を指定
+            .radius(3.0); // サイズを指定
+
+        Plot::new("measurement_trend")
+            .view_aspect(3.0)
+            .show_grid(true)
+            .allow_zoom(false)
+            .allow_drag(false)
+            .show(ui, |plot_ui| {
+                plot_ui.line(line);
+                plot_ui.points(points);
+            });
+    }
 }
 
 impl eframe::App for DisplayApp {
@@ -215,6 +266,7 @@ impl eframe::App for DisplayApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 self.draw_main_measurement(ui); // 計測表示
+                self.draw_main_plot(ui);
                 self.draw_main_history(ui); // 履歴表示
             });
         });
