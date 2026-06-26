@@ -35,9 +35,9 @@
 //!                    └── draw_main_history (過去データの履歴リスト)
 //! ```
 
-use eframe::egui;
+use eframe::egui::{self, style};
 use egui::Color32;
-use egui_plot::{Line, Plot, PlotPoints};
+use egui_plot::{Line, MarkerShape, Plot, PlotPoints, Points};
 use std::sync::mpsc::Receiver;
 
 use crate::config::{ConnectionInfo, FrameFormat, GuiConfig};
@@ -204,17 +204,15 @@ impl DisplayApp {
     fn draw_main_plot(&self, ui: &mut egui::Ui) {
         ui.add_space(20.0);
         ui.separator();
-        ui.label(egui::RichText::new("リアルタイムトレンドグラフ").strong());
+        ui.label(egui::RichText::new("Realtime Trend Graph").strong());
         ui.add_space(10.0);
 
         if self.history.is_empty() {
-            ui.weak("グラフデータなし");
+            ui.weak("No DATA");
             return;
         }
-
-        // 履歴を古い順に並び変えてプロット用データへ
-        //   x axis: index(old -> new)  ,  y axis: mes data
-        let points: PlotPoints = self
+        // plotデータをVec として収集
+        let points_vec: Vec<[f64; 2]> = self
             .history
             .iter_newest()
             .collect::<Vec<_>>()
@@ -227,10 +225,18 @@ impl DisplayApp {
             })
             .collect();
 
-        let line = Line::new(points)
-            .name("Measurement value")
+        // Lineオブジェクト
+        let line = Line::new(points_vec.clone())
+            .name("Measurement Value")
             .color(Color32::from_rgb(0, 255, 150))
-            .width(2.0);
+            .width(1.2);
+
+        // マーカーブジェクト
+        // 先頭の `use egui_plot::{Line, Plot};` に `Points` と `MarkerShape` を追加
+        let points = egui_plot::Points::new(points_vec)
+            .color(Color32::from_rgb(0, 255, 150))
+            .shape(egui_plot::MarkerShape::Circle) // 丸を指定
+            .radius(3.0); // サイズを指定
 
         Plot::new("measurement_trend")
             .view_aspect(3.0)
@@ -239,6 +245,7 @@ impl DisplayApp {
             .allow_drag(false)
             .show(ui, |plot_ui| {
                 plot_ui.line(line);
+                plot_ui.points(points);
             });
     }
 }
