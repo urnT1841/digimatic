@@ -5,17 +5,14 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: # manual actino button
+      - 'release/v*'
+  workflow_dispatch: # manual action button
 
 jobs:
   build:
     name: Build for ${{ matrix.os }}
     # Windows、Linux、Mac(Mシリーズ対応)の3台起動
     runs-on: ${{ matrix.os }}
-    # project直下に cargo.toml がないので，存在するdirを指定
-    defaults:
-      run:
-        working-directory: pc_tool
 
     strategy:
       matrix:
@@ -45,31 +42,32 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
+      # Linux環境固有の依存関係をインストール
       - name: Install system dependencies (Linux only)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libudev-dev pkg-config
 
-      # 本番用バイナリのビルドを実行 (cargo build --release)
+      # 本番用バイナリのビルドを実行 (プロジェクトルートで実行されます)
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
-      # `pc_tool/target/...` の中にあるので、正しく移動
+      # 🌟 修正：すべてのOSでルート直下（./）にバイナリをリネーム配置するよう修正
       - name: Prepare binary path
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv target/${{ matrix.target }}/release/digimatic.exe ./../${{ matrix.artifact_name }}
+            mv target/${{ matrix.target }}/release/digimatic.exe ./${{ matrix.artifact_name }}
           else
-            mv target/${{ matrix.target }}/release/digimatic ./../${{ matrix.artifact_name }}
+            mv target/${{ matrix.target }}/release/digimatic ./${{ matrix.artifact_name }}
           fi
-        #working-directory内(pc_tool)から、1つ上の階層(./../)にバイナリを投げる
 
+      # 直下に配置されたバイナリを回収してDraft Releaseを作成
       - name: Create Draft Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: ./${{ matrix.artifact_name }} # 👈 直下に放り投げられたバイナリを回収！
+          files: ./${{ matrix.artifact_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
