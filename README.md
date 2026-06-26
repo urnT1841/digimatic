@@ -6,7 +6,7 @@ Capture, decode, and log measurement data from Mitutoyo digital calipers using a
 
 ---
 
-## ✨ Overview
+##  Overview
 
 This project provides a complete pipeline for receiving Digimatic data from Mitutoyo calipers and processing it on a PC.
 
@@ -25,7 +25,34 @@ The system has been refactored in **v2.0.0** to clarify architecture boundaries 
 
 ---
 
-## 🧭 Architecture (v2)
+## Quick Start / How to Run
+
+This project supports both real hardware mode and simulation mode.
+
+### Simulation Mode (No hardware required)
+If you don't have the hardware connected, you can run the full system using the built-in simulator:
+```bash (or cmd/PowerShell)
+# Run with GUI simulator
+cargo run --bin digimatic -- --sim --gui
+
+# Run with CLI simulator (logs to console)
+cargo run --bin digimatic -- --sim --cli
+```
+
+### Actual Hardware Mode (raspberryPy pico required)
+
+```bash (or cmd/PowerShell)
+# Run with GUI
+cargo run --bin digimatic -- --actual --gui 
+
+# Run with CLI (logs to console)
+cargo run --bin digimatic -- --actual --cli
+```
+
+---
+
+
+## Architecture (v2)
 
 The system is now explicitly layered:
 
@@ -45,7 +72,7 @@ Key change in v2:
 ---
 
 
-## 🎯 Who is this for?
+## Who is this for?
 
 This project is primarily designed for personal and hobby use, but also serves as a practical tool for:
 
@@ -58,14 +85,14 @@ It is especially useful if you want access to both **raw communication data** an
 
 ---
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **PC Side:** Rust  
 - **Hardware Interface:** MicroPython (Raspberry Pi Pico / XIAO RP2040)
 
 ---
 
-## 🔁 Data Flow
+## Data Flow
 
 `Caliper` → `Level Shifter (SN74LXC8T245PWR)` → `XIAO RP2040` → `PC (Linux / Windows)`
 
@@ -73,7 +100,7 @@ Simulation mode replaces the hardware input stage.
 
 ---
 
-## 🚀 Features
+## Features
 
 - Real-time measurement data capture  
 - Digimatic frame decoding (v2 stabilized parser)
@@ -85,7 +112,7 @@ Simulation mode replaces the hardware input stage.
 
 ---
 
-## 🧪 Simulation Mode
+## Simulation Mode
 
 The simulator allows full pipeline execution without hardware.
 
@@ -111,7 +138,7 @@ The simulator allows full pipeline execution without hardware.
 
 ---
 
-## 🧰 Embedded (Pico) Diagnostic Mode
+## Embedded (Pico) Diagnostic Mode
 
 A built-in interactive diagnostic tool for GPIO and device behavior.
 
@@ -143,7 +170,7 @@ cargo run --bin digimatic -- -gui -sim
 
 ---
 
-## 📦 Legacy System (v2)
+## Legacy System (v2)
 
 The following components are no longer part of the active pipeline:
 
@@ -160,7 +187,7 @@ They are retained for reference and possible future OS-level I/O redesign.
 
 ---
 
-## 🧭 Design Philosophy (v2)
+## Design Philosophy (v2)
 
   - Clear separation of simulation and core parsing logic
   - Measurement as a stable domain model
@@ -172,7 +199,7 @@ They are retained for reference and possible future OS-level I/O redesign.
 
 ---
 
-## 🚀 Future Direction (v3+)
+## Future Direction (v3+)
 
   - Binary frame support
   - Trait-based frame generator abstraction
@@ -182,7 +209,7 @@ They are retained for reference and possible future OS-level I/O redesign.
 
 ---
 
-## ✅ Status
+## Status
 
 v2.0.0 represents a stabilized architecture milestone.
 

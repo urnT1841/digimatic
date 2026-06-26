@@ -1,4 +1,3 @@
-//! # エラー定義
 //! errors.rs
 //!
 //! # Error Handling and Domain Exception Definitions
@@ -8,13 +7,6 @@
 //! into a unified, domain-specific `DigimaticError` wrapping enum to ensure type-safe,
 //! idiomatic Rust error propagation across the entire pipeline.
 //!
-//!
-//! # エラーハンドリングとドメイン例外の定義
-//!
-//! Digimatic ツールにおけるエラー階層構造を定義
-//! I/O、シリアル通信、フレーム解析などの下位レイヤーのエラーを、ドメイン固有の
-//! 統合型列挙体 `DigimaticError` に集約・カプセル化し、パイプライン全体における
-//! エラー伝播（? 演算子による伝播）を実現させる
 
 use serde::Serialize;
 use std::io;
@@ -77,12 +69,18 @@ pub enum FrameParseError {
 pub enum ArgumentError {
     // 無効な引数の場合 簡易ヘルプも表示
     #[error(
-        "'{0}' は無効な引数です。\n\
-                    使用法:\n\
-                    (無引数) : GUI起動\n\
-                    s(im)    : CLIシミュレーション\n\
-                    a(ctual) : CLI実機\n\
-                    g(ui) -s : GUIシミュレーション"
+        "Error: '{0}' is an invalid argument.\n\n\
+                Usage:\n\
+                  pc_tool [OPTIONS]...\n\n\
+                Options:\n\
+                  -g, --gui       Enable Graphical User Interface mode\n\
+                  -c, --cli       Run in Headless Command Line Interface mode\n\
+                  -s, --sim       Use Software Simulator as data source\n\
+                  -a, --actual    Use Actual Mitutoyo device via Serial Port\n\
+                  -b, --bin       Enable Debug Mode: print raw binary frames\n\n\
+                Examples:\n\
+                  pc_tool --gui --sim\n\
+                  pc_tool -g -s -b"
     )]
     InvalidArgs(String),
 

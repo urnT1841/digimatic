@@ -1,31 +1,26 @@
-//! # USB-CDC 通信接続・レシーバ生成モジュール
-//! communicator.rs
+//! `communicator.rs`
 //!
-//! Raspberry Pi Pico（実機）との物理的なシリアル通信（USB-CDC）を確立し、
-//! データ受信を行うための「接続管理」および「レシーバオブジェクトの生成」する。
-//! Simのデータを受けるレシーバも同様に生成する。
+//! # USB-CDC Communication Link Layer Module
 //!
-//! ## 主な役割
-//! - システムが認識可能な仮想シリアルポートの自動探索・準備
-//! - 実機とのシリアルポート接続（ボーレート等の通信設定）の確立
-//! - 上流のデータ処理レイヤ（`received_data_handler` 等）へ引き渡すための、通信レシーバの初期化と生成
+//! This module establishes and manages the physical USB-CDC serial interface link
+//! with the Raspberry Pi Pico hardware, abstracting raw ingestion readers and channel sinks
+//! behind a unified dynamic runtime trait interface.
 //!
 
-//use serde::Serialize;
 use serialport::SerialPort;
 use std::io::{BufRead, BufReader, Read};
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
+use crate::config::FrameFormat;
 use crate::errors::{CommError, DigimaticError, FrameParseError};
-use crate::frame::FRAME_LENGTH;
-use crate::received_data_handler::FrameFormat;
+use crate::frame::{FRAME_LENGTH, TransportFrame};
 
 // PC側からのコード送出は未実装
 // 一部(timeoutは使用しているが他は未使用)
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StopCode {
+pub(crate) enum StopCode {
     Normal,      // 正常
     Stop,        //
     Timeout,     // 既定の時間Picoが見つからなかった
@@ -51,7 +46,7 @@ impl CdcReceiver {
     }
 
     // データ受信
-    fn read_raw_frame(&mut self) -> Result<Vec<u8>, DigimaticError> {
+    fn read_raw_frame(&mut self) -> Result<TransportFrame, DigimaticError> {
         match self.mode {
             FrameFormat::Str => {
                 let mut rx_stream = Vec::new();
@@ -65,8 +60,10 @@ impl CdcReceiver {
                                 found: (n),
                             })?;
                         }
+                        let bytes = rx_stream.trim_ascii_end().to_vec();
+
                         // trim_ascii_end を使って末尾を綺麗にする
-                        Ok(rx_stream.trim_ascii_end().to_vec())
+                        Ok(TransportFrame::Str(bytes))
                     }
                     Err(e) => Err(CommError::Io(e).into()),
                 }
@@ -74,7 +71,7 @@ impl CdcReceiver {
             FrameFormat::Bin => {
                 let mut buf = vec![0u8; 13];
                 match self.rx_reader.read_exact(&mut buf) {
-                    Ok(_) => Ok(buf),
+                    Ok(_) => Ok(TransportFrame::Bin(buf)),
                     // read_exact も Ok(0) 的な事象は Error(UnexpectedEof) 等で返す
                     Err(e) => Err(CommError::Io(e).into()),
                 }
@@ -85,52 +82,45 @@ impl CdcReceiver {
 
 // これをActual/Simを問わない入力インターフェイスにする
 pub trait MeasurementRead: Send {
-    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError>;
-    fn get_format(&self) -> FrameFormat;
+    fn read_measurement(&mut self) -> Result<TransportFrame, DigimaticError>;
 }
 
 // CdcReceiver にトレイトを適用
 impl MeasurementRead for CdcReceiver {
-    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
+    fn read_measurement(&mut self) -> Result<TransportFrame, DigimaticError> {
         self.read_raw_frame()
-    }
-
-    fn get_format(&self) -> FrameFormat {
-        self.mode
     }
 }
 
 /// Simの時は スレッドで投げられたrxを見に行く
 pub struct SimReceiver {
-    rx: Receiver<Vec<u8>>,
-    mode: FrameFormat,
+    rx: Receiver<TransportFrame>,
 }
 
 impl SimReceiver {
-    pub fn new(rx: Receiver<Vec<u8>>, mode: FrameFormat) -> Self {
-        Self { rx, mode }
+    pub fn new(rx: Receiver<TransportFrame>) -> Self {
+        Self { rx }
     }
 }
 
 // SimReceiver にトレイトを適用
 impl MeasurementRead for SimReceiver {
-    fn read_measurement(&mut self) -> Result<Vec<u8>, DigimaticError> {
-        // 🌟 チャネルから最初から生バイト列（Vec<u8>）が届くので、
-        //    文字列のパースやトリムは一切不要。そのまま上流へ右から左へ受け流す！
+    fn read_measurement(&mut self) -> Result<TransportFrame, DigimaticError> {
+        // チャネルから最初から生バイト列（Vec<u8>）が届くので、
+        //  文字列のパースやトリムは一切不要。そのまま上流へ受け流す
         let payload = self.rx.recv().map_err(|_| CommError::Timeout)?;
         Ok(payload)
     }
-
-    fn get_format(&self) -> FrameFormat {
-        self.mode
-    }
 }
 
+/// Blocks execution until a valid Raspberry Pi Pico USB/CDC hardware
+///    footprint is registered by the OS scanner.
 ///
-/// pico探す
+/// # Errors
 ///
+/// Returns a [`StopCode::Timeout`] variant if scanning loops exceed
+/// the 600-second maximum duration boundary.
 pub const MAX_WAIT_DURATION: Duration = Duration::from_secs(600);
-
 pub fn wait_until_connection() -> Result<String, StopCode> {
     let start_time = std::time::Instant::now();
 
@@ -150,10 +140,12 @@ pub fn wait_until_connection() -> Result<String, StopCode> {
     }
 }
 
+/// Attempts to claim ownership and open a raw system link to the physical file handle location path.
 ///
-/// portのpathを受け取って Open する
+/// # Errors
 ///
-pub const BAUD_RATE: u32 = 115200;
+/// Returns a [`DigimaticError::Comm`] wrapper sequence if the OS layer denies connection initialization.
+pub const BAUD_RATE: u32 = 115_200;
 pub fn open_cdc_port(path: &str, _baud_rate: u32) -> Result<Box<dyn SerialPort>, DigimaticError> {
     let port = serialport::new(path, BAUD_RATE)
         .timeout(Duration::from_millis(100))

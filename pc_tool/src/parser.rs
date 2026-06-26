@@ -7,13 +7,6 @@
 //! for the Digimatic protocol. It provides internal validation and parsing engines
 //! that safely transform raw incoming communication data (both ASCII string streams
 //! and raw binary bitframes) into structured data models defined in `frame.rs`.
-//!
-//! # 生データ解析・デコードエンジン
-//!
-//! Digimatic プロトコルにおける、ビット単位およびバイト単位の専門的なデコードロジックを
-//! 担う。受信した生の通信データ（ASCII文字列ストリームおよび生のバイナリビット
-//! フレームの双方）を厳密にバリデーションし、`frame.rs` で定義された構造化データモデルへと
-//! 安全に変換する内部解析エンジンを提供する。
 
 use crate::errors::FrameParseError;
 use crate::frame::*;
@@ -32,9 +25,9 @@ pub(crate) fn parse_bits(
 /// この関数は bit列 -> nibble で中身の解釈はしない。なので長さチェックは実施するが
 /// そのあとのエラーチェックは行わない (上層のNibble解釈で実施)
 fn bits_to_nibble(bits: &[u8], mode: BitMode) -> Result<[u8; FRAME_LENGTH], FrameParseError> {
-    if bits.len() != FRAME_LENGTH * FRAME_NIBBLES {
+    if bits.len() != FRAME_LENGTH * BITS_PER_NIBBLE {
         return Err(FrameParseError::InvalidBitLength {
-            expected: (FRAME_LENGTH * FRAME_NIBBLES),
+            expected: (FRAME_LENGTH * BITS_PER_NIBBLE),
             found: (bits.len()),
         });
     }
@@ -121,7 +114,7 @@ fn validate_bcd_slice(data: &[u8]) -> Result<[u8; 6], FrameParseError> {
 /// ニブル列 → 文字列フレーム生成
 /// DigimaticFrame化により本体用途では不要
 /// デバッグ時のbin→文字列確認用
-#[cfg(debug_assertions)]
+#[cfg(any(test, debug_assertions))]
 #[allow(dead_code)]
 fn decode_frame(nibbles: &[u8]) -> Result<String, FrameParseError> {
     if nibbles.len() != FRAME_LENGTH {
@@ -259,14 +252,14 @@ mod tests {
 
         // Check valid D5 values (should pass)
         for &valid in &valid_d5 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D5] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D5 values (should fail)
         for &invalid in &invalid_d5 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D5] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -277,14 +270,14 @@ mod tests {
 
         // Check valid D12 values (should pass)
         for &valid in &valid_d12 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D12] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D12 values (should fail)
         for &invalid in &invalid_d12 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D12] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -297,14 +290,14 @@ mod tests {
 
         // Check valid D13 values (should pass)
         for &valid in &valid_d13 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D13] = valid;
             assert!(validator_bits(&nibbles_clone).is_ok());
         }
 
         // Check invalid D13 values (should fail)
         for &invalid in &invalid_d13 {
-            let mut nibbles_clone = nibbles.clone();
+            let mut nibbles_clone = nibbles;
             nibbles_clone[D13] = invalid;
             assert!(validator_bits(&nibbles_clone).is_err());
         }
@@ -477,9 +470,7 @@ mod tests {
 
             // 1ニブル分(4bits)のダミーデータを作成 (13ニブル分必要なので埋める)
             let mut full_bits = vec![0u8; 13 * 4];
-            for b in 0..4 {
-                full_bits[b] = bits[b];
-            }
+            full_bits[0..4].copy_from_slice(&bits);
 
             let res_lsb = bits_to_nibble(&full_bits, BitMode::Lsb).unwrap()[0];
             let res_msb = bits_to_nibble(&full_bits, BitMode::Msb).unwrap()[0];

@@ -4,20 +4,20 @@
 //!
 //!
 
+use crate::config::FrameFormat;
 use crate::frame::*;
 use crate::parser::nibble_to_bits;
-use crate::received_data_handler::FrameFormat;
 
 const EPSILON: f64 = 1E-5; // 浮動小数点の揺らぎ対策
 
-pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> Vec<u8> {
+pub(crate) fn build_simulator_payload(val: f64, mode: FrameFormat) -> TransportFrame {
     let digi_frame = build_frame(val);
 
     match mode {
         FrameFormat::Str => {
             // execute_sim でやっていた組立処理をここに持ってくる
-            let hex: String = digi_frame.iter().map(|b| format!("{:x}", b)).collect();
-            hex.into_bytes()
+            let hex: String = digi_frame.iter().map(|b| format!("{b:x}")).collect();
+            TransportFrame::Str(hex.into_bytes())
         }
         FrameFormat::Bin => {
             // 生成したニブルをlsbで並べて52bitのbit streamにする
@@ -26,7 +26,7 @@ pub(crate) fn build_simurator_payload(val: f64, mode: FrameFormat) -> Vec<u8> {
                 .flat_map(|&n| nibble_to_bits(n, BitMode::Lsb))
                 .collect();
 
-            bit_stream
+            TransportFrame::Bin(bit_stream)
         }
     }
 }
@@ -67,18 +67,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_build_frame() {
-        let val = 123.456;
+    fn build_frame_works() {
+        let val = 123.456_f64;
         let frame = build_frame(val);
 
         // 期待される値をチェック
-        assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置 
-        assert_eq!(frame[D13], Unit::Mm as u8); // 単位 
+        assert_eq!(frame[D12], PointPosition::Two as u8); // 小数点位置
+        assert_eq!(frame[D13], Unit::Mm as u8); // 単位
 
         // 123.456 -> 123.46 (四捨五入) -> [0, 1, 2, 3, 4, 6]
         assert_eq!(frame[D11], 6); // d11 (1の位) [cite: 59-61]
 
-        println!("Test Frame: {:?}", frame);
+        println!("Test Frame: {frame:?}");
     }
 
     #[test]
