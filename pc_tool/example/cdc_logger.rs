@@ -8,8 +8,8 @@ use std::fs::{File, OpenOptions};
 use digimatic::communicator::{
     BAUD_RATE, CdcReceiver, MeasurementRead, StopCode, open_cdc_port, wait_until_connection,
 };
+use digimatic::config::FrameFormat;
 use digimatic::logger::RxDataLog;
-use digimatic::received_data_handler::FrameFormat;
 
 ///
 /// usb-cdcにつながれたPicoを探して，見つかったら接続, 流れてくるデータを記録

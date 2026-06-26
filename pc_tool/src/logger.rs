@@ -1,6 +1,9 @@
+//! `logger.rs`
 //!
-//! Logやデータ保存などファイル書き込み系を扱う
+//! # Logger and Persistence Layer Module
 //!
+//! This module orchestrates file I/O interactions, structured serialization (CSV format via `serde`),
+//! and terminal logging routing policies for the application runtime.
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -76,12 +79,12 @@ fn write_csv_and_flush<T: Serialize, W: Write>(
 ) -> Result<(), DigimaticError> {
     wtr.serialize(value).map_err(|e| SystemError {
         code: 101,
-        message: format!("CSV serialization failed: {}", e),
+        message: format!("CSV serialization failed: {e}"),
     })?;
 
     wtr.flush().map_err(|e| SystemError {
         code: 102,
-        message: format!("CSV flush failed: {}", e),
+        message: format!("CSV flush failed: {e}"),
     })?;
 
     Ok(())
@@ -113,6 +116,7 @@ mod tests {
     fn test_measurement_log_csv_roundtrip() {
         let mut buf = Vec::new();
         {
+            // Scoped scope block isolates `wtr` execution to lift mutable borrowing bounds on `buf` early.
             let mut wtr = csv::Writer::from_writer(&mut buf);
 
             let log = MeasurementLog::new(1.23);
