@@ -9,6 +9,127 @@ use rand::prelude::*;
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal as DistNormal};
 
+use crate::frame::Measurement;
+
+/// 排他制御対象の波形定義
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BaseWave {
+    Flat,
+    Random,
+    RandomWalk,
+    Sine,
+    Square,
+    // 必要になったらここに追加
+}
+
+/// 波形生成部
+/// base + parameter + effect
+pub struct WaveGenerator {
+    base: BaseWave,
+    amplitude: f64,
+    current_step: f64,
+    effect: PhysEffect, // ノイズやらの効果
+    random_walk_value: f64,
+    rng: StdRng, // 乱数生成用
+}
+
+impl WaveGenerator {
+    /// コンストラクタ
+    pub fn new(base: BaseWave) -> Self {
+        Self {
+            base,
+            amplitude: 10.0, // 振幅初期値
+            current_step: 0.0,
+            effect: PhysEffect::new(),
+            random_walk_value: 0.0, // 初期値はどうするか検討の余地あり。とりあえず0.0
+            rng: StdRng::seed_from_u64(2026),
+        }
+    }
+
+    /// 振幅メソッド
+    pub fn with_amplitude(mut self, amp: f64) -> Self {
+        self.amplitude = amp;
+        self
+    }
+
+    /// effectを一括でつなげるメソッドチェーン
+    pub fn with_effect(mut self, effect: PhysEffect) -> Self {
+        self.effect = effect;
+        self
+    }
+
+    /// 次の測定値を1件生成して引き出すコアメソッド
+    pub fn next_value(&mut self) -> Measurement {
+        self.current_step += 1.0;
+
+        // base wave 生成
+        let base_val = match self.base {
+            BaseWave::Sine => self.amplitude * (self.current_step as f64 * 0.1).sin(),
+            BaseWave::Square => {
+                if (self.current_step % 20.0) < 10.0 {
+                    self.amplitude
+                } else {
+                    -self.amplitude
+                }
+            }
+            BaseWave::Flat => self.amplitude,
+            BaseWave::Random => calc_random(&mut self.rng),
+            BaseWave::RandomWalk => {
+                self.random_walk_value += (self.current_step % 3.0) as f64 - 1.0;
+                self.random_walk_value
+            }
+        };
+
+        // effector へ流し込む
+        let effected = self
+            .effect
+            .apply_chain(base_val, self.current_step, &mut self.rng);
+
+        Measurement::from_f64(effected)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EffectKind {
+    Noise { std_dev: f64 },
+    Quantize { resolution: f64 },
+    Drift { speed: f64 },
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PhysEffect {
+    // 有効な(指定された)効果だけが入る
+    pub active_effects: Vec<EffectKind>,
+}
+
+impl PhysEffect {
+    pub fn new() -> Self {
+        Self {
+            active_effects: Vec::new(),
+        }
+    }
+
+    pub fn apply_chain(&self, initial_val: f64, current_step: f64, rng: &mut StdRng) -> f64 {
+        // 有効な効果のリストをイテレータ(fold) で回して
+        // 順次適用する。これなら順不同で行ける。
+        self.active_effects.iter().fold(initial_val, |val, effect| {
+            match effect {
+                EffectKind::Noise { std_dev } => val + calc_gaussian(val, *std_dev, rng),
+                EffectKind::Quantize { resolution } => {
+                    if *resolution > 0.0 {
+                        (val / resolution).round() * resolution
+                    } else {
+                        val
+                    }
+                }
+                EffectKind::Drift { speed } => {
+                    val + (*speed * current_step) // ステップ数を考慮するなら引数を増やす
+                } // 🌟 新しい効果が増えたら、この match の枝（アーム）を増やすだけ！
+            }
+        })
+    }
+}
+
 /// seed付きにも対応した完全ランダム値生成
 pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
     let raw: i32 = rng.random_range(1..=15_000);
