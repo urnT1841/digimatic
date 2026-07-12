@@ -175,27 +175,10 @@ impl TryFrom<&str> for DigimaticFrame {
     }
 }
 
-//  Digimatic -> measurement
-impl TryFrom<DigimaticFrame> for Measurement {
-    type Error = FrameParseError;
-
-    fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
-        // 計測値データニブルをu32に変換
-        // validate_bcd_slice()で BCD数値であることが検証ずみなので失敗は想定せず
-        // foldで積み重ねる
-        let val = frame
-            .data
-            .iter()
-            .fold(0u32, |acc, &nibble| acc * 10 + (nibble as u32));
-
-        Ok(Measurement {
-            val,
-            sign: frame.sign,
-            point: frame.point_pos,
-            unit: frame.unit,
-        })
-    }
-}
+// `impl TryFrom<DigimaticFrame> for Measurement` は frame.rs に移設した。
+// Measurementのフィールドを非公開化したことで、構造体リテラルによる組み立ては
+// Measurementと同じモジュール（frame.rs）内でしかできなくなったため。
+// ここから呼び出す分には `Measurement::try_from(frame)` は今まで通り使える。
 
 #[cfg(test)]
 mod tests {
@@ -361,33 +344,6 @@ mod tests {
         assert_eq!(result, expected_str);
     }
 
-    // 表示用 .to_f64() チェック
-    #[test]
-    fn test_to_f64_valid() {
-        let measurement = Measurement {
-            val: 123456,
-            sign: Sign::Plus,
-            point: PointPosition::Two,
-            unit: Unit::Mm,
-        };
-
-        let expected_value = 1234.56; // 小数点位置に合わせた期待値
-        assert_eq!(measurement.to_f64(), expected_value);
-    }
-
-    #[test]
-    fn test_to_f64_negative() {
-        let measurement = Measurement {
-            val: 123456,
-            sign: Sign::Minus,
-            point: PointPosition::Two,
-            unit: Unit::Mm,
-        };
-
-        let expected_value = -1234.56; // 符号がマイナスであることを確認
-        assert_eq!(measurement.to_f64(), expected_value);
-    }
-
     // 文字列フレーム→Measurementへの変換検証
     #[test]
     fn test_simulator_string_to_value() {
@@ -481,37 +437,5 @@ mod tests {
             );
         }
         println!("---------------------------------------\n");
-    }
-
-    #[test]
-    fn test_to_f64_all_point_positions() {
-        // (PointPosition, Sign, expected)
-        let cases = [
-            (PointPosition::Zero, Sign::Plus, 123456.0),
-            (PointPosition::One, Sign::Plus, 12345.6),
-            (PointPosition::Two, Sign::Plus, 1234.56),
-            (PointPosition::Three, Sign::Plus, 123.456),
-            (PointPosition::Four, Sign::Plus, 12.3456),
-            (PointPosition::Five, Sign::Plus, 1.23456),
-            (PointPosition::Zero, Sign::Minus, -123456.0),
-            (PointPosition::Five, Sign::Minus, -1.23456),
-        ];
-
-        for (point, sign, expected) in cases {
-            let m = Measurement {
-                val: 123456,
-                sign,
-                point,
-                unit: Unit::Mm,
-            };
-            assert!(
-                (m.to_f64() - expected).abs() < 1e-9,
-                "point={:?} sign={:?}: got {}, expected {}",
-                m.point,
-                m.sign,
-                m.to_f64(),
-                expected
-            );
-        }
     }
 }

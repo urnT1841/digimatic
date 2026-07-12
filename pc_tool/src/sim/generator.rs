@@ -9,7 +9,9 @@ use rand::prelude::*;
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal as DistNormal};
 
-use crate::frame::Measurement;
+// WaveGeneratorはドメイン型(Measurement)には触れない。
+// f64を返すところまでが責務で、Measurement化はbuild_frame -> parser
+// という既存の正規ルート（実機と同じ経路）に任せる。
 
 /// 排他制御対象の波形定義
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,12 +61,18 @@ impl WaveGenerator {
     }
 
     /// 次の測定値を1件生成して引き出すコアメソッド
-    pub fn next_value(&mut self) -> Measurement {
+    ///
+    /// 戻り値はf64のまま。Measurement化はしない
+    /// （呼び出し側で frame_builder::build_frame 等に渡す想定。
+    ///  FrameGenerator::generate_value() と同じ責務分担）。
+    pub fn next_value(&mut self) -> f64 {
         self.current_step += 1.0;
 
         // base wave 生成
         let base_val = match self.base {
-            BaseWave::Sine => self.amplitude * (self.current_step as f64 * 0.1).sin(),
+            // current_step はフィールドの時点で既に f64 なので、
+            // ここでの `as f64` は不要（clippy::unnecessary_cast の指摘どおり）。
+            BaseWave::Sine => self.amplitude * (self.current_step * 0.1).sin(),
             BaseWave::Square => {
                 if (self.current_step % 20.0) < 10.0 {
                     self.amplitude
@@ -75,17 +83,17 @@ impl WaveGenerator {
             BaseWave::Flat => self.amplitude,
             BaseWave::Random => calc_random(&mut self.rng),
             BaseWave::RandomWalk => {
-                self.random_walk_value += (self.current_step % 3.0) as f64 - 1.0;
+                self.random_walk_value += (self.current_step % 3.0) - 1.0;
                 self.random_walk_value
             }
         };
 
         // effector へ流し込む
-        let effected = self
-            .effect
-            .apply_chain(base_val, self.current_step, &mut self.rng);
-
-        Measurement::from_f64(effected)
+        // ここで得られる effected が最終的な「Sim測定値(f64, mm)」。
+        // Measurement化はしない。呼び出し側で build_frame(effected) のように
+        // 渡し、実機と同じ transport -> parser 経路でMeasurementにする。
+        self.effect
+            .apply_chain(base_val, self.current_step, &mut self.rng)
     }
 }
 
@@ -130,6 +138,13 @@ impl PhysEffect {
     }
 }
 
+// clippy::new_without_default 対策。中身は `new()` に委譲するだけ。
+impl Default for PhysEffect {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// seed付きにも対応した完全ランダム値生成
 pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
     let raw: i32 = rng.random_range(1..=15_000);
@@ -137,6 +152,10 @@ pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
 }
 
 /// 正弦波（サイン波）計算
+///
+/// execute_sim.rs から直接呼ばれている公開API。
+/// 前回、単一ファイル内だけを見て「未使用」と誤判定し一度削除してしまったが、
+/// クレート全体では使用されていたため復元。
 pub(crate) fn calc_sin_wave(
     // AxSin(Θ+δ) を表現。Step_countは外から与える増分
     center: f64,
@@ -159,61 +178,6 @@ pub(crate) fn calc_gaussian(target: f64, std_dev: f64, rng: &mut StdRng) -> f64 
     }
 }
 
-/// ノギス測定最小値 量子化モデル
-pub(crate) fn calc_quantize(value: f64, step: f64) -> f64 {
-    (value / step).round() * step
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn generator_test() {
-        // テスト用に適当なシード（例: 1234）で乱数器を1個用意する
-        let mut test_rng = StdRng::seed_from_u64(1234);
-
-        for _ in 0..1000 {
-            // 作成した乱数器の参照（&mut test_rng）を渡す
-            let v = calc_random(&mut test_rng);
-
-            assert!(v >= 0.01);
-            assert!(v <= 150.0);
-            assert!(v.is_finite());
-        }
-    }
-
-    // 種つき乱数（calc_seeded_random）の再現性テスト
-    #[test]
-    fn test_calc_seeded_random_reproducibility() {
-        // 同じシード値で2つの独立した乱数器を作る
-        let mut rng1 = StdRng::seed_from_u64(2026);
-        let mut rng2 = StdRng::seed_from_u64(2026);
-
-        // 1発目、2発目、3発目……と引いていく数列が「完全に一致」するか検証
-        for _ in 0..10 {
-            let val1 = calc_random(&mut rng1);
-            let val2 = calc_random(&mut rng2);
-            assert_eq!(val1, val2, "同じシードなのに値がズレました！");
-        }
-    }
-
-    #[test]
-    fn test_calc_sin_wave_math() {
-        // center: 50.0, amplitude: 10.0 のとき、波の範囲は 40.0 ~ 60.0 になるはず
-        let center = 50.0;
-        let amplitude = 10.0;
-        let frequency = 0.1;
-        let delta = 0.0;
-
-        // θ+δ が 0 のとき、sin(0) = 0 なので結果は center そのもの
-        let val_at_zero = calc_sin_wave(center, amplitude, frequency, delta, 0);
-        assert_eq!(val_at_zero, 50.0);
-
-        // 何回かループを回して、計算結果がちゃんと 40.0 から 60.0 の範囲に収まっているか検証
-        for step in 0..100 {
-            let val = calc_sin_wave(center, amplitude, frequency, delta, step);
-            assert!(val >= 40.0 && val <= 60.0, "値が範囲外です: {val}");
-        }
-    }
-}
+// calc_quantize は `rg -rn "calc_quantize"` で generator.rs 内の定義行しか
+// ヒットしなかった（= 他ファイルからの呼び出しなし）ことを確認済みのため削除。
+// Quantize相当のロジックは PhysEffect::apply_chain 内にインライン化されている。

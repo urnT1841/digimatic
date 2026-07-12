@@ -106,12 +106,20 @@ pub struct DigimaticFrame {
     pub unit: Unit,
 }
 
+/// 測定値のドメイン型。
+///
+/// フィールドはすべて非公開。
+/// 「Measurementは(パース処理を経て)生成されるものであり、
+///  外部から自由に組み立てられるべきものではない」という方針により、
+/// 構築経路を `TryFrom<DigimaticFrame>` と `dummy()` に限定している。
+/// 値を読みたいだけの場合は各getter（`val()`/`sign()`/`point()`/`unit()`）
+/// または `to_f64()` を使うこと。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Measurement {
-    pub val: u32,             // デジマチックフレームの D6-D11
-    pub sign: Sign,           // 符号
-    pub point: PointPosition, // 小数点位置
-    pub unit: Unit,           // 測定値単位 mm ,inch (ただmmしか使わない)
+    val: u32,             // デジマチックフレームの D6-D11
+    sign: Sign,           // 符号
+    point: PointPosition, // 小数点位置
+    unit: Unit,           // 測定値単位 mm ,inch (ただmmしか使わない)
 }
 
 // 初期化 (コンストラクタ)
@@ -129,6 +137,27 @@ impl Measurement {
     }
 }
 
+// getter群。
+// フィールドを非公開にした代わりに、読み取り専用のアクセサを用意する。
+// Measurement自体はCopyな小さい型なので、参照ではなく値で返して問題ない。
+impl Measurement {
+    pub fn val(&self) -> u32 {
+        self.val
+    }
+
+    pub fn sign(&self) -> Sign {
+        self.sign
+    }
+
+    pub fn point(&self) -> PointPosition {
+        self.point
+    }
+
+    pub fn unit(&self) -> Unit {
+        self.unit
+    }
+}
+
 impl Measurement {
     pub fn to_f64(self) -> f64 {
         let divisor = 10f64.powi(self.point as i32);
@@ -138,6 +167,33 @@ impl Measurement {
         };
 
         self.val as f64 / divisor * sign_dir
+    }
+}
+
+// Digimatic -> measurement
+//
+// parser.rs から移設。フィールドが非公開になったため、構造体リテラルで
+// Measurementを組み立てられるのはこのモジュール(frame.rs)内だけになった。
+// 「パース経由でしか生成できない」という制約を型で表現するには、この
+// TryFrom実装がMeasurementと同じモジュールにある必要がある。
+impl TryFrom<DigimaticFrame> for Measurement {
+    type Error = FrameParseError;
+
+    fn try_from(frame: DigimaticFrame) -> Result<Self, Self::Error> {
+        // 計測値データニブルをu32に変換
+        // validate_bcd_slice()で BCD数値であることが検証ずみなので失敗は想定せず
+        // foldで積み重ねる
+        let val = frame
+            .data
+            .iter()
+            .fold(0u32, |acc, &nibble| acc * 10 + (nibble as u32));
+
+        Ok(Measurement {
+            val,
+            sign: frame.sign,
+            point: frame.point_pos,
+            unit: frame.unit,
+        })
     }
 }
 
@@ -158,4 +214,73 @@ pub enum BitMode {
 pub enum TransportFrame {
     Str(Vec<u8>),
     Bin(Vec<u8>),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // parser.rs から移設したテスト群。
+    // 「Measurementの構造体リテラルを直接書く」という書き方自体が
+    // 非公開フィールド化によりこのモジュール内でしかできなくなったため、
+    // Measurement自身の定義と同じ場所（frame.rs）に置くのが自然になった。
+
+    // 表示用 .to_f64() チェック
+    #[test]
+    fn test_to_f64_valid() {
+        let measurement = Measurement {
+            val: 123456,
+            sign: Sign::Plus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        };
+
+        let expected_value = 1234.56; // 小数点位置に合わせた期待値
+        assert_eq!(measurement.to_f64(), expected_value);
+    }
+
+    #[test]
+    fn test_to_f64_negative() {
+        let measurement = Measurement {
+            val: 123456,
+            sign: Sign::Minus,
+            point: PointPosition::Two,
+            unit: Unit::Mm,
+        };
+
+        let expected_value = -1234.56; // 符号がマイナスであることを確認
+        assert_eq!(measurement.to_f64(), expected_value);
+    }
+
+    #[test]
+    fn test_to_f64_all_point_positions() {
+        // (PointPosition, Sign, expected)
+        let cases = [
+            (PointPosition::Zero, Sign::Plus, 123456.0),
+            (PointPosition::One, Sign::Plus, 12345.6),
+            (PointPosition::Two, Sign::Plus, 1234.56),
+            (PointPosition::Three, Sign::Plus, 123.456),
+            (PointPosition::Four, Sign::Plus, 12.3456),
+            (PointPosition::Five, Sign::Plus, 1.23456),
+            (PointPosition::Zero, Sign::Minus, -123456.0),
+            (PointPosition::Five, Sign::Minus, -1.23456),
+        ];
+
+        for (point, sign, expected) in cases {
+            let m = Measurement {
+                val: 123456,
+                sign,
+                point,
+                unit: Unit::Mm,
+            };
+            assert!(
+                (m.to_f64() - expected).abs() < 1e-9,
+                "point={:?} sign={:?}: got {}, expected {}",
+                m.point,
+                m.sign,
+                m.to_f64(),
+                expected
+            );
+        }
+    }
 }
