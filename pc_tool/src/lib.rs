@@ -60,3 +60,4 @@ pub(crate) mod received_data_handler;
 pub(crate) mod ring_buffer;
 pub(crate) mod scanner;
 pub(crate) mod sim;
+pub(crate) mod web_server;
