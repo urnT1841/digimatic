@@ -42,7 +42,7 @@ pub fn handle_received_data(
 
             crate::logger::console_info(
                 console_mode,
-                format!("[Decoded]: {}", format_with_display_unit(&m, m.unit)),
+                format!("[Decoded]: {}", format_with_display_unit(&m, m.unit())),
             );
             Ok(())
         }
