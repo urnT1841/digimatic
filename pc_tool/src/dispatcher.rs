@@ -60,7 +60,7 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
             #[cfg(target_os = "linux")]
             {
                 // linuxの場合はブラウザをguiウインドウにする
-                crate::bow_server::launch_web_server(rx_gui)
+                crate::web_server::launch_web_server(rx_gui)
             }
 
             #[cfg(not(target_os = "linux"))]

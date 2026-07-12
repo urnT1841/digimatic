@@ -23,6 +23,13 @@ struct WebPayload {
     history: Vec<f64>,
 }
 
+// ブラウザのアクセス先
+const INDEX_HTML: &str = include_str!("../web/index.html");
+const BROWSER_JS: &str = include_str!("../web/browser_gui.js");
+
+
+        
+
 pub fn launch_web_server(rx: Receiver<Measurement>) -> Result<(), crate::errors::DigimaticError> {
     // 非同期サーバーを動かすための Tokio 実行環境（Runtime）を生成
     let rt = tokio::runtime::Runtime::new()
@@ -32,7 +39,6 @@ pub fn launch_web_server(rx: Receiver<Measurement>) -> Result<(), crate::errors:
         // スレッド間で共有する安全な履歴管理（内部のリングバッファをラップ）
         let history = Arc::new(Mutex::new(MeasurementHistory::new()));
         let history_for_ws = Arc::clone(&history);
-
         // バックグラウンドでMPSCキューを監視し、リングバッファを更新し続ける非同期タスク
         tokio::spawn(async move {
             loop {
@@ -48,10 +54,14 @@ pub fn launch_web_server(rx: Receiver<Measurement>) -> Result<(), crate::errors:
 
         // ルーターの定義
         let app = Router::new()
-            // ブラウザからのWebSocket接続を受け付ける
             .route("/ws", get(move |ws| ws_handler(ws, history_for_ws)))
-            // pc_tool/web ディレクトリ内の HTML/JS/CSS をそのままブラウザに公開
-            .fallback_service(ServeDir::new("web"));
+            .route("/", get(|| async { axum::response::Html(INDEX_HTML) }))
+            .route("/browser_gui.js", get(|| async {
+                axum::response::Response::builder()
+                    .header("content-type", "application/javascript")
+                    .body(axum::body::Body::from(BROWSER_JS))
+                    .unwrap()
+            }));
 
         // サーバー起動 (localhost:8080)
         let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
