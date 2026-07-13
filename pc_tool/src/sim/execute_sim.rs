@@ -4,7 +4,6 @@
 
 use std::sync::mpsc::Sender;
 
-use rand::SeedableRng;
 use rand::rngs::StdRng;
 
 use crate::config::FrameFormat;
@@ -67,35 +66,44 @@ impl FrameGenerator {
         Self { tx, format, mode }
     }
 
-    /// JoinHandleを持っていないのでスレッドないPanicに対応できない
-    /// 用途的には気にしすぎ系だが留意するためコメントを残す
     pub fn start_generator_thread(self) {
         std::thread::spawn(move || {
-            let mut step: u32 = 0;
+            // 既存の GenMode から新設計 of WaveGenerator を組み立てる
+            use crate::sim::generator::{BaseWave, EffectKind, PhysEffect, WaveGenerator};
 
-            let mut rng = match &self.mode {
-                GenMode::Seed(s) => StdRng::seed_from_u64(*s),
-                _ => {
-                    let now = std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_nanos() as u64;
-                    StdRng::seed_from_u64(now)
+            let mut wave_gen = match self.mode {
+                GenMode::Random => WaveGenerator::new(BaseWave::Random),
+                GenMode::Seed(_) => WaveGenerator::new(BaseWave::Random),
+                GenMode::Fixed(v) => WaveGenerator::new(BaseWave::Flat).with_amplitude(v),
+                GenMode::Gaussian { target, std_dev } => {
+                    let mut effect = PhysEffect::new();
+                    effect.active_effects.push(EffectKind::Noise { std_dev });
+                    WaveGenerator::new(BaseWave::Flat)
+                        .with_amplitude(target)
+                        .with_effect(effect)
                 }
+                GenMode::SinWave { amplitude, .. } => {
+                    WaveGenerator::new(BaseWave::Sine).with_amplitude(amplitude)
+                }
+                GenMode::FaultInjection(_s) => WaveGenerator::new(BaseWave::Random),
             };
 
             loop {
-                let val = self.generate_value(step, &mut rng);
-                let payload = build_simulator_payload(val, self.format);
+                // 🌟 変数名を `wave_gen` に変更
+                let val = wave_gen.next_value();
+                let mut payload = build_simulator_payload(val, self.format);
+
+                if let GenMode::FaultInjection(sim_kind) = self.mode {
+                    // apply_frame_sim(sim_kind, &mut payload);
+                }
 
                 if self.tx.send(payload).is_err() {
                     break;
                 }
 
-                step = step.wrapping_add(1);
                 std::thread::sleep(std::time::Duration::from_millis(50));
             }
-        });
+        }); // 🌟 スレッドの閉じカッコ
     }
 
     fn generate_value(&self, step: u32, rng: &mut StdRng) -> f64 {

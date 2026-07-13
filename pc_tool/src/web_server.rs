@@ -27,9 +27,6 @@ struct WebPayload {
 const INDEX_HTML: &str = include_str!("../web/index.html");
 const BROWSER_JS: &str = include_str!("../web/browser_gui.js");
 
-
-        
-
 pub fn launch_web_server(rx: Receiver<Measurement>) -> Result<(), crate::errors::DigimaticError> {
     // 非同期サーバーを動かすための Tokio 実行環境（Runtime）を生成
     let rt = tokio::runtime::Runtime::new()
@@ -56,12 +53,15 @@ pub fn launch_web_server(rx: Receiver<Measurement>) -> Result<(), crate::errors:
         let app = Router::new()
             .route("/ws", get(move |ws| ws_handler(ws, history_for_ws)))
             .route("/", get(|| async { axum::response::Html(INDEX_HTML) }))
-            .route("/browser_gui.js", get(|| async {
-                axum::response::Response::builder()
-                    .header("content-type", "application/javascript")
-                    .body(axum::body::Body::from(BROWSER_JS))
-                    .unwrap()
-            }));
+            .route(
+                "/browser_gui.js",
+                get(|| async {
+                    axum::response::Response::builder()
+                        .header("content-type", "application/javascript")
+                        .body(axum::body::Body::from(BROWSER_JS))
+                        .unwrap()
+                }),
+            );
 
         // サーバー起動 (localhost:8080)
         let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
