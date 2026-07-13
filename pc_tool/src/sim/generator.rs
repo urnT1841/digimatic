@@ -83,7 +83,8 @@ impl WaveGenerator {
             BaseWave::Flat => self.amplitude,
             BaseWave::Random => calc_random(&mut self.rng),
             BaseWave::RandomWalk => {
-                self.random_walk_value += (self.current_step % 3.0) - 1.0;
+                let step_move: f64 = self.rng.random_range(-1.0..=1.0);
+                self.random_walk_value += step_move;
                 self.random_walk_value
             }
         };
@@ -130,9 +131,7 @@ impl PhysEffect {
                         val
                     }
                 }
-                EffectKind::Drift { speed } => {
-                    val + (*speed * current_step) // ステップ数を考慮するなら引数を増やす
-                } // 🌟 新しい効果が増えたら、この match の枝（アーム）を増やすだけ！
+                EffectKind::Drift { speed } => val + (*speed * current_step), // 新しい効果が増えたら、この match の枝（アーム）を増やすだけ！
             }
         })
     }
