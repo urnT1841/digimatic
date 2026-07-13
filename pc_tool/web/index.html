@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <title>Digimatic Data Display</title>
@@ -8,19 +9,23 @@
             font-family: 'DigitalNum';
             src: url('./assets/UDEVGothic35LG-Regular.ttf');
         }
+
         body {
             background-color: #1a1a1a;
             color: #ffffff;
             font-family: sans-serif;
             padding: 20px;
         }
+
         #value {
             font-family: 'DigitalNum', monospace;
             font-size: 80px;
             font-weight: bold;
-            color: #00FF96; /* eguiの緑 */
+            color: #00FF96;
+            /* eguiの緑 */
             margin: 20px 0;
         }
+
         #history {
             max-height: 200px;
             overflow-y: scroll;
@@ -30,15 +35,18 @@
         }
     </style>
 </head>
+
 <body>
     <small>Connection Status: <span style="color: #00FF96;">Connected</span></small>
-    
+
     <div id="value">0.00 mm</div>
-    
+    <canvas id="graph" width="600" height="150"
+        style="border: 1px solid #444; background: #111; margin-bottom: 20px; width: 100%; max-width: 600px; padding-left: 70px; box-sizing: border-box;"></canvas>
     <h3>履歴 (最大50件)</h3>
     <div id="history">履歴はありません（データ未受信）</div>
 
     <!-- コンパイルされたJSを読み込む -->
     <script src="./browser_gui.js"></script>
 </body>
+
 </html>
