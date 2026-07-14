@@ -5,7 +5,7 @@
 //! This module manages the global configuration matrix and runtime policies
 //! for the entire Digimatic application suite.
 use crate::frame::Unit;
-use crate::sim::execute_sim::GenMode;
+use crate::sim::sim_config::GenMode;
 
 /// アプリケーションの全般設定
 #[derive(Debug, Clone, Copy)]

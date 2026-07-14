@@ -64,7 +64,6 @@ impl WaveGenerator {
     ///
     /// 戻り値はf64のまま。Measurement化はしない
     /// （呼び出し側で frame_builder::build_frame 等に渡す想定。
-    ///  FrameGenerator::generate_value() と同じ責務分担）。
     pub fn next_value(&mut self) -> f64 {
         self.current_step += 1.0;
 
@@ -118,6 +117,11 @@ impl PhysEffect {
         }
     }
 
+    pub fn with_effect(mut self, effect: EffectKind) -> Self {
+        self.active_effects.push(effect);
+        self
+    }
+
     pub fn apply_chain(&self, initial_val: f64, current_step: f64, rng: &mut StdRng) -> f64 {
         // 有効な効果のリストをイテレータ(fold) で回して
         // 順次適用する。これなら順不同で行ける。
@@ -152,7 +156,6 @@ pub(crate) fn calc_random(rng: &mut StdRng) -> f64 {
 
 /// 正弦波（サイン波）計算
 ///
-/// execute_sim.rs から直接呼ばれている公開API。
 /// 前回、単一ファイル内だけを見て「未使用」と誤判定し一度削除してしまったが、
 /// クレート全体では使用されていたため復元。
 pub(crate) fn calc_sin_wave(
