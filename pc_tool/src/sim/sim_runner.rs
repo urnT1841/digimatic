@@ -8,9 +8,9 @@ use std::sync::mpsc::Sender;
 use crate::config::FrameFormat;
 use crate::frame::TransportFrame;
 
-use super::frame_builder::build_simulator_payload;
-use super::signal_builder::build_signal_generator;
-use super::sim_config::GenMode;
+use crate::sim::frame_builder::build_simulator_payload;
+use crate::sim::signal_builder::build_signal_generator;
+use crate::sim::sim_config::GenMode;
 
 /// Simデータ生成と送信を管理する
 ///

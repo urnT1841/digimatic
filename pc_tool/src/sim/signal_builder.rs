@@ -3,8 +3,8 @@
 //! Sim設定から信号生成器を構築する。
 //! GenModeとWaveGeneratorの橋渡しを担当する。
 
-use super::generator::{BaseWave, EffectKind, PhysEffect, WaveGenerator};
-use super::sim_config::GenMode;
+use crate::sim::generator::{BaseWave, EffectKind, PhysEffect, WaveGenerator};
+use crate::sim::sim_config::GenMode;
 
 /// Sim設定からWaveGeneratorを生成する。
 ///
