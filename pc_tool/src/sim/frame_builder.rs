@@ -15,7 +15,7 @@ pub(crate) fn build_simulator_payload(val: f64, mode: FrameFormat) -> TransportF
 
     match mode {
         FrameFormat::Str => {
-            // execute_sim でやっていた組立処理をここに持ってくる
+            // 測定値(f64)からTransportFrameへの変換を担当する。
             let hex: String = digi_frame.iter().map(|b| format!("{b:x}")).collect();
             TransportFrame::Str(hex.into_bytes())
         }
