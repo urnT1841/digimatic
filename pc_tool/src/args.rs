@@ -16,7 +16,7 @@
 
 use crate::config::{AppConfig, DataSource, UiMode};
 use crate::errors::{ArgumentError, DigimaticError};
-use crate::sim::execute_sim::GenMode;
+use crate::sim::sim_config::GenMode;
 
 #[derive(Debug)]
 enum Token {

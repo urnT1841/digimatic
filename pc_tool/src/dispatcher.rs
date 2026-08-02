@@ -22,7 +22,7 @@ use crate::config::{AppConfig, ConnectionInfo, ConsoleMode, DataSource, UiMode};
 use crate::errors::DigimaticError;
 use crate::frame::Measurement;
 use crate::received_data_handler::{create_log_writer, handle_received_data};
-use crate::sim::execute_sim::FrameGenerator;
+use crate::sim::sim_runner::FrameGenerator;
 
 /// エントリポイント
 pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
@@ -55,9 +55,21 @@ pub fn run(config: AppConfig) -> Result<(), DigimaticError> {
                     eprintln!("[Error] Pipeline failed: {e:?}");
                 }
             });
-            // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
-            let conn_info = ConnectionInfo::new(config.format);
-            crate::gui_app::launch_display(rx_gui, conn_info)
+
+            // 実行環境による場合分け
+            #[cfg(target_os = "linux")]
+            {
+                // linuxの場合はブラウザをguiウインドウにする
+                crate::web_server::launch_web_server(rx_gui)
+            }
+
+            #[cfg(not(target_os = "linux"))]
+            {
+                // windows or Macのときは eguiでネイティブ描画
+                // メインスレッドでGUIを起動（rx_guiからデータ受け取れる)
+                let conn_info = ConnectionInfo::new(config.format);
+                crate::gui_app::launch_display(rx_gui, conn_info)
+            }
         }
         UiMode::Cli => {
             // cliの時はメインスレッドで直接パイプラン実行
