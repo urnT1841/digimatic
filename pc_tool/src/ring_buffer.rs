@@ -50,11 +50,15 @@ impl<T, const N: usize> StaticRingBuffer<T, N> {
 
     /// 要素挿入 お尻に追加。リングなので満杯の場合は古いのから上書き
     pub(crate) fn push(&mut self, item: T) {
-        self.data[self.write_index] = Some(item);
-        self.write_index = (self.write_index + 1) % N;
-        if self.count < N {
+        // 満杯の時は明示的にDropさせてから追加
+        if self.count == N {
+            let _old = self.data[self.write_index].take();
+        } else {
             self.count += 1;
         }
+
+        self.data[self.write_index] = Some(item);
+        self.write_index = (self.write_index + 1) % N;
     }
 
     /// バッファクリア
