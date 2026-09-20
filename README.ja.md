@@ -1,8 +1,9 @@
-# Mitutoyo Digital Caliper to PC Interface (SPC)
+# デジタルノギス等の計測システム (SPC)
 
 *[English version](README.md)*
 
-Raspberry Pi Pico と Rust ベースの PC パイプラインを使用して、ミツトヨ製デジタルノギスからの測定データのキャプチャ、デコード、およびログ記録を行います。
+デジタル計測機の計測データのGUIによる表示,デコード,およびログ記録を行います。
+ノギスとのインターフェイスはマイコン(RP2040),PC側はRustによるシステムです。
 
 ---
 
@@ -12,9 +13,11 @@ Raspberry Pi Pico と Rust ベースの PC パイプラインを使用して、�
 
 
 <p align="left">
-  <img src="./pc_tool/assets/DisplayWindow(windows).png" width="230">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" width="450">
 </p>
-
+<p align="right">
+  <img src="./pc_tool/assets/DisplayWindow(windows).png" width="450">
+</p>
 
 本システムは、アーキテクチャの境界を明確にし、データフローを安定させるために **v2.0.0** でリファクタリングされました。
 
